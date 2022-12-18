@@ -1,4 +1,4 @@
-moraband chess engine in c++
+Moraband UCI chess engine in c++
 
 From the Star Wars wiki:
 
