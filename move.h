@@ -1,84 +1,93 @@
-/* move.h */
-
 #ifndef MOVE_H
 #define MOVE_H
 
 #include <string>
 #include "defs.h"
 
-typedef unsigned int Move;
+typedef uint16_t Move;
 
 struct MoveEntry {
 	Move move;
 	int score;
 };
 
-bool no_score(MoveEntry &entry) {
+inline bool noScore(const MoveEntry & entry) {
 	return entry.score == 0;
 }
 
-bool operator == (MoveEntry &entry, Move move) {
-	return entry.move == move;
+inline bool operator==(const MoveEntry& pEntry, const Move pMove) {
+	return pEntry.move == pMove;
 }
 
-bool operator < (MoveEntry &entry1, MoveEntry &entry2) {
-	return entry1.score < entry2.score;
+inline bool operator<(const MoveEntry& pEntry1, const MoveEntry& pEntry2) {
+	return pEntry1.score < pEntry2.score;
 }
 
-const Move NULL_MOVE = 0;
-const Move SRC_MASK = 0x003F;
-const Move DEST_MASK = 0x0FC0;
-const Move PIECE_PROMOTION_MASK = 0x7000;
-const Move CASTLE_FLAG = 0x8000;
+static const Move NULL_MOVE = 0;
+static const Move SRC_MASK = 0x003F;
+static const Move DST_MASK = 0x0FC0;
+static const Move PIECE_PROMOTION_MASK = 0x7000;
+static const Move CASTLE_FLAG = 0x8000;
 
-Move make_move(Square sq_src, Square sq_dest) {
-	return static_cast<Move>(sq_src) | static_cast<Move>(sq_dest) << 6;
+inline Move makeMove(Square src, Square dst) {
+	return static_cast<Move>(src) | static_cast<Move>(dst) << 6;
 }
 
-Move make_move(Square sq_src, Square sq_dest, PieceType pr) {
-	return static_cast<Move>(sq_src) | static_cast<Move>(sq_dest) << 6 | static_cast<Move>(pr) << 12;
+inline Move makeMove(Square src, Square dst, PieceType promo) {
+	return static_cast<Move>(src) | static_cast<Move>(dst)   << 6  | static_cast<Move>(promo) << 12;
 }
 
-Move make_castling_move(Square sq_src, Square sq_dest) {
-	return static_cast<Move>(sq_src) | static_cast<Move>(sq_dest) << 6 | CASTLE_FLAG;
+inline Move makeCastle(Square src, Square dst) {
+	return static_cast<Move>(src) | static_cast<Move>(dst) << 6 | CASTLE_FLAG;
 }
 
-Square get_src(Move move) {
-	return static_cast<Square>(move & SRC_MASK);
+inline Square getSrc(Move m) {
+	return static_cast<Square>(m & SRC_MASK);
 }
 
-Square get_dest(Move move) {
-	return static_cast<Square>((move & DEST_MASK) >> 6);
+inline Square getDst(Move m) {
+	return static_cast<Square>((m & DST_MASK) >> 6);
 }
 
-PieceType get_piece_promotion(Move move) {
-	return static_cast<PieceType>((move & PIECE_PROMOTION_MASK) >> 12);
+inline PieceType getPiecePromotion(Move m) {
+	return static_cast<PieceType>((m & PIECE_PROMOTION_MASK) >> 12);
 }
 
-bool is_promotion(Move move) {
-	return get_piece_promotion(move);
+inline bool isPromotion(Move m) {
+	return getPiecePromotion(m);
 }
 
-bool is_castling(Move move) {
-	return move & CASTLE_FLAG;
+inline bool isCastle(Move m) {
+	return m & CASTLE_FLAG;
 }
 
-std::string to_string(Move move) {
+inline std::string toString(Move m) {
 	std::string res;
-	Square src, dest;
-	
-	src = get_src(move);
-	dest = get_dest(move);
-	
-	res = SQ[src] + SQ[dest];
-	
-	auto piece = get_piece_promotion(move);
-	if (piece == knight) res += "n";
-	else if (piece == bishop) res += "b";
-	else if (piece == rook) res += "r";
-	else if (piece == queen) res += "q";
-	
-	return res; 
+	Square src, dst;
+
+	src = getSrc(m);
+	dst = getDst(m);
+
+	res = SQUARE_TO_STRING[src] + SQUARE_TO_STRING[dst];
+
+	switch (getPiecePromotion(m)) {
+		case knight:
+			res += "n";
+			break;
+		case bishop:
+			res += "b";
+			break;
+		case rook:
+			res += "r";
+			break;
+		case queen:
+			res += "q";
+			break;
+		default:
+		break;
+	}
+
+	return res;
 }
 
 #endif
