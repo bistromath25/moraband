@@ -29,7 +29,7 @@ static const int gameStageSize = 2;
 
 enum GameStage {
 	MIDDLEGAME,
-    ENDGAME
+	ENDGAME
 };
 
 enum Color { 
@@ -55,13 +55,13 @@ static const int QUEEN_WEIGHT = 950;
 static const int KING_WEIGHT = 32767;
 
 static const int PieceValue[] =  {
-    PAWN_WEIGHT,
-    KNIGHT_WEIGHT,
-    BISHOP_WEIGHT,
-    ROOK_WEIGHT,
-    QUEEN_WEIGHT,
-    KING_WEIGHT,
-    0 // none
+	PAWN_WEIGHT,
+	KNIGHT_WEIGHT,
+	BISHOP_WEIGHT,
+	ROOK_WEIGHT,
+	QUEEN_WEIGHT,
+	KING_WEIGHT,
+	0 // none
 };
 
 enum Square : uint32_t {
@@ -108,10 +108,10 @@ inline Rank rank(Square s) {
 }
 
 enum CastlingRights {
-    WHITE_SHORT_CASTLE = 1,
-    WHITE_LONG_CASTLE = 2,
-    BLACK_SHORT_CASTLE = 4,
-    BLACK_LONG_CASTLE = 8
+	WHITE_SHORT_CASTLE = 1,
+	WHITE_LONG_CASTLE = 2,
+	BLACK_SHORT_CASTLE = 4,
+	BLACK_LONG_CASTLE = 8
 };
 
 static const int SCORE[PIECE_TYPES_SIZE][PIECE_TYPES_SIZE] = {
@@ -158,10 +158,9 @@ enum Prop : uint32_t {
 	en_passant
 };
 
-const int Neg_inf   = -50000;
-const int Pos_inf   = 50000;
-const int Killer_size = 2;
-const int Max_ply   = 50;
+const int POS_INF = 50000;
+const int NEG_INF = -50000;
+const int MAX_PLY = 50;
 
 enum NodeType {
 	pv, cut, all
@@ -173,9 +172,7 @@ inline File& operator++(File& f) { return f = static_cast<File>(static_cast<int>
 inline Color operator!(const Color c) { return static_cast<Color>(!static_cast<bool>(c)); }
 inline Square operator+(const Square s, const int i) { return static_cast<Square>(static_cast<int>(s) + i); }
 inline Square operator-(const Square s, const int i) { return static_cast<Square>(static_cast<int>(s) - i); }
-inline Square operator-(const Square s1, const Square s2) {
-	return static_cast<Square>(static_cast<int>(s1) - static_cast<int>(s2));
-}
+inline Square operator-(const Square s1, const Square s2) { return static_cast<Square>(static_cast<int>(s1) - static_cast<int>(s2)); }
 
 inline std::string to_string(File f) {
 	return std::string(1, char('h' - f));

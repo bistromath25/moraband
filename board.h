@@ -128,14 +128,14 @@ inline U64 get_lsb_bb(U64 bb) {
 	return 1ULL << get_lsb(bb);
 }
 
-// Clears the LSB and returns the index.
+// Clears the LSB and returns the index
 inline Square pop_lsb(U64 & bb) {
 	U64 t = bb;
 	bb &= (bb - 1);
 	return get_lsb(t);
 }
 
-// Clears the LSB and returns as a bitboard.
+// Clears the LSB and returns as a bitboard
 inline U64 pop_lsb_bb(U64 & bb) {
 	assert(bb);
 	U64 t = bb;
@@ -161,7 +161,7 @@ inline U64 shift_up(U64 bb, const Dir D) {
 				: 0;
 }
 
-// Return bitboard of same color squares.
+// Return bitboard of same color squares
 inline U64 squares_of_color(Square s) {
 	return s & LIGHT_SQUARES ? LIGHT_SQUARES : DARK_SQUARES;
 }
