@@ -90,4 +90,27 @@ inline std::string toString(Move m) {
 	return res;
 }
 
+static const MAX_PV_SIZE = ((MAX_PLY * MAX_PLY) + MAX_PLY) / 2;
+
+inline int triangularIndex(int ply) {
+	return ply * (2 * MAX_PLY + 1 - ply) / 2;
+}
+
+class Variation {
+public:
+	Variation();
+	void pushToPv(Move pMove, U64 pKey, int pPly, int pScore);
+	U64 getPvKey(int pPly=0) const;
+	Move getPvMove(int pPly=0) const;
+	bool isMate() const;
+	int getMateinN() const;
+	void clearPv();
+	void checkPv(State& pState);
+	void printPv();
+private:
+	std::array<std::pair<Move, U64>, MAX_PV_SIZE> mPv;
+	bool mMatingLine;
+	std::size_t mSize;
+};
+
 #endif
