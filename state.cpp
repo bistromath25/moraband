@@ -93,16 +93,16 @@ State::State(const std::string & fen) {
 	enpass = -1;
 	for (++it; it < fen.end(); ++it) {
 		if (*it == 'K') {
-			mCastleRights += WHITE_SHORT_CASTLE;
+			mCastleRights += WHITE_KINGSIDE_CASTLE;
 		}
 		else if (*it == 'Q') {
-			mCastleRights += WHITE_LONG_CASTLE;
+			mCastleRights += WHITE_QUEENSIDE_CASTLE;
 		}
 		else if (*it == 'k') {
-			mCastleRights += BLACK_SHORT_CASTLE;
+			mCastleRights += BLACK_KINGSIDE_CASTLE;
 		}
 		else if (*it == 'q') {
-			mCastleRights += BLACK_LONG_CASTLE;
+			mCastleRights += BLACK_QUEENSIDE_CASTLE;
 		}
 		else if (isalpha(*it)) {
 			enpass = 'h' - *it;
@@ -518,8 +518,8 @@ void State::make_t(Move pMove) {
 		setGamePhase();
 	}
 	// Update castle rights
-	mCastleRights &= Castle_rights[src];
-	mCastleRights &= Castle_rights[dst];
+	mCastleRights &= CASTLE_RIGHTS[src];
+	mCastleRights &= CASTLE_RIGHTS[dst];
 
 	mKey ^= Zobrist::key(mCastleRights);
 
@@ -598,13 +598,13 @@ std::ostream & operator << (std::ostream & os, const State & s) {
 	const char * Empty    = " ";
 	
 	std::string nums[8] = {"1", "2", "3", "4", "5", "6", "7", "8"};
-	const std::string bar = " + - + - + - + - + - + - + - + - + ";
+	const std::string bar = "  + - + - + - + - + - + - + - + - + ";
 
 	os << bar << std::endl;
     for (int i = 63; i >= 0; --i) {
 		U64 bit = square_bb[i];
 		if (i % 8 == 7) {
-			os << nums[i / 8] << "| ";
+			os << nums[i / 8] << " | ";
 		}
 		
 		os << (bit & s.getPieceBB<pawn>(WHITE) ? W_pawn
@@ -626,7 +626,7 @@ std::ostream & operator << (std::ostream & os, const State & s) {
 		}
 	}
 
-	os << "  A  B  C  D  E  F  G  H\n";
+	os << "    a   b   c   d   e   f   g   h\n";
 	
 	// os << "mKey:     " << s.mKey << '\n';
 	// os << "mPawnKey: " << s.mPawnKey << '\n';

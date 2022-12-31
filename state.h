@@ -22,8 +22,7 @@ enum Phase {
 	totalPhase  = 24
 };
 
-class State
-{
+class State {
 public:
 	State() {};
 	State(const std::string &);
@@ -42,10 +41,10 @@ public:
 	PieceType onSquare(const Square s) const;
 	Square getKingSquare(Color c) const;
 	int getPstScore(GameStage g) const;
-	float getGamePhase() const;
+	int getGamePhase() const;
 	void setGamePhase();
 
-	// Access piece bitboards.
+	// Access piece bitboards
 	template<PieceType P> const std::array<Square, PIECE_MAX>& getPieceList(Color pColor) const;
 	template<PieceType P> U64 getPieceBB(Color c) const;
 	template<PieceType P> U64 getPieceBB() const;
@@ -58,7 +57,7 @@ public:
 	U64 getOccupancyBB(Color c) const;
 	U64 getEmptyBB() const;
 
-	// Castle rights.
+	// Castle rights
 	bool canCastleKingside() const;
 	bool canCastleKingside(Color c) const;
 	bool canCastleQueenside() const;
@@ -69,7 +68,7 @@ public:
 	bool isValid(Move pMove, U64 pValid) const;
 	bool givesCheck(Move pMove) const;
 
-	// Functions involved in making a move.
+	// Make move functions
 	void make_t(Move m);
 	void makeNull();
 	void addPiece(Color pColor, PieceType pPiece, Square pSquare);
@@ -77,14 +76,14 @@ public:
 	void removePiece(Color pColor, PieceType pPiece, Square pSquare);
 	void swapTurn();
 
-	// Valid king moves and pins.
+	// Valid king moves and pins
 	U64 getCheckSquaresBB(PieceType pPiece) const;
 	void setCheckers();
 	void setPins(Color c);
 	U64 getPinsBB(Color c) const;
 	U64 getDiscoveredChecks(Color c) const;
 
-	// Check and attack information.
+	// Check and attack information
 	bool isLegal(Move pMove) const;
 	bool isAttacked(Square pSquare, Color pColor, U64 pChange) const;
 	bool attacked(Square s) const;
@@ -104,13 +103,13 @@ public:
 
 	// Print
 	friend std::ostream & operator << (std::ostream & o, const State & state);
-
+	
 private:
 	Color mUs;
 	Color mThem;
 	int mFiftyMoveRule;
 	int mCastleRights;
-	float mPhase;
+	int mPhase;
 	U64 mKey;
 	U64 mPawnKey;
 	U64 mCheckers;
@@ -122,7 +121,7 @@ private:
 	std::array<PieceType, BOARD_SIZE> mBoard;
 	std::array<std::array<U64, PIECE_TYPES_SIZE>, PLAYER_SIZE> mPieces;
 	std::array<std::array<int, PIECE_TYPES_SIZE>, PLAYER_SIZE> mPieceCount;
-	std::array<std::array<int, gameStageSize>, PLAYER_SIZE> mPstScore;
+	std::array<std::array<int, GAMESTAGE_SIZE>, PLAYER_SIZE> mPstScore;
 	std::array<std::array<std::array<Square, PIECE_MAX>, PIECE_TYPES_SIZE>, PLAYER_SIZE> mPieceList;
 };
 
@@ -158,12 +157,12 @@ inline U64 State::getPinsBB(Color c) const {
 	return mPinned[c];
 }
 
-inline float State::getGamePhase() const {
+inline int State::getGamePhase() const {
 	return mPhase;
 }
 
 inline void State::setGamePhase() {
-	float phase = totalPhase
+	int phase = totalPhase
 		- getPieceCount<pawn>() * pawnPhase
 			- getPieceCount<knight>() * knightPhase
 				- getPieceCount<bishop>() * bishopPhase
@@ -293,19 +292,19 @@ inline U64 State::getCheckersBB() const {
 }
 
 inline bool State::canCastleKingside() const {
-	return mUs ? mCastleRights & BLACK_SHORT_CASTLE : mCastleRights & WHITE_SHORT_CASTLE;
+	return mUs ? mCastleRights & BLACK_KINGSIDE_CASTLE : mCastleRights & WHITE_KINGSIDE_CASTLE;
 }
 
 inline bool State::canCastleKingside(Color c) const {
-	return c == WHITE ? mCastleRights & WHITE_SHORT_CASTLE : mCastleRights & BLACK_SHORT_CASTLE;
+	return c == WHITE ? mCastleRights & WHITE_KINGSIDE_CASTLE : mCastleRights & BLACK_KINGSIDE_CASTLE;
 }
 
 inline bool State::canCastleQueenside() const {
-	return mUs ? mCastleRights & BLACK_LONG_CASTLE : mCastleRights & WHITE_LONG_CASTLE;
+	return mUs ? mCastleRights & BLACK_QUEENSIDE_CASTLE : mCastleRights & WHITE_QUEENSIDE_CASTLE;
 }
 
 inline bool State::canCastleQueenside(Color c) const {
-	return c == WHITE ? mCastleRights & WHITE_LONG_CASTLE : mCastleRights & BLACK_LONG_CASTLE;
+	return c == WHITE ? mCastleRights & WHITE_QUEENSIDE_CASTLE : mCastleRights & BLACK_QUEENSIDE_CASTLE;
 }
 
 template<PieceType Pawn> inline U64 State::getAttackBB(Square s, Color c) const {
@@ -406,18 +405,17 @@ inline U64 State::allAttackers(Square s) const {
 }
 
 inline bool State::check(U64 change) const {
-	return (Bmagic(getKingSquare(mUs), getOccupancyBB() ^ change) & (getPieceBB<bishop>(mThem) | getPieceBB<queen>(mThem)))
+	return (Bmagic(getKingSquare(mUs), getOccupancyBB() ^ change) & (getPieceBB<bishop>(mThem) | getPieceBB<queen>(mThem))) 
 		|| (Rmagic(getKingSquare(mUs), getOccupancyBB() ^ change) & (getPieceBB< rook >(mThem) | getPieceBB<queen>(mThem)));
 }
 
 inline bool State::check(U64 change, Color c) const {
-	return (Bmagic(getKingSquare(c), getOccupancyBB() ^ change) & (getPieceBB<bishop>(!c) | getPieceBB<queen>(!c)))
+	return (Bmagic(getKingSquare(c), getOccupancyBB() ^ change) & (getPieceBB<bishop>(!c) | getPieceBB<queen>(!c))) 
 		|| (Rmagic(getKingSquare(c), getOccupancyBB() ^ change) & (getPieceBB< rook >(!c) | getPieceBB<queen>(!c)));
 }
 
 inline U64 State::getXRayAttacks(Square square) const {
-	return bishopMoves[square] & (getPieceBB<bishop>() | getPieceBB<queen>())
-		| rookMoves[square] & (getPieceBB<rook>() | getPieceBB<queen>());
+	return bishopMoves[square] & (getPieceBB<bishop>() | getPieceBB<queen>()) | rookMoves[square] & (getPieceBB<rook>() | getPieceBB<queen>());
 }
 
 #endif

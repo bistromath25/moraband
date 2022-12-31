@@ -404,7 +404,7 @@ void initmagicmoves(void)
 				BmagicNOMASK2(i,tempocc)=initmagicmoves_Bmoves(i,tempocc);
 			#else
 				U64 moves=initmagicmoves_Bmoves(i,tempocc);
-				U64 index=(((tempocc)*magicmoves_b_magics[i])>>MINIMAL_B_BITS_SHIFT);
+				U64 index=(((tempocc)*magicmoves_b_magics[i])>>MINIMAL_B_BITS_SHIFT); // square
 				int j;
 				for(j=0;j<1428;j++)
 				{
@@ -442,7 +442,7 @@ void initmagicmoves(void)
 			#else
 				U64 moves=initmagicmoves_Rmoves(i,tempocc);
 				U64 index=(((tempocc)*magicmoves_r_magics[i])>>MINIMAL_R_BITS_SHIFT);
-				int j;
+				int j; 
 				for(j=0;j<4900;j++)
 				{
 					if(!magicmovesrdb[j])

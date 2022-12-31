@@ -1,6 +1,8 @@
 #ifndef DEFS_H
 #define DEFS_H
 
+#define NDEBUG
+
 #include <string>
 #include <assert.h>
 
@@ -14,7 +16,7 @@ static const int PIECE_TYPES_SIZE = 6;
 static const int PLAYER_SIZE = 2;
 static const int PIECE_MAX = 10;
 
-static const int Castle_rights[BOARD_SIZE] = {
+static const int CASTLE_RIGHTS[BOARD_SIZE] = {
 	14, 15, 15, 12, 15, 15, 15, 13,
 	15, 15, 15, 15, 15, 15, 15, 15,
 	15, 15, 15, 15, 15, 15, 15, 15,
@@ -25,11 +27,11 @@ static const int Castle_rights[BOARD_SIZE] = {
 	11, 15, 15,  3, 15, 15, 15,  7
 };
 
-static const int gameStageSize = 2;
+static const int GAMESTAGE_SIZE = 2;
 
 enum GameStage {
 	MIDDLEGAME,
-	ENDGAME
+    ENDGAME
 };
 
 enum Color { 
@@ -47,21 +49,35 @@ enum PieceType {
 	none
 };
 
-static const int PAWN_WEIGHT = 100;
-static const int KNIGHT_WEIGHT = 300;
-static const int BISHOP_WEIGHT = 300;
-static const int ROOK_WEIGHT = 500;
-static const int QUEEN_WEIGHT = 950;
+/*
+static const int PAWN_WEIGHT_MG = 82;
+static const int KNIGHT_WEIGHT_MG = 337;
+static const int BISHOP_WEIGHT_MG = 365;
+static const int ROOK_WEIGHT_MG = 477;
+static const int QUEEN_WEIGHT_MG = 1025;
+
+static const int PAWN_WEIGHT_EG = 94;
+static const int KNIGHT_WEIGHT_EG = 281;
+static const int BISHOP_WEIGHT_EG = 297;
+static const int ROOK_WEIGHT_EG = 512;
+static const int QUEEN_WEIGHT_EG = 936;
+*/
+
+static const int PAWN_WEIGHT = 88;
+static const int KNIGHT_WEIGHT = 309;
+static const int BISHOP_WEIGHT = 331;
+static const int ROOK_WEIGHT = 494;
+static const int QUEEN_WEIGHT = 980;
 static const int KING_WEIGHT = 32767;
 
 static const int PieceValue[] =  {
-	PAWN_WEIGHT,
-	KNIGHT_WEIGHT,
-	BISHOP_WEIGHT,
-	ROOK_WEIGHT,
-	QUEEN_WEIGHT,
-	KING_WEIGHT,
-	0 // none
+    PAWN_WEIGHT,
+    KNIGHT_WEIGHT,
+    BISHOP_WEIGHT,
+    ROOK_WEIGHT,
+    QUEEN_WEIGHT,
+    KING_WEIGHT,
+    0 // none
 };
 
 enum Square : uint32_t {
@@ -107,11 +123,11 @@ inline Rank rank(Square s) {
 	return Rank(s >> 3);
 }
 
-enum CastlingRights {
-	WHITE_SHORT_CASTLE = 1,
-	WHITE_LONG_CASTLE = 2,
-	BLACK_SHORT_CASTLE = 4,
-	BLACK_LONG_CASTLE = 8
+enum CASTLINGRIGHTS {
+    WHITE_KINGSIDE_CASTLE = 1,
+    WHITE_QUEENSIDE_CASTLE = 2,
+    BLACK_KINGSIDE_CASTLE = 4,
+    BLACK_QUEENSIDE_CASTLE = 8
 };
 
 static const int SCORE[PIECE_TYPES_SIZE][PIECE_TYPES_SIZE] = {
@@ -149,17 +165,17 @@ enum Prop : uint32_t {
 	quiet,
 	attack,
 	dbl_push,
-	king_cast,
-	queen_cast,
-	queen_promo,
-	knight_promo,
-	rook_promo,
-	bishop_promo,
+	kingside_castle,
+	queenside_castle,
+	queen_promotion,
+	knight_promotion,
+	rook_promotion,
+	bishop_promotion,
 	en_passant
 };
 
-const int POS_INF = 50000;
 const int NEG_INF = -50000;
+const int POS_INF = 50000;
 const int MAX_PLY = 50;
 
 enum NodeType {
@@ -172,7 +188,9 @@ inline File& operator++(File& f) { return f = static_cast<File>(static_cast<int>
 inline Color operator!(const Color c) { return static_cast<Color>(!static_cast<bool>(c)); }
 inline Square operator+(const Square s, const int i) { return static_cast<Square>(static_cast<int>(s) + i); }
 inline Square operator-(const Square s, const int i) { return static_cast<Square>(static_cast<int>(s) - i); }
-inline Square operator-(const Square s1, const Square s2) { return static_cast<Square>(static_cast<int>(s1) - static_cast<int>(s2)); }
+inline Square operator-(const Square s1, const Square s2) {
+	return static_cast<Square>(static_cast<int>(s1) - static_cast<int>(s2));
+}
 
 inline std::string to_string(File f) {
 	return std::string(1, char('h' - f));
@@ -183,10 +201,10 @@ inline std::string to_string(Rank r) {
 }
 
 inline std::string to_string(Prop p) {
-	return p == queen_promo  ? "q"
-		: p == knight_promo ? "k"
-			: p == rook_promo   ? "r"
-				: p == bishop_promo ? "b"
+	return p == queen_promotion ? "q"
+		: p == knight_promotion ? "k"
+			: p == rook_promotion ? "r"
+				: p == bishop_promotion ? "b"
 					: "";
 }
 
