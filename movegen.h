@@ -1,17 +1,16 @@
-/* movegen.h */
-
-#ifndef MOVEGEN_H
-#define MOVEGEN_H
+#ifndef MOVE_GENERATOR_H
+#define MOVE_GENERATOR_H
 
 #include <cmath>
 #include <algorithm>
 #include <vector>
 #include <array>
-
-#include "bitboard.h"
-#include "move.h"
-#include "magicmoves.h"
+#include "state.h"
+#include "board.h"
+#include "MagicMoves.hpp"
 #include "defs.h"
+#include "move.h"
+#include "history.h"
 
 const U64 Full = 0xFFFFFFFFFFFFFFFF;
 const int maxSize = 256;
@@ -36,7 +35,7 @@ enum MoveStage {
 };
 
 enum class MoveType {
-	Attacks, 
+	Attacks,
 	Quiets,
 	Evasions,
 	QuietChecks,
@@ -45,44 +44,41 @@ enum class MoveType {
 
 class MoveList {
 public:
-	MoveList()
-}
+	MoveList(const State& pState, Move pBest, History* pHistory, int pPly, bool pQSearch=false);
+	MoveList(const State& pState);
+	std::size_t size() const;
+	void push(Move m);
+	bool contains(Move move) const;
+	Move getBestMove();
+	Move pop();
+	void checkLegal();
+	void setStage(int stage) { mStage = stage; }
+	
+	template<MoveType T> void generateMoves();
+	template<MoveType T, Color C> void pushPawnMoves();
+	template<MoveType T, PieceType P> void pushMoves();
+	template<MoveType T> void pushCastle();
+	template<MoveType T> void pushPromotion(Square src, Square dst);
+	friend std::ostream & operator << (std::ostream & os, const MoveList & mlist);
 
-// search
-enum Phase {
-	pawn_phase = 0;
-	knight_phase = 1;
-	bishop_phase = 1;
-	rook_phase = 2;
-	queen_phase = 4;
-	total_phase = 24;
-};
-
-class State {
-public:
-	State() {};
-	State(const std::string &);
-	State(const State &s);
-	void operator = (const State &);
-	void init();
 private:
-	Color us;
-	Color them;
-	int fifty_moves;
-	int castling_rights;
-	int phase;
-	U64 key;
-	U64 pawn_key;
-	U64 checkers;
-	U64 attackers;
-	U64 en_passant;
-	std::array<U64, PIECE_TYPES_SIZE> check_squares;
-	std::array<U64, PLAYER_SIZE> pinned;
-	std::array<U64, PLAYER_SIZE> occupancy;
-	std::array<int, BOARD_SIZE> piece_index;
+	bool mQSearch;
+	U64 mValid;
+	U64 mDiscover;
+	const State& mState;
+	const History* mHistory;
+	int mPly;
+	int mStage;
+	std::array<MoveEntry, maxSize> mList;
+	std::vector<MoveEntry> badCaptures;
+	std::size_t mSize;
+	Move mBest;
+	Move mKiller1;
+	Move mKiller2;
 };
 
-
-
+void mg_init();
 
 #endif
+
+///
