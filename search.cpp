@@ -29,7 +29,7 @@ bool interrupt(SearchInfo& si) {
 
 int qsearch(State& s, SearchInfo& si, int ply, int alpha, int beta) {
 	si.nodes++;
-	assert(ply < Max_ply);
+	assert(ply < MAX_PLY);
 
 	if (history.isThreefoldRepetition(s) || s.insufficientMaterial() || s.getFiftyMoveRule() > 99) {
 		return DRAW; // Game must be a draw, return
@@ -55,7 +55,7 @@ int qsearch(State& s, SearchInfo& si, int ply, int alpha, int beta) {
 	Move m;
 
 	// Futility pruning: do not search subtrees which are unlikely to improve the alpha value score
-	while (m = mlist.getBestMove()) {
+	while ((m = mlist.getBestMove())) {
 		// Avoid pruning tactical positions
 		if (!s.inCheck() && !s.givesCheck(m) && !s.isEnPassant(m) && !isPromotion(m)) {
 			int fScore = qscore + 100 + PieceValue[s.onSquare(getDst(m))];
@@ -66,7 +66,7 @@ int qsearch(State& s, SearchInfo& si, int ply, int alpha, int beta) {
 		}
 
 		State c(s);
-		c.make_t(m);
+		c.makeMove(m);
 
 		history.push(std::make_pair(m, c.getKey()));
 		score = -qsearch(c, si, ply + 1, -beta, -alpha);
@@ -185,7 +185,7 @@ int scout_search(State& s, SearchInfo& si, int depth, int ply, int alpha, int be
 	bool first = true;
 	int count = 0;
 	
-	while (m = mlist.getBestMove()) {
+	while ((m = mlist.getBestMove())) {
 		d = depth - 1; // Early pruning
 		if (!isPv && bestScore > -CHECKMATE_BOUND && !s.inCheck() && !s.givesCheck(m) && s.getNonPawnPieceCount(s.getOurColor())) {
 			// Futility pruning
@@ -199,7 +199,7 @@ int scout_search(State& s, SearchInfo& si, int depth, int ply, int alpha, int be
 		}
 
 		State c(s);
-		c.make_t(m); // Make move
+		c.makeMove(m); // Make move
 		history.push(std::make_pair(m, c.getKey())); // Add move to history
 		count++;
 
@@ -265,7 +265,7 @@ int scout_search(State& s, SearchInfo& si, int depth, int ply, int alpha, int be
 
 	ttable.store(s.getKey(), best_move, a <= alpha ? all : a >= b ? cut : pv, depth, a);
 
-	assert(variation.getPvMove() == NULL_MOVE); // Sometimes the PV is empty
+	// assert(variation.getPvMove() != NULL_MOVE);
 	// Fail-Hard alpha beta score
 	return a;
 }

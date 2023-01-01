@@ -57,7 +57,7 @@ void Variation::checkPv(State& pState) {
 
 		// If the next pv move is in the move list, make the move
 		if (moveList.contains(nextMove)) {
-			c.make_t(nextMove);
+			c.makeMove(nextMove);
 		}
 		// If the next pv move is not found, break the loop
 		else {

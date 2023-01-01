@@ -1,2 +1,2 @@
 all:
-	g++-12 -pthread -o Moraband *.cpp -std=c++17 -O3
+	g++ -pthread -w -o Moraband *.cpp -std=c++17 -O3

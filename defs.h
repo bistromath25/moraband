@@ -1,12 +1,24 @@
 #ifndef DEFS_H
 #define DEFS_H
 
-#define NDEBUG
-
 #include <string>
 #include <assert.h>
 
 #include <sys/time.h>
+
+#ifndef DEBUG
+#define ASSERT(x)
+#else
+#define ASSERT(x) \
+if (!(x)) { \
+	std::cout << "Error: " << #x; \
+	std::cout << "Date: " << __DATE__ << '\n'; \
+	std::cout << "Time: " << __TIME__ << '\n'; \
+	std::cout << "File: " << __FILE__ << '\n'; \
+	std::cout << "Line: " << __LINE__ << '\n'; \
+	std::exit(0); \
+}
+#endif
 
 typedef unsigned long long U64;
 #define C64(u) u##ULL;
@@ -31,7 +43,7 @@ static const int GAMESTAGE_SIZE = 2;
 
 enum GameStage {
 	MIDDLEGAME,
-    ENDGAME
+	ENDGAME
 };
 
 enum Color { 

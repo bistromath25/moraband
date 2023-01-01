@@ -435,7 +435,7 @@ int State::see(Move m) const {
 	return gain[0];
 }
 
-void State::make_t(Move pMove) {
+void State::makeMove(Move pMove) {
 	assert(pMove != NULL_MOVE);
 	assert(getSrc(pMove) < no_sq);
 	assert(getDst(pMove) < no_sq);

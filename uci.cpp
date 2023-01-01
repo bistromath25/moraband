@@ -116,7 +116,7 @@ void position(std::istringstream & is, State & s) {
 			return;
 		}
 		else {
-			s.make_t(m);
+			s.makeMove(m);
 			history.push(std::make_pair(m, s.getKey()));
 		}
 	}
@@ -219,7 +219,7 @@ void uci() {
 			while (mlist.size() >= 1) {
 				Move move = mlist.pop();
 				State temp = root;
-				temp.make_t(move);
+				temp.makeMove(move);
 				std::cout << toString(move) << "      " << -Evaluate(temp).getScore() << "\n";
 			}
 			std::cout << "------------------" << std::endl;

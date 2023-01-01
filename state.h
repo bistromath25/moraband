@@ -69,7 +69,7 @@ public:
 	bool givesCheck(Move pMove) const;
 
 	// Make move functions
-	void make_t(Move m);
+	void makeMove(Move m);
 	void makeNull();
 	void addPiece(Color pColor, PieceType pPiece, Square pSquare);
 	void movePiece(Color pColor, PieceType pPiece, Square pSrc, Square pDst);

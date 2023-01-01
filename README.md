@@ -2,7 +2,7 @@
 From the [Star Wars wiki](https://starwars.fandom.com/wiki/Moraband):  
 *Moraband, known in antiquity as Korriban, was an Outer Rim planet that was home to the ancient Sith.*  
 
-Moraband is a simple UCI chess engine written in C++, and may be used with any chess interfaces supporting the UCI protocol such as [Banksia](https://banksiagui.com) or [Arena](http://www.playwitharena.de).
+Moraband is a UCI chess engine written in C++, and may be used with any chess interfaces supporting the UCI protocol such as [Banksia](https://banksiagui.com) or [Arena](http://www.playwitharena.de).
 
 ## Details 
 - Move Generation
@@ -26,15 +26,17 @@ Moraband is a simple UCI chess engine written in C++, and may be used with any c
     - [Tapered evaluation](https://www.chessprogramming.org/Tapered_Eval)
 
 ## Compiling
-Use the provided makefile. Moraband is guaranteed to compile and run on M1 Mac.
+Use the provided makefile.
 
 ## Background
-Coming soon! Spend more gems to speed this up. 
+Like everyone else, I found myself playing a great deal of chess online during the 2020 lockdowns, encouraged by the advent of Netflix's *Queen's Gambit* and a general lack of things to do. It was also during this time that I developed an interest in algorithmic problem solving, and it wasn't soon before I decided to try my hand at writing my own chess-playing program, a suitable sparring partner, following along closely to BlueFeverSoft's video tutorials. Eventually I lost interest in my endeavor, weighed down by my final years of high school and the (somewhat?) easing Covid restrictions.
+
+I "restarted" this project during the current winter break, having just completed my Fall 2022 1A term at the University of Waterloo. As was the case a few years ago, writing my own chess program is an excellent way to combine passion of chess with my love of computer programming, and no doubt bolster my rather experience-less resume. Morever, it would be an excellent opportunity to practice developing "professional" software in anticipation of my first co-op. 
 
 ## Credit and Resources
 - [Vice chess engine tutorial](https://www.chessprogramming.org/Vice)
 - [Chess programming wiki](https://www.chessprogramming.org/Main_Page)
 - Pradyumna Kannan's MagicMoves.cpp and MagicMoves.hpp
 - PST and piece evaluation values taken from [Rofchade](http://www.talkchess.com/forum3/viewtopic.php?f=2&t=68311&sid=b2b59fa572501777ceb19d49fa17614f&start=10)
-- Various evaluation and search ideas taken from [Stockfish](https://www.chessprogramming.org/Stockfish)
+- Strong, open-source chess engines such as [Stockfish](https://www.chessprogramming.org/Stockfish)
 
