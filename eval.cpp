@@ -36,8 +36,8 @@ Evaluate::Evaluate(const State& pState) : mState(pState) , mMaterial{}, mPawnStr
 	Color c = mState.getOurColor();
 	mScore = mMobility[c] - mMobility[!c] + mKingSafety[c] - mKingSafety[!c] + mPawnStructure[c] - mPawnStructure[!c] + mMaterial[c] - mMaterial[!c];
 	mScore += ((mState.getPstScore(MIDDLEGAME) * (256 - mGamePhase)) + mState.getPstScore(ENDGAME) * mGamePhase) / 256;
-
-    mScore += TEMPO_BONUS; // Side-to-move bonus
+	
+	mScore += TEMPO_BONUS; // Side-to-move bonus
 }
 
 int Evaluate::getScore() const {
@@ -45,14 +45,14 @@ int Evaluate::getScore() const {
 }
 
 template<PieceType PT> int Evaluate::outpost(Square p, Color c) {
-    int score;
-    if (!(p & outpost_area[c]) || !(pawn_attacks[!c][p] & mState.getPieceBB<pawn>(c)) || in_front[c][p] & adj_files[p] & mState.getPieceBB<pawn>(!c)) {
+	int score;
+	if (!(p & outpost_area[c]) || !(pawn_attacks[!c][p] & mState.getPieceBB<pawn>(c)) || in_front[c][p] & adj_files[p] & mState.getPieceBB<pawn>(!c)) {
 		return 0;
 	}
 	
 	score = PieceSquareTable::getOutpostScore(PT, c, p);
 	// Bonus if outpost can't be attacked by opponent minor piece
-    if (!mState.getPieceBB<knight>(!c) && !(mState.getPieceBB<bishop>(!c) & squares_of_color(p))) {
+	if (!mState.getPieceBB<knight>(!c) && !(mState.getPieceBB<bishop>(!c) & squares_of_color(p))) {
 		score += OUTPOST_BONUS;
 	}
 	return score;
@@ -162,8 +162,8 @@ void Evaluate::evalPieces(const Color c) {
 		mMobility[c] += BISHOP_MOBILITY[pop_count(moves & mobilityNet)];
 		mMaterial[c] += BAD_BISHOP * pop_count(squares_of_color(p) & mState.getPieceBB<pawn>(c));
 	}
-
-    for (Square p : mState.getPieceList<rook>(c)) {
+	
+	for (Square p : mState.getPieceList<rook>(c)) {
 		if (p == no_sq) {
 			break;
 		}
@@ -189,8 +189,8 @@ void Evaluate::evalPieces(const Color c) {
 			}
 		}
 	}
-
-    for (Square p : mState.getPieceList<queen>(c)) {
+	
+	for (Square p : mState.getPieceList<queen>(c)) {
 		if (p == no_sq) {
 			break;
 		}

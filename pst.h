@@ -6,10 +6,6 @@
 namespace PieceSquareTable {
 
 #define FLIP(sq) ((sq) ^ 56)
-// #define OTHER(side) ((side) ^ 1)
-
-inline int getScore(PieceType p, GameStage g, Color c, Square s);
-inline int getTaperedScore(float phase, PieceType p, Color c, Square s);
 
 // Values from Rofchade
 // TalkChess: http://www.talkchess.com/forum3/viewtopic.php?f=2&t=68311&start=19
