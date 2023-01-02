@@ -121,13 +121,6 @@ void position(std::istringstream & is, State & s) {
 		}
 	}
 	
-    // If start flag is false, initialize board state with fen string
-	/*
-	if (!start_flag) {
-		s = State(fen);
-	}
-	*/
-	
 	//std::cout << s;
 }
 
@@ -138,6 +131,15 @@ void set_option(std::string & name, std::string & value) {
 	}
 	else if (name == "ClearHash") {
 		ttable.clear();
+	}
+	else if (name == "Move Overhead") {
+		MOVE_OVERHEAD = std::stoi(value);
+		if (MOVE_OVERHEAD < 0) {
+			MOVE_OVERHEAD = 0;
+		}
+		else if (MOVE_OVERHEAD > 10000) {
+			MOVE_OVERHEAD = 10000;
+		}
 	}
 	return;
 }
@@ -166,7 +168,8 @@ void uci() {
 				<< "id author " << ENGINE_AUTHOR << "\n"
 					<< "option name Hash type spin default " << DEFAULT_HASH_SIZE
 						<< " min " << MIN_HASH_SIZE
-							<< " max " << MAX_HASH_SIZE << "\n";
+							<< " max " << MAX_HASH_SIZE << "\n"
+								<< "option name Move Overhead type spin default 500 min 0 max 10000\n";  
 			std::cout << "uciok" << std::endl;
 			
 			/*

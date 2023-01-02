@@ -5,7 +5,7 @@
 //#include <sys/time.h>
 
 const int MIN_SEARCH_TIME = 500; // Absolute minimum time to spend searching
-const int MOVE_OVERHEAD = 500;
+static int MOVE_OVERHEAD = 500;
 
 class Clock {
 public:
