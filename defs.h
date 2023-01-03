@@ -200,9 +200,12 @@ inline File& operator++(File& f) { return f = static_cast<File>(static_cast<int>
 inline Color operator!(const Color c) { return static_cast<Color>(!static_cast<bool>(c)); }
 inline Square operator+(const Square s, const int i) { return static_cast<Square>(static_cast<int>(s) + i); }
 inline Square operator-(const Square s, const int i) { return static_cast<Square>(static_cast<int>(s) - i); }
-inline Square operator-(const Square s1, const Square s2) {
-	return static_cast<Square>(static_cast<int>(s1) - static_cast<int>(s2));
-}
+inline Square operator-(const Square s1, const Square s2) { return static_cast<Square>(static_cast<int>(s1) - static_cast<int>(s2)); }
+
+//inline int abs(int x) { return x >= 0 ? x : -x; }
+//inline int manhattanDistance(const Square sq1, const Square sq2) {
+//	return abs(file(sq1) - file(sq2)) + abs(rank(sq1) - rank(sq2));
+//}
 
 inline std::string to_string(File f) {
 	return std::string(1, char('h' - f));

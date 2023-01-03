@@ -8,6 +8,14 @@
 #define ENGINE_VERSION "0.9"
 #define ENGINE_AUTHOR "Brighten Zhang"
 
+/* 
+position fen 7K/8/k1P5/7p/8/8/8/8 w - - 0 1
+go
+...
+info depth 21 score cp 0 time 467 nodes 2103985 nps 4495000 pv h8g7 a6b6 g7f6 h5h4 f6e5 b6c6 e5f4 h4h3 f4g3 h3h2 g3g2 h2h1q g2h1 
+bestmove h8g7
+*/
+
 // Validate incoming UCI move
 Move get_uci_move(std::string & token, State & s) {
 	Move m;
