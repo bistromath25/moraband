@@ -26,7 +26,7 @@ Moraband is a UCI chess engine written in C++, and may be used with any chess in
     - [Tapered evaluation](https://www.chessprogramming.org/Tapered_Eval)
 
 ## Compiling
-Use the provided makefile. For Apple M1, depending on which compiler you have, it may be necesarry to use `-mcpu=apple-m1` rather than `-march=native`.  
+Use the provided makefile. It may be necesarry to replace `-mcpu=apple-m1` with `-march=native`.
 
 ## Background
 Like everyone else, I found myself playing a great deal of chess online during the 2020 lockdowns, encouraged by the advent of Netflix's *Queen's Gambit* and a general lack of things to do. It was also during this time that I developed an interest in algorithmic problem solving, and it wasn't soon before I decided to try my hand at writing my own chess-playing program, a suitable sparring partner, following along closely to BlueFeverSoft's video tutorials. Eventually I lost interest in my endeavor, weighed down by my final years of high school and the (somewhat?) easing Covid restrictions.
