@@ -94,7 +94,7 @@ int scout_search(State& s, SearchInfo& si, int depth, int ply, int alpha, int be
 	assert(depth >= 0);
 	Move best_move = NULL_MOVE;
 
-	if (si.quit || (si.nodes % 3000 == 0 && interrupt(si))) {
+	if (si.quit || (si.nodes % 2047 == 0 && interrupt(si))) {
 		return 0;
 	}
 
@@ -194,8 +194,9 @@ int scout_search(State& s, SearchInfo& si, int depth, int ply, int alpha, int be
 			}
 			// SEE-based pruning (prune if SEE too low)
 			// Prune if see(move) < -(pawn * 2 ^ (depth - 1))
-			if (depth < 3 && s.see(m) < -PAWN_WEIGHT * (1 << (depth - 1)))
+			if (depth < 3 && s.see(m) < -PAWN_WEIGHT * (1 << (depth - 1))) {
 				continue;
+			}
 		}
 
 		State c(s);
@@ -274,10 +275,6 @@ int scout_search(State& s, SearchInfo& si, int depth, int ply, int alpha, int be
 void iterative_deepening(State& s, SearchInfo& si) {
 	int score;
 	for (int d = 1; !si.quit; ++d) {
-		if (d == si.depth) {
-			break;
-		}
-
 		score = scout_search(s, si, d, 0, NEG_INF, POS_INF, true, false, true);
 
 		if (variation.getPvMove() == NULL_MOVE) {
@@ -323,7 +320,7 @@ void iterative_deepening(State& s, SearchInfo& si) {
 		std::cout << std::endl;
 		//engine_log << std::endl;
 
-		if (si.nodes == si.prevNodes) {
+		if (si.nodes == si.prevNodes || si.nodes >= si.max_nodes || d >= si.depth) {
 			break;
 		}
 		if (si.clock.elapsed<std::chrono::milliseconds>() * 2 > si.moveTime) {

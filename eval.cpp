@@ -178,7 +178,7 @@ void Evaluate::evalPieces(const Color c) {
 			king_threats += ROOK_THREAT;
 		}
 		mMobility[c] += ROOK_MOBILITY[pop_count(moves & mobilityNet)];
-		//if (!(file_bb[p] & in_front[c][p] & mState.getPieceBB<pawn>(!c))) {
+		//if (!(file_bb[p] & in_front[c][p] & mState.getPieceBB<pawn>(!c) & mState.getPieceBB<pawn>(c))) {
 		//	mMaterial[c] += ((ROOK_OPEN_FILE_MG * (256 - mGamePhase)) + ROOK_OPEN_FILE_EG * mGamePhase) / 256;
 		//}
 		if (mState.getPieceBB<king>(c) & bottomRank && square_bb[p] & bottomRank) { // **NOTE** check if this is working properly
