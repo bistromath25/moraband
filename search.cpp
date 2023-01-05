@@ -7,7 +7,7 @@
 
 Variation variation;
 History history;
-bool USE_BOOK = false;
+//bool USE_BOOK = false;
 
 // Check if search should be stopped
 bool interrupt(SearchInfo& si) {
@@ -285,7 +285,7 @@ void iterative_deepening(State& s, SearchInfo& si) {
 			//MoveList mlist(s); // Try to make a (random?) move
 			//std::cout << "bestmove " << toString(mlist.getBestMove()) << " MAYBE ILLEGAL" << std::endl;
 			ttable.clear();
-			std::cout << "CLEARED TRANSPOSITION TABLE" << std::endl;
+			D(std::cout << "CLEARED TRANSPOSITION TABLE" << std::endl;);
 			//engine_log << "CLEARED TRANSPOSITION TABLE" << std::endl;
 			//engine_output += "CLEARED TRANSPOSITION TABLE\n";
 			score = scout_search(s, si, d, 0, NEG_INF, POS_INF, true, false, true);
@@ -343,6 +343,7 @@ void setup_search(State& s, SearchInfo& si) {
 	init_eval();
 	history.clear();
 	
+	/*
 	if (USE_BOOK) {
 		std::string bookmove = getBookMove(s.getFen(), s.getOurColor());
 		if (bookmove != "none") {
@@ -356,6 +357,8 @@ void setup_search(State& s, SearchInfo& si) {
 	else {
 		iterative_deepening(s, si);
 	}
+	*/
+	iterative_deepening(s, si);
 }
 
 ///

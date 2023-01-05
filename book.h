@@ -11,7 +11,7 @@
 #include <string>
 #include <random>
 
-extern bool USE_BOOK;
+//extern bool USE_BOOK;
 static std::string BOOK_PATH_WHITE = "white.txt";
 static std::string BOOK_PATH_BLACK = "black.txt";
 
@@ -48,7 +48,7 @@ static std::string parseFen(std::string ln) {
 }
 
 static std::string getBookMove(std::string gameFen, int c) {
-	std::fstream f(c == WHITE ? BOOK_PATH_WHITE : BOOK_PATH_BLACK);
+	std::fstream f(c == WHITE ? BOOK_PATH_WHITE : BOOK_PATH_BLACK, std::ios::in);
 	if (f.is_open()) {
 		std::string ln;
 		while (std::getline(f, ln)) {
