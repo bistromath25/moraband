@@ -15,7 +15,7 @@
 #include "variation.h"
 #include "move.h"
 #include "history.h"
-#include "book.h"
+//#include "book.h"
 
 static const int LMR_COUNT = 3;
 static const int LMR_DEPTH = 2;

@@ -8,6 +8,7 @@
 
 #ifndef DEBUG
 #define ASSERT(x)
+#define D(x)
 #else
 #define ASSERT(x) \
 if (!(x)) { \
@@ -18,6 +19,7 @@ if (!(x)) { \
 	std::cout << "Line: " << __LINE__ << '\n'; \
 	std::exit(0); \
 }
+#define D(x) {x;}
 #endif
 
 typedef unsigned long long U64;

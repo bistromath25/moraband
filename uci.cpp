@@ -1,5 +1,5 @@
 #include "uci.h"
-//#include "perft.h"
+#include "perft.h"
 #include "io.h"
 //#include "book.h". // include book.h
 #include <fstream>
@@ -177,10 +177,12 @@ void set_option(std::string & name, std::string & value) {
 		else if (MOVE_OVERHEAD > 10000) {
 			MOVE_OVERHEAD = 10000;
 		}
+		D(std::cout << "Move Overhead set to value " << MOVE_OVERHEAD << std::endl);
 	}
+	/*
 	else if (name == "Book") {
 		USE_BOOK = value == "true";
-		/*
+		D(std::cout << "USE_BOOK set to value " << USE_BOOK << std::endl;);
 		if (USE_BOOK) {
 			std::cout << "Loading books...\n";
 			bookWhite.load(BOOK_PATH_WHITE);
@@ -189,8 +191,9 @@ void set_option(std::string & name, std::string & value) {
 			std::cout << "Black\n" << bookBlack << '\n';
 			std::cout << "Books loaded" << std::endl;
 		}
-		*/
 	}
+	*/
+	
 	
 	return;
 }
@@ -220,8 +223,7 @@ void uci() {
 					<< "option name Hash type spin default " << DEFAULT_HASH_SIZE
 						<< " min " << MIN_HASH_SIZE
 							<< " max " << MAX_HASH_SIZE << "\n"
-								<< "option name Move Overhead type spin default 500 min 0 max 10000\n"
-									<< "option name Book type check default false\n";
+								<< "option name Move Overhead type spin default 500 min 0 max 10000\n";
 			std::cout << "uciok" << std::endl;
 			
 			/*
@@ -262,11 +264,10 @@ void uci() {
 			Evaluate evaluate(root);
 			std::cout << evaluate;
 		}
-		/*
 		else if (token == "perft") {
-			perftTest();
+			is >> token;
+			perftTest(root, std::stoi(token));
 		}
-		*/
 		/*
 		else if (token == "moves") {
 			MoveList mlist(root);

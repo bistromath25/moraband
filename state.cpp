@@ -638,17 +638,26 @@ std::string State::getFen() { // Current FEN
 		fen += 'b';
 	}
 	fen += ' ';
+	bool castle = false;
 	if (canCastleKingside(WHITE)) {
 		fen += 'K';
+		castle = true;
 	}
 	if (canCastleQueenside(WHITE)) {
 		fen += 'Q';
+		castle = true;
 	}
 	if (canCastleKingside(BLACK)) {
 		fen += 'k';
+		castle = true;
 	} 
 	if (canCastleQueenside(BLACK)) {
 		fen += 'q';
+		castle = true;
+	}
+	
+	if (!castle) {
+		fen += '-';
 	}
 	fen += ' ';
 	
@@ -658,7 +667,7 @@ std::string State::getFen() { // Current FEN
 		// Double pawn push
 		for (Square p : getPieceList<pawn>(mUs)) {
 			if (rank(p) == rank(dst) && std::max(file(p), file(dst)) - std::min(file(p), file(dst)) == 1) {
-				//std::cout << SQUARE_TO_STRING[p] << ' ' << SQUARE_TO_STRING[dst] << std::endl;
+				D(std::cout << SQUARE_TO_STRING[p] << ' ' << SQUARE_TO_STRING[dst] << std::endl;);
 				fen += SQUARE_TO_STRING[dst + (mUs == WHITE ? 8 : -8)];
 				enpass = true;
 				break;
