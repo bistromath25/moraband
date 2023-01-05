@@ -1,12 +1,14 @@
 #include "uci.h"
-//#include "test.h"
 //#include "perft.h"
 #include "io.h"
+//#include "book.h". // include book.h
 #include <fstream>
 
 #define ENGINE_NAME "Moraband"
-#define ENGINE_VERSION "0.9"
+#define ENGINE_VERSION "0.9.1"
 #define ENGINE_AUTHOR "Brighten Zhang"
+
+//Book bookWhite, bookBlack; // define white and black books
 
 /* 
 position fen 7K/8/k1P5/7p/8/8/8/8 w - - 0 1
@@ -52,33 +54,59 @@ void go(std::istringstream & is, State & s) {
 				}
 			}
 		}
-		
-		else if (token == "wtime")
+		else if (token == "wtime") {
 			is >> search_info.time[WHITE];
-		else if (token == "btime")
+		}
+		else if (token == "btime") {
 			is >> search_info.time[BLACK];
-		else if (token == "winc")
+		}
+		else if (token == "winc") {
 			is >> search_info.inc[WHITE];
-		else if (token == "binc")
+		}
+		else if (token == "binc") {
 			is >> search_info.inc[BLACK];
-		else if (token == "movestogo")
+		}
+		else if (token == "movestogo") {
 			is >> search_info.moves_to_go;
-		else if (token == "depth")
+		}
+		else if (token == "depth") {
 			is >> search_info.depth;
-		else if (token == "nodes")
+		}
+		else if (token == "nodes") {
 			is >> search_info.max_nodes;
-		else if (token == "mate")
+		}
+		else if (token == "mate") {
 			is >> search_info.mate;
-		else if (token == "movetime")
+		}
+		else if (token == "movetime") {
 			is >> search_info.moveTime;
-		else if (token == "infinite")
+		}
+		else if (token == "infinite") {
 			search_info.infinite = true;
+		}
 	}
-
+	
 	search_info.clock.set();
 	if (!search_info.moveTime) {
 		search_info.moveTime = allocate_time(search_info.time[s.getOurColor()], search_info.inc[s.getOurColor()], history.size() / 2, search_info.moves_to_go);
 	}
+	
+	/*
+	if (USE_BOOK) {
+		std::string fen = s.getFen();
+		std::string bookmove = s.getOurColor() == WHITE ? bookWhite.getMove(fen) : bookBlack.getMove(fen);
+		if (bookmove != "none") {
+			std::cout << "found bookmove\nbestmove " << bookmove << std::endl;
+		}
+		else {
+			std::cout << "no bookmove found\n";
+			setup_search(s, search_info);
+		}
+	}
+	else {
+		setup_search(s, search_info);
+	}
+	*/
 	
 	setup_search(s, search_info);
 }
@@ -125,6 +153,7 @@ void position(std::istringstream & is, State & s) {
 		}
 		else {
 			s.makeMove(m);
+			//s.updateGameMoves(token);
 			history.push(std::make_pair(m, s.getKey()));
 		}
 	}
@@ -149,6 +178,20 @@ void set_option(std::string & name, std::string & value) {
 			MOVE_OVERHEAD = 10000;
 		}
 	}
+	else if (name == "Book") {
+		USE_BOOK = value == "true";
+		/*
+		if (USE_BOOK) {
+			std::cout << "Loading books...\n";
+			bookWhite.load(BOOK_PATH_WHITE);
+			bookBlack.load(BOOK_PATH_BLACK);
+			std::cout << "White\n" << bookWhite << '\n';
+			std::cout << "Black\n" << bookBlack << '\n';
+			std::cout << "Books loaded" << std::endl;
+		}
+		*/
+	}
+	
 	return;
 }
 
@@ -177,7 +220,8 @@ void uci() {
 					<< "option name Hash type spin default " << DEFAULT_HASH_SIZE
 						<< " min " << MIN_HASH_SIZE
 							<< " max " << MAX_HASH_SIZE << "\n"
-								<< "option name Move Overhead type spin default 500 min 0 max 10000\n";  
+								<< "option name Move Overhead type spin default 500 min 0 max 10000\n"
+									<< "option name Book type check default false\n";
 			std::cout << "uciok" << std::endl;
 			
 			/*
@@ -211,17 +255,19 @@ void uci() {
 		else if (token == "display") {
 			std::cout << root;
 		}
+		else if (token == "fen") {
+			std::cout << root.getFen() << std::endl;
+		}
 		else if (token == "eval") {
 			Evaluate evaluate(root);
 			std::cout << evaluate;
 		}
 		/*
-		else if (token == "test") {
-			ccrTest();
-		}
 		else if (token == "perft") {
 			perftTest();
 		}
+		*/
+		/*
 		else if (token == "moves") {
 			MoveList mlist(root);
 			std::cout << mlist.size() << " possible moves:\n";
