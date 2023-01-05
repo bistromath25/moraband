@@ -43,6 +43,10 @@ public:
 	int getPstScore(GameStage g) const;
 	int getGamePhase() const;
 	void setGamePhase();
+	//void updateGameMoves(std::string pMove);
+	//std::string getGameMoves() const;
+	std::string getFen();
+	Move getPreviousMove() const; // Previous move made
 
 	// Access piece bitboards
 	template<PieceType P> const std::array<Square, PIECE_MAX>& getPieceList(Color pColor) const;
@@ -100,9 +104,9 @@ public:
 	U64 getAttackBB(PieceType pPiece, Square pSquare, U64 pOcc) const;
 	int see(Move m) const;
 	U64 getXRayAttacks(Square square) const;
-
+	
 	// Print
-	friend std::ostream & operator << (std::ostream & o, const State & state);
+	friend std::ostream & operator << (std::ostream & os, const State & state);
 	
 private:
 	Color mUs;
@@ -114,6 +118,7 @@ private:
 	U64 mPawnKey;
 	U64 mCheckers;
 	U64 mEnPassant;
+	Move mPreviousMove;
 	std::array<U64, PIECE_TYPES_SIZE> mCheckSquares;
 	std::array<U64, PLAYER_SIZE> mPinned;
 	std::array<U64, PLAYER_SIZE> mOccupancy;
@@ -123,6 +128,8 @@ private:
 	std::array<std::array<int, PIECE_TYPES_SIZE>, PLAYER_SIZE> mPieceCount;
 	std::array<std::array<int, GAMESTAGE_SIZE>, PLAYER_SIZE> mPstScore;
 	std::array<std::array<std::array<Square, PIECE_MAX>, PIECE_TYPES_SIZE>, PLAYER_SIZE> mPieceList;
+
+	//std::string mGameMoves;
 };
 
 inline Color State::getOurColor() const {
@@ -416,6 +423,20 @@ inline bool State::check(U64 change, Color c) const {
 
 inline U64 State::getXRayAttacks(Square square) const {
 	return bishopMoves[square] & (getPieceBB<bishop>() | getPieceBB<queen>()) | rookMoves[square] & (getPieceBB<rook>() | getPieceBB<queen>());
+}
+
+/*
+inline void State::updateGameMoves(std::string pMove) {
+	mGameMoves += pMove + ' ';
+}
+
+inline std::string State::getGameMoves() const {
+	return mGameMoves;
+}
+*/
+
+inline Move State::getPreviousMove() const {
+	return mPreviousMove;
 }
 
 #endif

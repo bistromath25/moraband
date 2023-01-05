@@ -7,6 +7,7 @@
 
 Variation variation;
 History history;
+bool USE_BOOK = false;
 
 // Check if search should be stopped
 bool interrupt(SearchInfo& si) {
@@ -341,7 +342,20 @@ void setup_search(State& s, SearchInfo& si) {
 	variation.clearPv();
 	init_eval();
 	history.clear();
-	iterative_deepening(s, si);
+	
+	if (USE_BOOK) {
+		std::string bookmove = getBookMove(s.getFen(), s.getOurColor());
+		if (bookmove != "none") {
+			std::cout << "found bookmove\nbestmove " << bookmove << std::endl;
+		}
+		else {
+			std::cout << "bookmove not found" << std::endl;
+			iterative_deepening(s, si);
+		}
+	}
+	else {
+		iterative_deepening(s, si);
+	}
 }
 
 ///

@@ -11,7 +11,8 @@ State::State(const State & s)
 	, mKey(s.mKey)
 	, mPawnKey(s.mPawnKey)
 	, mCheckers(s.mCheckers)
-	, mEnPassant(s.mEnPassant)
+	, mEnPassant(s.mEnPassant) 
+	, mPreviousMove(s.mPreviousMove)
 	, mCheckSquares(s.mCheckSquares)
 	, mPinned(s.mPinned)
 	, mOccupancy(s.mOccupancy)
@@ -33,6 +34,7 @@ void State::operator=(const State & s) {
 	mPawnKey = s.mPawnKey;
 	mCheckers = s.mCheckers;
 	mEnPassant = s.mEnPassant;
+	mPreviousMove = s.mPreviousMove;
 	mCheckSquares = s.mCheckSquares;
 	mPinned = s.mPinned;
 	mOccupancy = s.mOccupancy;
@@ -116,6 +118,8 @@ State::State(const std::string & fen) {
 		mEnPassant = square_bb[enpass];
 		mKey ^= Zobrist::key(get_file(mEnPassant));
 	}
+	
+	mPreviousMove = NULL_MOVE;
 
 	// Initialize pins
 	setPins(WHITE);
@@ -137,6 +141,7 @@ void State::init() {
 	mPawnKey = 0;
 	mCheckers = 0;
 	mEnPassant = 0;
+	mPreviousMove = NULL_MOVE;
 	mCheckSquares.fill({});
 	mPinned.fill({});
 	mOccupancy.fill({});
@@ -444,7 +449,6 @@ void State::makeMove(Move pMove) {
 	bool epFlag = false;
 	bool gamePhase = false;
 
-
 	src = getSrc(pMove);
 	dst = getDst(pMove);
 	moved = onSquare(src);
@@ -525,6 +529,7 @@ void State::makeMove(Move pMove) {
 
 	assert(!check());
 	assert((mEnPassant & getOccupancyBB()) == 0);
+	mPreviousMove = pMove;
 	swapTurn();
 
 	setPins(WHITE);
@@ -581,6 +586,92 @@ bool State::insufficientMaterial() const {
 	return res;
 }
 
+std::string State::getFen() { // Current FEN
+	Square src = getSrc(getPreviousMove());
+	Square dst = getDst(getPreviousMove());
+	PieceType moved = onSquare(dst);
+	
+	std::string fen = "";
+	int e = 0;
+	for (int i = 63; i >= 0; --i) {
+		U64 bit = square_bb[i];
+		if (i % 8 == 7 && i != 63) {
+			if (e != 0) {
+				fen += e + '0';
+				e = 0;
+			}
+			fen += '/';
+		}
+		
+		char p = bit & getPieceBB<pawn>(WHITE) ? 'P'
+			: bit & getPieceBB<knight>(WHITE) ? 'N'
+				: bit & getPieceBB<bishop>(WHITE) ? 'B'
+					: bit & getPieceBB<rook>(WHITE) ? 'R'
+						: bit & getPieceBB<queen>(WHITE) ? 'Q'
+							: bit & getPieceBB<king>(WHITE) ? 'K'
+								: bit & getPieceBB<pawn>(BLACK) ? 'p'
+									: bit & getPieceBB<knight>(BLACK) ? 'n'
+										: bit & getPieceBB<bishop>(BLACK) ? 'b'
+											: bit & getPieceBB<rook>(BLACK) ? 'r'
+												: bit & getPieceBB<queen>(BLACK) ? 'q'
+													: bit & getPieceBB<king>(BLACK) ? 'k' 
+														: 'e';
+		if (p == 'e') {
+			++e;
+		}
+		else {
+			if (e != 0) {
+				fen += e + '0';
+				e = 0;
+			}
+			fen += p;
+		}
+	}
+	if (e != 0) {
+		fen += e + '0';
+	}
+	fen += ' ';
+	if (mUs == WHITE) {
+		fen += 'w';
+	}
+	else {
+		fen += 'b';
+	}
+	fen += ' ';
+	if (canCastleKingside(WHITE)) {
+		fen += 'K';
+	}
+	if (canCastleQueenside(WHITE)) {
+		fen += 'Q';
+	}
+	if (canCastleKingside(BLACK)) {
+		fen += 'k';
+	} 
+	if (canCastleQueenside(BLACK)) {
+		fen += 'q';
+	}
+	fen += ' ';
+	
+	// Check pMove could result in enpassant
+	bool enpass = false;
+	if (moved == pawn && int(std::max(src, dst)) - int(std::min(src, dst)) == 16) {
+		// Double pawn push
+		for (Square p : getPieceList<pawn>(mUs)) {
+			if (rank(p) == rank(dst) && std::max(file(p), file(dst)) - std::min(file(p), file(dst)) == 1) {
+				//std::cout << SQUARE_TO_STRING[p] << ' ' << SQUARE_TO_STRING[dst] << std::endl;
+				fen += SQUARE_TO_STRING[dst + (mUs == WHITE ? 8 : -8)];
+				enpass = true;
+				break;
+			}
+		}
+	}
+	if (!enpass) {
+		fen += '-';
+	}
+	
+	return fen;
+}
+
 // Print board
 std::ostream & operator << (std::ostream & os, const State & s) {
 	const char * W_pawn   = "\u2659";
@@ -601,7 +692,7 @@ std::ostream & operator << (std::ostream & os, const State & s) {
 	const std::string bar = "  + - + - + - + - + - + - + - + - + ";
 
 	os << bar << std::endl;
-    for (int i = 63; i >= 0; --i) {
+	for (int i = 63; i >= 0; --i) {
 		U64 bit = square_bb[i];
 		if (i % 8 == 7) {
 			os << nums[i / 8] << " | ";
@@ -630,6 +721,7 @@ std::ostream & operator << (std::ostream & os, const State & s) {
 	
 	// os << "mKey:     " << s.mKey << '\n';
 	// os << "mPawnKey: " << s.mPawnKey << '\n';
+	os << "previous move: " << toString(s.mPreviousMove) << '\n';
 	if (s.mUs == WHITE) {
 		os << "White to move\n";
 	}
