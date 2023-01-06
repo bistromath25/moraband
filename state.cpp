@@ -730,7 +730,7 @@ std::ostream & operator << (std::ostream & os, const State & s) {
 	
 	// os << "mKey:     " << s.mKey << '\n';
 	// os << "mPawnKey: " << s.mPawnKey << '\n';
-	os << "previous move: " << toString(s.mPreviousMove) << '\n';
+	os << "previous move: " << to_string(s.mPreviousMove) << '\n';
 	if (s.mUs == WHITE) {
 		os << "White to move\n";
 	}
