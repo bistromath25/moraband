@@ -20,7 +20,7 @@ struct TableEntry {
 };
 
 inline std::ostream& operator<<(std::ostream& os, const TableEntry& tableEntry) {
-	os << "Best Move: " << toString(tableEntry.best) << '\n'
+	os << "Best Move: " << to_string(tableEntry.best) << '\n'
 		<< "    Depth: " << tableEntry.depth << '\n'
 			<< "    Score: " << tableEntry.score << '\n'
 				<< "     Node: " << (tableEntry.type == pv  ? "PV" 
@@ -67,7 +67,7 @@ public:
 	}
 	void store(U64 key, Move best, NodeType type, int depth, int score) {
 		int i = key % table.size();
-		if (table[i].depth < depth || table[i].ancient || type == pv) {
+		if (table[i].depth <= depth || table[i].ancient || type == pv) {
 			table[i].key = key;
 			table[i].best = best;
 			table[i].type = type;

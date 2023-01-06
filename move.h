@@ -67,7 +67,7 @@ inline bool isCastle(Move m) {
 	return m & CASTLE_FLAG;
 }
 
-inline std::string toString(Move m) {
+inline std::string to_string(Move m) {
 	std::string res;
 	Square src, dst;
 

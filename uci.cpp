@@ -26,7 +26,7 @@ Move get_uci_move(std::string & token, State & s) {
 	MoveList mlist(s);
 	while (mlist.size() > 0) {
 		m = mlist.pop();
-		if (toString(m) == token) {
+		if (to_string(m) == token) {
 			return m;
 		}
 		if (mlist.size() == 0) {
@@ -91,7 +91,7 @@ void go(std::istringstream & is, State & s) {
 		search_info.moveTime = allocate_time(search_info.time[s.getOurColor()], search_info.inc[s.getOurColor()], history.size() / 2, search_info.moves_to_go);
 	}
 	
-	/*
+	/* TODO: update (updated search return type)
 	if (USE_BOOK) {
 		std::string fen = s.getFen();
 		std::string bookmove = s.getOurColor() == WHITE ? bookWhite.getMove(fen) : bookBlack.getMove(fen);
@@ -108,7 +108,8 @@ void go(std::istringstream & is, State & s) {
 	}
 	*/
 	
-	setup_search(s, search_info);
+	m = search(s, search_info);
+	std::cout << "bestmove " << to_string(m) << std::endl;
 }
 
 // Set position
@@ -278,7 +279,7 @@ void uci() {
 				Move move = mlist.pop();
 				State temp = root;
 				temp.makeMove(move);
-				std::cout << toString(move) << "      " << -Evaluate(temp).getScore() << "\n";
+				std::cout << to_string(move) << "      " << -Evaluate(temp).getScore() << "\n";
 			}
 			std::cout << "------------------" << std::endl;
 		}

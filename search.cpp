@@ -273,7 +273,7 @@ int scout_search(State& s, SearchInfo& si, int depth, int ply, int alpha, int be
 }
 
 // CPW: https://www.chessprogramming.org/Iterative_Deepening
-void iterative_deepening(State& s, SearchInfo& si) {
+Move iterative_deepening(State& s, SearchInfo& si) {
 	int score;
 	for (int d = 1; !si.quit; ++d) {
 		score = scout_search(s, si, d, 0, NEG_INF, POS_INF, true, false, true);
@@ -332,12 +332,13 @@ void iterative_deepening(State& s, SearchInfo& si) {
 		si.nodes = 0;
 	}
 	
-	std::cout << "bestmove " << toString(variation.getPvMove()) << std::endl;
+	//std::cout << "bestmove " << toString(variation.getPvMove()) << std::endl;
 	//engine_log << "bestmove " << toString(variation.getPvMove()) << std::endl;
 	//engine_output += "bestmove " + toString(variation.getPvMove()) + "\n";
+	return variation.getPvMove();
 }
 
-void setup_search(State& s, SearchInfo& si) {
+Move search(State& s, SearchInfo& si) {
 	ttable.clear();
 	variation.clearPv();
 	init_eval();
@@ -358,7 +359,7 @@ void setup_search(State& s, SearchInfo& si) {
 		iterative_deepening(s, si);
 	}
 	*/
-	iterative_deepening(s, si);
+	return iterative_deepening(s, si);
 }
 
 ///
