@@ -9,10 +9,6 @@ Variation variation;
 History history;
 //bool USE_BOOK = false;
 
-struct SearchGlobals {
-	int test;
-};
-
 // Check if search should be stopped
 bool interrupt(SearchInfo& si) {
 	// Not enough time left for search
