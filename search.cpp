@@ -71,7 +71,7 @@ int qsearch(State& s, SearchInfo& si, int ply, int alpha, int beta) {
 
 		history.push(std::make_pair(m, c.getKey()));
 		score = -qsearch(c, si, ply + 1, -beta, -alpha);
-		if (!(si.nodes & 2047) && (si.quit && interrupt(si))) {
+		if (!(si.nodes & 2047) && (si.quit || interrupt(si))) {
 			return 0;
 		}
 
@@ -115,7 +115,7 @@ int scout(State& s, SearchInfo& si, int depth, int ply, int alpha, int beta, boo
 		return alpha;
 	}
 	
-	if (!(si.nodes & 2047) && (si.quit && interrupt(si))) {
+	if (!(si.nodes & 2047) && (si.quit || interrupt(si))) {
 		return 0;
 	}
 
