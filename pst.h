@@ -160,32 +160,6 @@ const int pst[PIECE_TYPES_SIZE][GAMESTAGE_SIZE][BOARD_SIZE] = {
 	}
 };
 
-// Outpost values for Knights and Bishops
-const int outpost[GAMESTAGE_SIZE][BOARD_SIZE] {
-	// Knights
-	{
-		0, 0, 0, 0, 0, 0, 0, 0,
-		6, 8, 12, 12, 12, 12, 8, 6,
-		8, 12, 16, 16, 16, 16, 12, 8,
-		8, 12, 16, 17, 17, 16, 12, 8,
-		8, 12, 16, 17, 17, 16, 12, 8,
-		0, 0, 0, 0, 0, 0, 0, 0,
-		0, 0, 0, 0, 0, 0, 0, 0,
-		0, 0, 0, 0, 0, 0, 0, 0
-	},
-	// Bishops
-	{
-		0, 0, 0, 0, 0, 0, 0, 0,
-		6, 9, 9, 9, 9, 9, 9, 6,
-		6, 9, 11, 11, 11, 11, 9, 6,
-		6, 9, 11, 13, 13, 11, 9, 6,
-		6, 9, 11, 13, 13, 11, 9, 6,
-		0, 0, 0, 0, 0, 0, 0, 0,
-		0, 0, 0, 0, 0, 0, 0, 0,
-		0, 0, 0, 0, 0, 0, 0, 0
-	}
-};
-
 inline int getScore(PieceType p, GameStage g, Color c, Square sq) {
 	return c == WHITE ? pst[p][g][FLIP(sq)] : pst[p][g][sq];
 }
@@ -194,11 +168,6 @@ inline int getScore(PieceType p, GameStage g, Color c, Square sq) {
 inline int getTaperedScore(int phase, PieceType p, Color c, Square sq) {
 	return c == WHITE ? ((pst[p][MIDDLEGAME][FLIP(sq)] * (256 - phase)) + pst[p][ENDGAME][FLIP(sq)] * phase) / 256 
 		: ((pst[p][MIDDLEGAME][sq] * (256 - phase)) + pst[p][ENDGAME][sq] * phase) / 256;
-}
-
-// Outpost score for knights and bishops
-inline int getOutpostScore(PieceType p, Color c, Square sq) {
-	return c == WHITE ? outpost[p == bishop][FLIP(sq)] : outpost[p == bishop][sq];
 }
 
 }

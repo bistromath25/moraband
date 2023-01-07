@@ -492,6 +492,22 @@ Move MoveList::getBestMove() {
 	return NULL_MOVE;
 }
 
+Move MoveList::getKiller1() const {
+	return mKiller1;
+}
+
+Move MoveList::getKiller2() const {
+	return mKiller2;
+}
+
+void MoveList::setKiller1(Move m) {
+	mKiller1 = m;
+}
+
+void MoveList::setKiller2(Move m) {
+	mKiller2 = m;
+}
+
 MoveList::MoveList(const State& pState) : mState(pState), mValid(Full), mQSearch(false), mBest(NULL_MOVE), mSize(0), mHistory(nullptr), mPly(0) {
 	generateMoves<MoveType::All>();
 	mStage = allLegal;

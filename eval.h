@@ -111,7 +111,6 @@ inline void init_eval() {
 	std::fill(pawnHash.begin(), pawnHash.end(), PawnEntry());
 }
 
-
 inline PawnEntry* probe(U64 pKey) {
 	return &pawnHash[pKey % pawnHash.size()];
 }

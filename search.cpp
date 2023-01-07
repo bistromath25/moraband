@@ -9,6 +9,10 @@ Variation variation;
 History history;
 //bool USE_BOOK = false;
 
+struct SearchGlobals {
+	int test;
+};
+
 // Check if search should be stopped
 bool interrupt(SearchInfo& si) {
 	// Not enough time left for search
@@ -71,6 +75,10 @@ int qsearch(State& s, SearchInfo& si, int ply, int alpha, int beta) {
 
 		history.push(std::make_pair(m, c.getKey()));
 		score = -qsearch(c, si, ply + 1, -beta, -alpha);
+		if (!(si.nodes & 2047) && (si.quit && interrupt(si))) {
+			return 0;
+		}
+
 		history.pop();
 		if (score >= bestScore) {
 			bestScore = score;
@@ -91,13 +99,9 @@ int qsearch(State& s, SearchInfo& si, int ply, int alpha, int beta) {
 	return alpha;
 }
 
-int scout_search(State& s, SearchInfo& si, int depth, int ply, int alpha, int beta, bool isPv, bool isNull, bool isRoot) {
+int scout(State& s, SearchInfo& si, int depth, int ply, int alpha, int beta, bool isPv, bool isNull, bool isRoot) {
 	assert(depth >= 0);
 	Move best_move = NULL_MOVE;
-
-	if (si.quit || (si.nodes % 2047 == 0 && interrupt(si))) {
-		return 0;
-	}
 
 	si.nodes++;
 
@@ -107,8 +111,19 @@ int scout_search(State& s, SearchInfo& si, int depth, int ply, int alpha, int be
 	if (!isRoot && (history.isThreefoldRepetition(s) || s.insufficientMaterial() || s.getFiftyMoveRule() > 99)) {
 		return DRAW;
 	}
+	
+	// Mate distance pruning
+	alpha = std::max((-CHECKMATE + ply), alpha);
+	beta = std::min((CHECKMATE - ply), beta);
+	if (alpha >= beta) {
+		return alpha;
+	}
+	
+	if (!(si.nodes & 2047) && (si.quit && interrupt(si))) {
+		return 0;
+	}
 
-	const TableEntry* table_entry = ttable.probe(s.getKey());
+	const TableEntry* table_entry = tt.probe(s.getKey());
 	
 	if (table_entry->key == s.getKey() && table_entry->depth >= depth) {
 		if (table_entry->type == pv) { // PV node
@@ -134,14 +149,15 @@ int scout_search(State& s, SearchInfo& si, int depth, int ply, int alpha, int be
 
 	int staticEval = 0;
 	if (!isPv) { // Evaluate current position statically if current node is NOT a PV node
+		// TODO: use tt entry here
 		Evaluate evaluate(s);
 		staticEval = evaluate.getScore();
 	}
 	
 	// Reverse futility pruning
 	if (!isPv && !isNull && !s.inCheck() && depth <= 2 && s.getNonPawnPieceCount(s.getOurColor())) {
-		if (staticEval - 100 * depth >= beta) {
-			return beta;
+		if (staticEval - 150 * depth >= beta) {
+			return staticEval; /* beta */
 		}
 	}
 
@@ -156,7 +172,7 @@ int scout_search(State& s, SearchInfo& si, int depth, int ply, int alpha, int be
 		std::memmove(&n, &s, sizeof s);
 		n.makeNull();
 		history.push(std::make_pair(NULL_MOVE, n.getKey()));
-		int nullScore = -scout_search(n, si, depth - 3, ply + 1, -(alpha + 1), -alpha, false, true, false);
+		int nullScore = -scout(n, si, depth - 3, ply + 1, -(alpha + 1), -alpha, false, true, false);
 		history.pop();
 		if (nullScore >= beta) {
 			return beta;
@@ -165,11 +181,9 @@ int scout_search(State& s, SearchInfo& si, int depth, int ply, int alpha, int be
 
 	// Internal iterative deepening
 	// In case no best move was found, perform a shallower search to determine which move to properly seach first
-	if (isPv && !isNull && !s.inCheck() && best_move == NULL_MOVE && depth > 5) {
-		// Using the Stockfish depth calculation
-		int d = 3 * depth / 4 - 2;
-		scout_search(s, si, d, ply, alpha, beta, isPv, true, false);
-		table_entry = ttable.probe(s.getKey());
+	if ((isPv || staticEval + 100 >= beta) && !isNull && !s.inCheck() && best_move == NULL_MOVE && depth >= 5) {
+		scout(s, si, depth - 2, ply, alpha, beta, isPv, true, false);
+		table_entry = tt.probe(s.getKey());
 		if (table_entry->key == s.getKey()) {
 			best_move = table_entry->best;
 		}
@@ -212,7 +226,7 @@ int scout_search(State& s, SearchInfo& si, int depth, int ply, int alpha, int be
 		// Search first move
 		if (first) {
 			best_move = m;
-			score = -scout_search(c, si, d, ply + 1, -b, -a, isPv, isNull, false);
+			score = -scout(c, si, d, ply + 1, -b, -a, isPv, isNull, false);
 			first = false;
 		}     
 		else {
@@ -220,17 +234,17 @@ int scout_search(State& s, SearchInfo& si, int depth, int ply, int alpha, int be
 			// Seach with reduced depth under conditions described below
 			// CPW: https://www.chessprogramming.org/Late_Move_Reductions
 			if (count > LMR_COUNT && depth > LMR_DEPTH && !isPv && !s.inCheck() && !c.inCheck() && !s.isCapture(m) && !isPromotion(m)) {
-				score = -scout_search(c, si, d - 1, ply + 1, -(a + 1), -a, false, isNull, false);
+				score = -scout(c, si, d - 1, ply + 1, -(a + 1), -a, false, isNull, false);
 			}
 			else {
 				score = a + 1;
 			}
 			if (score > a) {
-				score = -scout_search(c, si, d, ply + 1, -(a + 1), -a, false, isNull, false);
+				score = -scout(c, si, d, ply + 1, -(a + 1), -a, false, isNull, false);
 			}
 			// If an alpha improvement resulted in a fail-high, search again with a full window
 			if (a < score && b > score) {
-				score = -scout_search(c, si, d, ply + 1, -b, -a, true, isNull, false);
+				score = -scout(c, si, d, ply + 1, -b, -a, true, isNull, false);
 			}
 		}
 		
@@ -265,7 +279,7 @@ int scout_search(State& s, SearchInfo& si, int depth, int ply, int alpha, int be
 		variation.pushToPv(best_move, s.getKey(), ply, a);
 	}
 
-	ttable.store(s.getKey(), best_move, a <= alpha ? all : a >= b ? cut : pv, depth, a);
+	tt.store(s.getKey(), best_move, a <= alpha ? all : a >= b ? cut : pv, depth, a);
 
 	// assert(variation.getPvMove() != NULL_MOVE);
 	// Fail-Hard alpha beta score
@@ -276,7 +290,7 @@ int scout_search(State& s, SearchInfo& si, int depth, int ply, int alpha, int be
 Move iterative_deepening(State& s, SearchInfo& si) {
 	int score;
 	for (int d = 1; !si.quit; ++d) {
-		score = scout_search(s, si, d, 0, NEG_INF, POS_INF, true, false, true);
+		score = scout(s, si, d, 0, NEG_INF, POS_INF, true, false, true);
 
 		if (variation.getPvMove() == NULL_MOVE) {
 #ifdef DEBUG_ACCEPT_NULL_MOVE
@@ -284,11 +298,11 @@ Move iterative_deepening(State& s, SearchInfo& si) {
 #else
 			//MoveList mlist(s); // Try to make a (random?) move
 			//std::cout << "bestmove " << toString(mlist.getBestMove()) << " MAYBE ILLEGAL" << std::endl;
-			ttable.clear();
+			tt.clear();
 			D(std::cout << "CLEARED TRANSPOSITION TABLE" << std::endl;);
 			//engine_log << "CLEARED TRANSPOSITION TABLE" << std::endl;
 			//engine_output += "CLEARED TRANSPOSITION TABLE\n";
-			score = scout_search(s, si, d, 0, NEG_INF, POS_INF, true, false, true);
+			score = scout(s, si, d, 0, NEG_INF, POS_INF, true, false, true);
 #endif
 		}
 		
@@ -339,7 +353,7 @@ Move iterative_deepening(State& s, SearchInfo& si) {
 }
 
 Move search(State& s, SearchInfo& si) {
-	ttable.clear();
+	tt.clear();
 	variation.clearPv();
 	init_eval();
 	history.clear();

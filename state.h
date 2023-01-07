@@ -183,7 +183,7 @@ inline bool State::isCapture(Move pMove) const {
 }
 
 inline bool State::isQuiet(Move m) const {
-	return !isCapture(m);
+	return !isCapture(m) && !isPromotion(m); // No promotion?
 }
 
 inline bool State::isEnPassant(Move m) const {

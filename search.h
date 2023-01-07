@@ -39,7 +39,7 @@ struct SearchInfo {
 
 extern History history;
 extern Variation variation;
-int scout_search(State& s, SearchInfo& si, int depth, int ply, int alpha, int beta, bool isPv, bool isNull, bool isRoot);
+int scout(State& s, SearchInfo& si, int depth, int ply, int alpha, int beta, bool isPv, bool isNull, bool isRoot);
 Move iterative_deepening(State& s, SearchInfo& si);
 Move search(State& s, SearchInfo& si);
 
