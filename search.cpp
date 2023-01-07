@@ -9,10 +9,6 @@ Variation variation;
 History history;
 //bool USE_BOOK = false;
 
-struct SearchGlobals {
-	int test;
-};
-
 // Check if search should be stopped
 bool interrupt(SearchInfo& si) {
 	// Not enough time left for search
@@ -75,7 +71,7 @@ int qsearch(State& s, SearchInfo& si, int ply, int alpha, int beta) {
 
 		history.push(std::make_pair(m, c.getKey()));
 		score = -qsearch(c, si, ply + 1, -beta, -alpha);
-		if (!(si.nodes & 2047) && (si.quit && interrupt(si))) {
+		if (!(si.nodes & 2047) && (si.quit || interrupt(si))) {
 			return 0;
 		}
 
@@ -119,7 +115,7 @@ int scout(State& s, SearchInfo& si, int depth, int ply, int alpha, int beta, boo
 		return alpha;
 	}
 	
-	if (!(si.nodes & 2047) && (si.quit && interrupt(si))) {
+	if (!(si.nodes & 2047) && (si.quit || interrupt(si))) {
 		return 0;
 	}
 
