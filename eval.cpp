@@ -44,20 +44,6 @@ int Evaluate::getScore() const {
 	return mScore;
 }
 
-template<PieceType PT> int Evaluate::outpost(Square p, Color c) {
-	int score;
-	if (!(p & outpost_area[c]) || !(pawn_attacks[!c][p] & mState.getPieceBB<pawn>(c)) || in_front[c][p] & adj_files[p] & mState.getPieceBB<pawn>(!c)) {
-		return 0;
-	}
-	
-	score = PieceSquareTable::getOutpostScore(PT, c, p);
-	// Bonus if outpost can't be attacked by opponent minor piece
-	if (!mState.getPieceBB<knight>(!c) && !(mState.getPieceBB<bishop>(!c) & squares_of_color(p))) {
-		score += OUTPOST_BONUS;
-	}
-	return score;
-}
-
 void Evaluate::evalPawns(const Color c) {
 	const int dir = c == WHITE ? 8 : -8;
 	
@@ -130,7 +116,6 @@ void Evaluate::evalPieces(const Color c) {
 			break;
 		}
 		mMaterial[c] += ((KNIGHT_WEIGHT_MG * (256 - mGamePhase)) + KNIGHT_WEIGHT_EG * mGamePhase) / 256;
-		//mMaterial[c] += outpost<knight>(p, c);
 		if (square_bb[p] & pins) {
 			mMobility[c] += KNIGHT_MOBILITY[0];
 			continue;
@@ -149,7 +134,6 @@ void Evaluate::evalPieces(const Color c) {
 			break;
 		}
 		mMaterial[c] += ((BISHOP_WEIGHT_MG * (256 - mGamePhase)) + BISHOP_WEIGHT_EG * mGamePhase) / 256;
-		//mMaterial[c] += outpost<bishop>(p, c);
 		moves = mState.getAttackBB<bishop>(p);
 		if (square_bb[p] & pins) {
 			moves &= coplanar[p][kingSq];
@@ -273,7 +257,7 @@ std::ostream& operator<<(std::ostream& os, const Evaluate& e) {
 		<< std::setw(12) << e.mAttacks[!c] << " |"
 		<< std::setw(12) << e.mAttacks[c] - e.mAttacks[!c] << " |\n"
 		<< "-------------------------------------------------------------\n"
-		<< "| PST (mid/late)  |"
+		<< "| PST             |"
 		<< std::setw(12) << pstMid << " |" 
 		<< std::setw(12) << pstLate << " |"
 		<< std::setw(12) << pstMid + pstLate << " |\n"

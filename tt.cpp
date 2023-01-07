@@ -1,5 +1,5 @@
 #include "tt.h"
 
-TranspositionTable ttable;
+TranspositionTable tt;
 
 ///

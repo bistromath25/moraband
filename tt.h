@@ -80,7 +80,7 @@ private:
 	std::vector<TableEntry> table;
 };
 
-extern TranspositionTable ttable;
+extern TranspositionTable tt;
 
 #endif
 

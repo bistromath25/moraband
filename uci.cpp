@@ -5,7 +5,7 @@
 #include <fstream>
 
 #define ENGINE_NAME "Moraband"
-#define ENGINE_VERSION "0.9.1"
+#define ENGINE_VERSION "1.0"
 #define ENGINE_AUTHOR "Brighten Zhang"
 
 //Book bookWhite, bookBlack; // define white and black books
@@ -165,10 +165,10 @@ void position(std::istringstream & is, State & s) {
 // UCI setoption command
 void set_option(std::string & name, std::string & value) {
 	if (name == "Hash") { // Currently changing hash is the only command available
-		ttable.resize(std::stoi(value));
+		tt.resize(std::stoi(value));
 	}
 	else if (name == "ClearHash") {
-		ttable.clear();
+		tt.clear();
 	}
 	else if (name == "Move Overhead") {
 		MOVE_OVERHEAD = std::stoi(value);
