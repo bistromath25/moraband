@@ -20,14 +20,32 @@ private:
 	std::chrono::high_resolution_clock::time_point mTime;
 };
 
-// Bob Hyatt's time management formula (with increment)
+// https://www.chessprogramming.org/Time_Management
+/*
 inline int64_t allocate_time(int time_left, int inc, int moves, int moves_to_go) {
 	int64_t num_moves, target, search_time;
 	float factor;
-	num_moves = std::min(moves, 10);
+	num_moves = std::min(moves - 10, 10);
 	factor = 2 - num_moves / 10.0;
-	target = std::max((time_left - MOVE_OVERHEAD) / (moves_to_go ? moves_to_go : 27), MIN_SEARCH_TIME);
+	target = (time_left - MOVE_OVERHEAD) / (moves_to_go ? moves_to_go : 40);
 	search_time = factor * target + inc / 2;
+	return search_time > MIN_SEARCH_TIME ? search_time : MIN_SEARCH_TIME;
+}
+*/
+
+inline int64_t allocate_time(int time_left, int inc, int moves, int moves_to_go) {
+	int64_t search_time;
+	if (moves_to_go || inc) {
+		if (moves_to_go && moves_to_go < 8) {
+			search_time = std::min(int64_t((time_left - MOVE_OVERHEAD) / 2), int64_t((time_left - MOVE_OVERHEAD) / (moves_to_go + 12) + inc * 0.4));
+		}
+		else {
+			search_time = std::min(int64_t((time_left - MOVE_OVERHEAD) / 4), int64_t((time_left - MOVE_OVERHEAD) / 27 + inc * 0.9));
+		}
+	}
+	else {
+		search_time = (time_left - MOVE_OVERHEAD) / 40;
+	}
 	return search_time > MIN_SEARCH_TIME ? search_time : MIN_SEARCH_TIME;
 }
 

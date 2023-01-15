@@ -55,8 +55,9 @@ int MTperft(State& s, int depth) {
 	std::vector<std::thread> threads;
 	nodeCount.clear();
 	MoveList mlist(s);
-	for (unsigned int i = 0; i < nThreads; ++i)
-	threads.push_back(std::thread(test, s, &mlist, depth, i));
+	for (unsigned int i = 0; i < nThreads; ++i) {
+		threads.push_back(std::thread(test, s, &mlist, depth, i));
+	}
 	{
 		std::lock_guard<std::mutex> lk(qMutex);
 		ready = true;
@@ -71,7 +72,7 @@ void perftTest(State& s, int depth) {
 	double nps, time;
 	Clock clock;
 	clock.set();
-	nodes = MTperft(s, depth);
+	nodes = perft(s, depth);
 	time = clock.elapsed<std::chrono::microseconds>() / static_cast<double>(1000000);
 	std::cout << s << std::endl;
 	std::cout << s.getFen() << std::endl;
