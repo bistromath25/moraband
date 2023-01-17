@@ -2,7 +2,7 @@
 #define TIMER_H
 
 #include <chrono>
-//#include <sys/time.h>
+#include <sys/time.h>
 
 const int MIN_SEARCH_TIME = 500; // Absolute minimum time to spend searching
 static int MOVE_OVERHEAD = 500;
@@ -21,18 +21,6 @@ private:
 };
 
 // https://www.chessprogramming.org/Time_Management
-/*
-inline int64_t allocate_time(int time_left, int inc, int moves, int moves_to_go) {
-	int64_t num_moves, target, search_time;
-	float factor;
-	num_moves = std::min(moves - 10, 10);
-	factor = 2 - num_moves / 10.0;
-	target = (time_left - MOVE_OVERHEAD) / (moves_to_go ? moves_to_go : 40);
-	search_time = factor * target + inc / 2;
-	return search_time > MIN_SEARCH_TIME ? search_time : MIN_SEARCH_TIME;
-}
-*/
-
 inline int64_t allocate_time(int time_left, int inc, int moves, int moves_to_go) {
 	int64_t search_time;
 	if (moves_to_go || inc) {
