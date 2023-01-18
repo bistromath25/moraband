@@ -106,7 +106,7 @@ void Evaluate::evalPieces(const Color c) {
 		mobilityNet &= ~((mState.getPieceBB<pawn>(BLACK) & NOT_A_FILE) >> 7 | (mState.getPieceBB<pawn>(BLACK) & NOT_H_FILE) >> 9);
 	}
 	else {
-		mobilityNet &= ~((mState.getPieceBB<pawn>(WHITE) & NOT_A_FILE) << 9	| (mState.getPieceBB<pawn>(WHITE) & NOT_H_FILE) << 7);
+		mobilityNet &= ~((mState.getPieceBB<pawn>(WHITE) & NOT_A_FILE) << 9 | (mState.getPieceBB<pawn>(WHITE) & NOT_H_FILE) << 7);
 	}
 	
 	pins = mState.getPinsBB(c);
