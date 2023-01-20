@@ -9,6 +9,7 @@
 #include "pst.h"
 
 static const int TEMPO_BONUS = 8; // Side-to-move bonus
+static int CONTEMPT = 0;
 
 static const int KNIGHT_THREAT = 2; // Threats on enemy King
 static const int BISHOP_THREAT = 2;
@@ -121,30 +122,10 @@ inline void store(U64 pKey, const std::array<int, PLAYER_SIZE>& pStructure, cons
 	pawnHash[pKey % pawnHash.size()].mMaterial = pMaterial;
 }
 
-/*
-struct Score {
-	Score() : mg(0), eg(0) {}
-	Score(int score) : mg(score), eg(score) {}
-	Score(int mg, int eg) : mg(mg), eg(eg) {}
-	int value(int phase) const;
-	int value() const;
-private:
-	int mg;
-	int eg;
-}
-
-inline int Score::value() const { return mg; }
-inline int Score::value(int phase) const { return ((mg * phase) + (eg * (256 - phase))) / 256; }
-inline Score S(int val) { return Score(val); }
-inline Score S(int mg, int eg) { return Score(mg, eg); }
-*/
-
 class Evaluate {
 public:
 	Evaluate(const State& pState);
-	// Returns the score of a bishop or rook on an outpost square
-	template<PieceType PT>
-	int outpost(Square p, Color c);
+	template<PieceType PT> int outpost(Square p, Color c);
 	void evalPawns(const Color c);
 	void evalPieces(const Color c);
 	void evalAttacks(Color c);

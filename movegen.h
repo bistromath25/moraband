@@ -50,10 +50,10 @@ public:
 	void push(Move m);
 	bool contains(Move move) const;
 	Move getBestMove();
-	Move getKiller1() const;
-	Move getKiller2() const;
-	void setKiller1(Move m);
-	void setKiller2(Move m);
+	//Move getKiller1() const;
+	//Move getKiller2() const;
+	//void setKiller1(Move m);
+	//void setKiller2(Move m);
 	Move pop();
 	void checkLegal();
 	void setStage(int stage) { mStage = stage; }

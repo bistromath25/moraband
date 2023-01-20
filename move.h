@@ -40,7 +40,7 @@ inline Move makeMove(Square src, Square dst) {
 }
 
 inline Move makeMove(Square src, Square dst, PieceType promo) {
-	return static_cast<Move>(src) | static_cast<Move>(dst)   << 6  | static_cast<Move>(promo) << 12;
+	return static_cast<Move>(src) | static_cast<Move>(dst) << 6 | static_cast<Move>(promo) << 12;
 }
 
 inline Move makeCastle(Square src, Square dst) {
@@ -90,7 +90,7 @@ inline std::string to_string(Move m) {
 			res += "q";
 			break;
 		default:
-		break;
+			break;
 	}
 
 	return res;

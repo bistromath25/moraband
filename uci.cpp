@@ -178,7 +178,17 @@ void set_option(std::string & name, std::string & value) {
 		else if (MOVE_OVERHEAD > 10000) {
 			MOVE_OVERHEAD = 10000;
 		}
-		D(std::cout << "Move Overhead set to value " << MOVE_OVERHEAD << std::endl);
+		D(std::cout << "Move Overhead set to value " << MOVE_OVERHEAD << std::endl;);
+	}
+	else if (name == "Contempt") {
+		CONTEMPT = std::stoi(value);
+		if (CONTEMPT < -100) {
+			CONTEMPT = 100;
+		}
+		else if (CONTEMPT > 100) {
+			CONTEMPT = -100;
+		}
+		D(std::cout << "Contempt set to value " << CONTEMPT << std::endl;);
 	}
 	/*
 	else if (name == "Book") {
@@ -194,7 +204,6 @@ void set_option(std::string & name, std::string & value) {
 		}
 	}
 	*/
-	
 	
 	return;
 }
@@ -221,10 +230,9 @@ void uci() {
 		else if (token == "uci") {
 			std::cout << "id name " << ENGINE_NAME << " " << ENGINE_VERSION << "\n"
 				<< "id author " << ENGINE_AUTHOR << "\n"
-					<< "option name Hash type spin default " << DEFAULT_HASH_SIZE
-						<< " min " << MIN_HASH_SIZE
-							<< " max " << MAX_HASH_SIZE << "\n"
-								<< "option name Move Overhead type spin default 500 min 0 max 10000\n";
+					<< "option name Hash type spin default " << DEFAULT_HASH_SIZE << " min " << MIN_HASH_SIZE << " max " << MAX_HASH_SIZE << "\n"
+						<< "option name Move Overhead type spin default 500 min 0 max 10000\n"
+							<< "option name Contempt type spin default 0 min -100 max 100\n";
 			std::cout << "uciok" << std::endl;
 			
 			/*
