@@ -1,7 +1,5 @@
 #include "eval.h"
 
-// Heavy or light eval?
-
 Evaluate::Evaluate(const State& pState) : mState(pState) , mMaterial{}, mPawnStructure{}, mMobility{}, mKingSafety{}, mAttacks{}, mPieceAttacksBB{}, mAllAttacksBB{} {
 	
 	// Check for entry in pawn hash table
@@ -41,7 +39,8 @@ Evaluate::Evaluate(const State& pState) : mState(pState) , mMaterial{}, mPawnStr
 }
 
 int Evaluate::getScore() const {
-	return mScore;
+	// return mScore;
+	return CONTEMPT ? mScore * CONTEMPT / 50 : mScore;
 }
 
 void Evaluate::evalPawns(const Color c) {

@@ -33,7 +33,8 @@ int qsearch(State& s, SearchInfo& si, int ply, int alpha, int beta) {
 	assert(ply < MAX_PLY);
 
 	if (history.isThreefoldRepetition(s) || s.insufficientMaterial() || s.getFiftyMoveRule() > 99) {
-		return DRAW; // Game must be a draw, return
+		//return DRAW; // Game must be a draw, return
+		return -CONTEMPT;
 	}
 
 	Evaluate evaluate(s);
@@ -105,7 +106,8 @@ int scout(State& s, SearchInfo& si, int depth, int ply, int alpha, int beta, boo
 		return qsearch(s, si, ply, alpha, beta);
 	}
 	if (!isRoot && (history.isThreefoldRepetition(s) || s.insufficientMaterial() || s.getFiftyMoveRule() > 99)) {
-		return DRAW;
+		//return DRAW;
+		return -CONTEMPT;
 	}
 	
 	// Mate distance pruning
