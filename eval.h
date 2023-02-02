@@ -9,7 +9,7 @@
 #include "pst.h"
 
 static const int TEMPO_BONUS = 8; // Side-to-move bonus
-static int CONTEMPT = 0;
+static int CONTEMPT = 0; // Contempt
 
 static const int KNIGHT_THREAT = 2; // Threats on enemy King
 static const int BISHOP_THREAT = 2;
@@ -43,13 +43,16 @@ static const int WEAK_PAWN_ATTACK = 40; // -40
 static const int HANGING = -25;
 
 // Assorted bonuses (maybe not used)
+/*
 static const int BISHOP_PAIR_MG = 7;
 static const int BISHOP_PAIR_EG = 10;
 static const int ROOK_OPEN_FILE_MG = 7;
 static const int ROOK_OPEN_FILE_EG = 8;
 static const int OUTPOST_BONUS = 5;
+*/
 
 static const int CHECKMATE = 32767;
+static const int MAX_CHECKMATE = CHECKMATE + 2000;
 static const int CHECKMATE_BOUND = CHECKMATE - MAX_PLY;
 static const int STALEMATE = 0;
 static const int DRAW = 0;
@@ -125,7 +128,9 @@ inline void store(U64 pKey, const std::array<int, PLAYER_SIZE>& pStructure, cons
 class Evaluate {
 public:
 	Evaluate(const State& pState);
-	template<PieceType PT> int outpost(Square p, Color c);
+	// Returns the score of a bishop or rook on an outpost square
+	template<PieceType PT>
+	int outpost(Square p, Color c);
 	void evalPawns(const Color c);
 	void evalPieces(const Color c);
 	void evalAttacks(Color c);
