@@ -91,23 +91,6 @@ void go(std::istringstream & is, State & s) {
 		search_info.moveTime = allocate_time(search_info.time[s.getOurColor()], search_info.inc[s.getOurColor()], history.size() / 2, search_info.moves_to_go);
 	}
 	
-	/* TODO: update (updated search return type)
-	if (USE_BOOK) {
-		std::string fen = s.getFen();
-		std::string bookmove = s.getOurColor() == WHITE ? bookWhite.getMove(fen) : bookBlack.getMove(fen);
-		if (bookmove != "none") {
-			std::cout << "found bookmove\nbestmove " << bookmove << std::endl;
-		}
-		else {
-			std::cout << "no bookmove found\n";
-			setup_search(s, search_info);
-		}
-	}
-	else {
-		setup_search(s, search_info);
-	}
-	*/
-	
 	m = search(s, search_info);
 	std::cout << "bestmove " << to_string(m) << std::endl;
 }
@@ -164,7 +147,7 @@ void position(std::istringstream & is, State & s) {
 
 // UCI setoption command
 void set_option(std::string & name, std::string & value) {
-	if (name == "Hash") { // Currently changing hash is the only command available
+	if (name == "Hash") {
 		tt.resize(std::stoi(value));
 	}
 	else if (name == "ClearHash") {
@@ -190,21 +173,6 @@ void set_option(std::string & name, std::string & value) {
 		}
 		D(std::cout << "Contempt set to value " << CONTEMPT << std::endl;);
 	}
-	/*
-	else if (name == "Book") {
-		USE_BOOK = value == "true";
-		D(std::cout << "USE_BOOK set to value " << USE_BOOK << std::endl;);
-		if (USE_BOOK) {
-			std::cout << "Loading books...\n";
-			bookWhite.load(BOOK_PATH_WHITE);
-			bookBlack.load(BOOK_PATH_BLACK);
-			std::cout << "White\n" << bookWhite << '\n';
-			std::cout << "Black\n" << bookBlack << '\n';
-			std::cout << "Books loaded" << std::endl;
-		}
-	}
-	*/
-	
 	return;
 }
 

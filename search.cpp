@@ -7,7 +7,26 @@
 
 Variation variation;
 History history;
-//bool USE_BOOK = false;
+
+inline int value_to_tt(int value, int ply) {
+	if (value >= MAX_CHECKMATE) {
+		value += ply;
+	}
+	else if (value <= -MAX_CHECKMATE) {
+		value -= ply;
+	}
+	return value;
+}
+
+inline int value_from_tt(int value, int ply) {
+	if (value >= MAX_CHECKMATE) {
+		value -= ply;
+	}
+	else if (value <= -MAX_CHECKMATE) {
+		value += ply;
+	}
+	return value;
+}
 
 // Check if search should be stopped
 bool interrupt(SearchInfo& si) {
@@ -33,8 +52,7 @@ int qsearch(State& s, SearchInfo& si, int ply, int alpha, int beta) {
 	assert(ply < MAX_PLY);
 
 	if (history.isThreefoldRepetition(s) || s.insufficientMaterial() || s.getFiftyMoveRule() > 99) {
-		//return DRAW; // Game must be a draw, return
-		return -CONTEMPT;
+		return DRAW; // Game must be a draw, return
 	}
 
 	Evaluate evaluate(s);
@@ -106,8 +124,7 @@ int scout(State& s, SearchInfo& si, int depth, int ply, int alpha, int beta, boo
 		return qsearch(s, si, ply, alpha, beta);
 	}
 	if (!isRoot && (history.isThreefoldRepetition(s) || s.insufficientMaterial() || s.getFiftyMoveRule() > 99)) {
-		//return DRAW;
-		return -CONTEMPT;
+		return DRAW;
 	}
 	
 	// Mate distance pruning
@@ -121,23 +138,23 @@ int scout(State& s, SearchInfo& si, int depth, int ply, int alpha, int beta, boo
 		return 0;
 	}
 
-	const TableEntry* table_entry = tt.probe(s.getKey());
-	
-	if (table_entry->key == s.getKey() && table_entry->depth >= depth) {
-		if (table_entry->type == pv) { // PV node
-			return table_entry->score;
-		}
-		else if (table_entry->type == cut) { // Cut node
-			if (table_entry->score >= beta) {
-				return beta;
+	// Probe tt
+	bool tt_hit = false;
+	int tt_score = NEG_INF;
+	int tt_flag = -1;
+	Move tt_move = 0;
+	TTEntry tt_entry = tt.probe(s.getKey());
+	D(std::cout << s.getKey() << ' ' << tt_entry.getKey() << std::endl;);
+	if (tt_entry.getKey() == s.getKey()) {
+		tt_hit = true;
+		tt_move = tt_entry.getMove();
+		tt_score = value_from_tt(tt_entry.getScore(), s.getFiftyMoveRule());
+		tt_flag = tt_entry.getFlag();
+		if (/*!pv_node && */tt_entry.getDepth() >= depth) {
+			if (tt_flag == FLAG_EXACT || (tt_flag == FLAG_LOWER && tt_score >= beta) || (tt_flag == FLAG_UPPER && tt_score <= alpha)) {
+				return tt_score; // tt_score
 			}
 		}
-		else {
-			if (table_entry->score <= alpha) {
-				return alpha;
-			}
-		}
-		best_move = table_entry->best;
 	}
 
 	// Check PV variation
@@ -181,9 +198,9 @@ int scout(State& s, SearchInfo& si, int depth, int ply, int alpha, int beta, boo
 	// In case no best move was found, perform a shallower search to determine which move to properly seach first
 	if ((isPv || staticEval + 100 >= beta) && !isNull && !s.inCheck() && best_move == NULL_MOVE && depth >= 5) {
 		scout(s, si, depth - 2, ply, alpha, beta, isPv, true, false);
-		table_entry = tt.probe(s.getKey());
-		if (table_entry->key == s.getKey()) {
-			best_move = table_entry->best;
+		tt_entry = tt.probe(s.getKey());
+		if (tt_entry.getKey() == s.getKey()) {
+			best_move = tt_entry.getMove();
 		}
 	}
 
@@ -277,7 +294,11 @@ int scout(State& s, SearchInfo& si, int depth, int ply, int alpha, int beta, boo
 		variation.pushToPv(best_move, s.getKey(), ply, a);
 	}
 
-	tt.store(s.getKey(), best_move, a <= alpha ? all : a >= b ? cut : pv, depth, a);
+	U64 flag = a >= b ? FLAG_LOWER
+		: a > alpha ? FLAG_EXACT
+			: FLAG_UPPER;
+	
+	tt.insert(best_move, flag, depth, value_to_tt(bestScore, s.getFiftyMoveRule()), s.getKey());
 
 	// assert(variation.getPvMove() != NULL_MOVE);
 	// Fail-Hard alpha beta score
@@ -355,22 +376,6 @@ Move search(State& s, SearchInfo& si) {
 	variation.clearPv();
 	init_eval();
 	history.clear();
-	
-	/*
-	if (USE_BOOK) {
-		std::string bookmove = getBookMove(s.getFen(), s.getOurColor());
-		if (bookmove != "none") {
-			std::cout << "found bookmove\nbestmove " << bookmove << std::endl;
-		}
-		else {
-			std::cout << "bookmove not found" << std::endl;
-			iterative_deepening(s, si);
-		}
-	}
-	else {
-		iterative_deepening(s, si);
-	}
-	*/
 	return iterative_deepening(s, si);
 }
 
