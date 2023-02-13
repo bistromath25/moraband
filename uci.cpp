@@ -88,10 +88,10 @@ void go(std::istringstream & is, State & s) {
 	
 	search_info.clock.set();
 	if (!search_info.moveTime) {
-		search_info.moveTime = allocate_time(search_info.time[s.getOurColor()], search_info.inc[s.getOurColor()], history.size() / 2, search_info.moves_to_go);
+		search_info.moveTime = allocate_time(search_info.time[s.getOurColor()], search_info.inc[s.getOurColor()], global_info[0].history.size() / 2, search_info.moves_to_go);
 	}
 	
-	m = search(s, search_info);
+	m = search(s, search_info); // searching main only
 	std::cout << "bestmove " << to_string(m) << std::endl;
 }
 
@@ -101,44 +101,38 @@ void position(std::istringstream & is, State & s) {
 	Move m;
 
 	s = State(START_FEN);
-	history.init();
-	history.push(std::make_pair(NULL_MOVE, s.getKey()));
+	for (int i = 0; i < NUM_THREADS; ++i) {
+		global_info[i].history.init();
+		global_info[i].history.push(std::make_pair(NULL_MOVE, s.getKey()));
+	}
 
 	is >> token;
 	if (token == "fen") {
-		//engine_log << "fen";
-		//engine_output += "fen";
 		while (is >> token && token != "moves") {
 			fen += token + " ";
 		}
-		//engine_log << fen << "\n";
-		//engine_output += fen += "\n";
 		s = State(fen);
 	}
 	else if (token == "startpos") {
 		is >> token;
-		//engine_output += "startpos";
-		//engine_log << "startpos";
 	}
 	else {
 		std::cout << "unknown command\n";
-		//engine_log << "unknown command\n";
 		return;
 	}
 
 	while (is >> token) {
 		m = get_uci_move(token, s);
-		//engine_log << token;
 		if (m == NULL_MOVE) {
 			std::cout << "illegal move found: " << token << '\n';
-			//engine_log << "illegal move found: " << token << '\n';
-			//engine_output += "illegal move found: " + token + "\n";
 			return;
 		}
 		else {
 			s.makeMove(m);
 			//s.updateGameMoves(token);
-			history.push(std::make_pair(m, s.getKey()));
+			for (int i = 0; i < NUM_THREADS; ++i) {
+				global_info[i].history.push(std::make_pair(m, s.getKey()));
+			}
 		}
 	}
 	
@@ -152,6 +146,16 @@ void set_option(std::string & name, std::string & value) {
 	}
 	else if (name == "ClearHash") {
 		tt.clear();
+	}
+	else if (name == "Threads") {
+		NUM_THREADS = std::stoi(value);
+		if (NUM_THREADS < 1) {
+			NUM_THREADS = 1;
+		}
+		else if (NUM_THREADS > MAX_THREADS) {
+			NUM_THREADS = MAX_THREADS;
+		}
+		D(std::cout << "Threads set to value " << NUM_THREADS << std::endl;);
 	}
 	else if (name == "Move Overhead") {
 		MOVE_OVERHEAD = std::stoi(value);
@@ -186,11 +190,13 @@ void uci() {
 		std::getline(std::cin, command);
 		std::istringstream is(command);
 		is >> std::skipws >> token;
-		//engine_log << "> " << token << "\n";
 
 		if (token == "quit") {
 			//engine_log.close();
 			break;
+		}
+		else if (token == "ucinewgame") {
+			tt.clear();
 		}
 		else if (token == "isready") {
 			std::cout << "readyok" << std::endl;
@@ -198,19 +204,11 @@ void uci() {
 		else if (token == "uci") {
 			std::cout << "id name " << ENGINE_NAME << " " << ENGINE_VERSION << "\n"
 				<< "id author " << ENGINE_AUTHOR << "\n"
-					<< "option name Hash type spin default " << DEFAULT_HASH_SIZE << " min " << MIN_HASH_SIZE << " max " << MAX_HASH_SIZE << "\n"
-						<< "option name Move Overhead type spin default 500 min 0 max 10000\n"
-							<< "option name Contempt type spin default 0 min -100 max 100\n";
+					<< "option name Hash type spin default " << DEFAULT_HASH_SIZE << " min " << MIN_HASH_SIZE << " max " << MAX_HASH_SIZE << "\n" 
+						<< "option name Threads type spin default 1 max 16 min 1\n"
+							<< "option name Move Overhead type spin default 500 min 0 max 10000\n"
+								<< "option name Contempt type spin default 0 min -100 max 100\n";
 			std::cout << "uciok" << std::endl;
-			
-			/*
-			engine_log << "id name " << ENGINE_NAME << " " << ENGINE_VERSION << "\n"
-				<< "id author " << ENGINE_AUTHOR << "\n"
-					<< "option name Hash type spin default " << DEFAULT_HASH_SIZE
-						<< " min " << MIN_HASH_SIZE
-							<< " max " << MAX_HASH_SIZE << "\n";
-			engine_log << "uciok" << std::endl;
-			*/
 		}
 		else if (token == "setoption") {
 			std::string name, value;
