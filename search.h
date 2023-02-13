@@ -1,6 +1,8 @@
 #ifndef SEARCH_H
 #define SEARCH_H
 
+#include <thread>
+
 #include <algorithm>
 #include <stack>
 #include <sstream>
@@ -21,6 +23,10 @@ static const int LMR_COUNT = 3;
 static const int LMR_DEPTH = 2;
 static const int NULL_MOVE_COUNT = 3;
 static const int NULL_MOVE_DEPTH = 3;
+static const int ASP_DELTA[] = { 10, 30, 50, 100, 200, 300, POS_INF };
+static const int MAX_THREADS = 16;
+static int NUM_THREADS = 1;
+static bool THREAD_STOP = false;
 
 enum SearchType {
 	qSearch,
@@ -37,9 +43,25 @@ struct SearchInfo {
 	std::vector<Move> sm;
 };
 
-extern History history;
-extern Variation variation;
-int scout(State& s, SearchInfo& si, int depth, int ply, int alpha, int beta, bool isPv, bool isNull, bool isRoot);
+struct GlobalInfo {
+	GlobalInfo() {
+		nodes = 0;
+		history.clear();
+		variation.clearPv();
+	}
+	U64 nodes;
+	History history;
+	Variation variation;
+};
+
+//extern History history;
+//extern Variation variation;
+static std::thread threads[MAX_THREADS];
+static GlobalInfo global_info[MAX_THREADS];
+static std::pair<int, bool> results[MAX_THREADS];
+
+int search(State& s, SearchInfo& si, GlobalInfo& gi, int depth, int ply, int alpha, int beta, bool isPv, bool isNull, bool isRoot);
+//int search_main(State& s, SearchInfo& si, GlobalInfo& gi, int depth, int ply, int alpha, int beta, bool isPv, bool isNull, bool isRoot);
 Move iterative_deepening(State& s, SearchInfo& si);
 Move search(State& s, SearchInfo& si);
 

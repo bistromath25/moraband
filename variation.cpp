@@ -69,9 +69,7 @@ void Variation::checkPv(State& pState) {
 
 void Variation::printPv() {
 	std::cout << " pv ";
-	//engine_log << " pv ";
 	for (auto it = mPv.begin(); it != mPv.begin() + mSize; ++it) {
 		std::cout << to_string(it->first) << " ";
-		//engine_log << toString(it->first) << " ";
 	}
 }

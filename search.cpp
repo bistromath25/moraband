@@ -3,10 +3,12 @@
 #include <string>
 #include <fstream>
 
+#include <thread>
+
 // CPW: https://www.chessprogramming.org/Futility_Pruning
 
-Variation variation;
-History history;
+//Variation variation;
+//History history;
 
 inline int value_to_tt(int value, int ply) {
 	if (value >= MAX_CHECKMATE) {
@@ -47,11 +49,11 @@ bool interrupt(SearchInfo& si) {
 	return false; // No interrupt
 }
 
-int qsearch(State& s, SearchInfo& si, int ply, int alpha, int beta) {
+int qsearch(State& s, SearchInfo& si, GlobalInfo& gi, int ply, int alpha, int beta) {
 	si.nodes++;
 	assert(ply < MAX_PLY);
 
-	if (history.isThreefoldRepetition(s) || s.insufficientMaterial() || s.getFiftyMoveRule() > 99) {
+	if (gi.history.isThreefoldRepetition(s) || s.insufficientMaterial() || s.getFiftyMoveRule() > 99) {
 		return DRAW; // Game must be a draw, return
 	}
 
@@ -68,7 +70,7 @@ int qsearch(State& s, SearchInfo& si, int ply, int alpha, int beta) {
 	alpha = std::max(alpha, qscore);
 
 	// Generate moves and create the movelist.
-	MoveList mlist(s, NULL_MOVE, &history, ply, true);
+	MoveList mlist(s, NULL_MOVE, &gi.history, ply, true);
 
 	int bestScore = NEG_INF;
 	int score;
@@ -88,13 +90,13 @@ int qsearch(State& s, SearchInfo& si, int ply, int alpha, int beta) {
 		State c(s);
 		c.makeMove(m);
 
-		history.push(std::make_pair(m, c.getKey()));
-		score = -qsearch(c, si, ply + 1, -beta, -alpha);
+		gi.history.push(std::make_pair(m, c.getKey()));
+		score = -qsearch(c, si, gi, ply + 1, -beta, -alpha);
 		if (!(si.nodes & 2047) && (si.quit || interrupt(si))) {
 			return 0;
 		}
 
-		history.pop();
+		gi.history.pop();
 		if (score >= bestScore) {
 			bestScore = score;
 		}
@@ -114,16 +116,16 @@ int qsearch(State& s, SearchInfo& si, int ply, int alpha, int beta) {
 	return alpha;
 }
 
-int scout(State& s, SearchInfo& si, int depth, int ply, int alpha, int beta, bool isPv, bool isNull, bool isRoot) {
+int search(State& s, SearchInfo& si, GlobalInfo& gi, int depth, int ply, int alpha, int beta, bool isPv, bool isNull, bool isRoot) {
 	assert(depth >= 0);
 	Move best_move = NULL_MOVE;
 
-	si.nodes++;
+	si.nodes++; gi.nodes++;
 
 	if (depth == 0) {
-		return qsearch(s, si, ply, alpha, beta);
+		return qsearch(s, si, gi, ply, alpha, beta);
 	}
-	if (!isRoot && (history.isThreefoldRepetition(s) || s.insufficientMaterial() || s.getFiftyMoveRule() > 99)) {
+	if (!isRoot && (gi.history.isThreefoldRepetition(s) || s.insufficientMaterial() || s.getFiftyMoveRule() > 99)) {
 		return DRAW;
 	}
 	
@@ -144,13 +146,13 @@ int scout(State& s, SearchInfo& si, int depth, int ply, int alpha, int beta, boo
 	int tt_flag = -1;
 	Move tt_move = 0;
 	TTEntry tt_entry = tt.probe(s.getKey());
-	D(std::cout << s.getKey() << ' ' << tt_entry.getKey() << std::endl;);
+	//D(std::cout << s.getKey() << ' ' << tt_entry.getKey() << std::endl;);
 	if (tt_entry.getKey() == s.getKey()) {
 		tt_hit = true;
 		tt_move = tt_entry.getMove();
 		tt_score = value_from_tt(tt_entry.getScore(), s.getFiftyMoveRule());
 		tt_flag = tt_entry.getFlag();
-		if (/*!pv_node && */tt_entry.getDepth() >= depth) {
+		if (!isPv && tt_entry.getDepth() >= depth) {
 			if (tt_flag == FLAG_EXACT || (tt_flag == FLAG_LOWER && tt_score >= beta) || (tt_flag == FLAG_UPPER && tt_score <= alpha)) {
 				return tt_score; // tt_score
 			}
@@ -158,8 +160,8 @@ int scout(State& s, SearchInfo& si, int depth, int ply, int alpha, int beta, boo
 	}
 
 	// Check PV variation
-	if (variation.getPvKey(ply) == s.getKey()) {
-		best_move = variation.getPvMove(ply);
+	if (gi.variation.getPvKey(ply) == s.getKey()) {
+		best_move = gi.variation.getPvMove(ply);
 	}
 
 	int staticEval = 0;
@@ -186,9 +188,9 @@ int scout(State& s, SearchInfo& si, int depth, int ply, int alpha, int beta, boo
 		State n;
 		std::memmove(&n, &s, sizeof s);
 		n.makeNull();
-		history.push(std::make_pair(NULL_MOVE, n.getKey()));
-		int nullScore = -scout(n, si, depth - 3, ply + 1, -(alpha + 1), -alpha, false, true, false);
-		history.pop();
+		gi.history.push(std::make_pair(NULL_MOVE, n.getKey()));
+		int nullScore = -search(n, si, gi, depth - 3, ply + 1, -(alpha + 1), -alpha, false, true, false);
+		gi.history.pop();
 		if (nullScore >= beta) {
 			return beta;
 		}
@@ -197,14 +199,14 @@ int scout(State& s, SearchInfo& si, int depth, int ply, int alpha, int beta, boo
 	// Internal iterative deepening
 	// In case no best move was found, perform a shallower search to determine which move to properly seach first
 	if ((isPv || staticEval + 100 >= beta) && !isNull && !s.inCheck() && best_move == NULL_MOVE && depth >= 5) {
-		scout(s, si, depth - 2, ply, alpha, beta, isPv, true, false);
+		search(s, si, gi, depth - 2, ply, alpha, beta, isPv, true, false);
 		tt_entry = tt.probe(s.getKey());
 		if (tt_entry.getKey() == s.getKey()) {
 			best_move = tt_entry.getMove();
 		}
 	}
 
-	MoveList mlist(s, best_move, &history, ply); // Generate movelist
+	MoveList mlist(s, best_move, &(gi.history), ply); // Generate movelist
 
 	int a = alpha;
 	int b = beta;
@@ -231,7 +233,7 @@ int scout(State& s, SearchInfo& si, int depth, int ply, int alpha, int beta, boo
 
 		State c(s);
 		c.makeMove(m); // Make move
-		history.push(std::make_pair(m, c.getKey())); // Add move to history
+		gi.history.push(std::make_pair(m, c.getKey())); // Add move to history
 		count++;
 
 		if (c.inCheck() && depth == 1) {
@@ -241,7 +243,7 @@ int scout(State& s, SearchInfo& si, int depth, int ply, int alpha, int beta, boo
 		// Search first move
 		if (first) {
 			best_move = m;
-			score = -scout(c, si, d, ply + 1, -b, -a, isPv, isNull, false);
+			score = -search(c, si, gi, d, ply + 1, -b, -a, isPv, isNull, false);
 			first = false;
 		}     
 		else {
@@ -249,21 +251,21 @@ int scout(State& s, SearchInfo& si, int depth, int ply, int alpha, int beta, boo
 			// Seach with reduced depth under conditions described below
 			// CPW: https://www.chessprogramming.org/Late_Move_Reductions
 			if (count > LMR_COUNT && depth > LMR_DEPTH && !isPv && !s.inCheck() && !c.inCheck() && !s.isCapture(m) && !isPromotion(m)) {
-				score = -scout(c, si, d - 1, ply + 1, -(a + 1), -a, false, isNull, false);
+				score = -search(c, si, gi, d - 1, ply + 1, -(a + 1), -a, false, isNull, false);
 			}
 			else {
 				score = a + 1;
 			}
 			if (score > a) {
-				score = -scout(c, si, d, ply + 1, -(a + 1), -a, false, isNull, false);
+				score = -search(c, si, gi, d, ply + 1, -(a + 1), -a, false, isNull, false);
 			}
 			// If an alpha improvement resulted in a fail-high, search again with a full window
 			if (a < score && b > score) {
-				score = -scout(c, si, d, ply + 1, -b, -a, true, isNull, false);
+				score = -search(c, si, gi, d, ply + 1, -b, -a, true, isNull, false);
 			}
 		}
 		
-		history.pop(); // Pop move from gamelist
+		gi.history.pop(); // Pop move from gamelist
 
 		if (score > bestScore) {
 			best_move = m;
@@ -276,13 +278,13 @@ int scout(State& s, SearchInfo& si, int depth, int ply, int alpha, int beta, boo
 		if (a >= b) {
 			a = b;
 			if (s.isQuiet(m)) {
-				history.update(m, depth, ply, true);
+				gi.history.update(m, depth, ply, true);
 			}
 			break;
 		}
 		else {
 			if (s.isQuiet(m)) {
-				history.update(m, depth, ply, false);
+				gi.history.update(m, depth, ply, false);
 			}
 		}
 	}
@@ -291,7 +293,7 @@ int scout(State& s, SearchInfo& si, int depth, int ply, int alpha, int beta, boo
 		return s.check() ? -CHECKMATE + ply : STALEMATE;
 	}
 	if (a > alpha && a < b && !si.quit) {
-		variation.pushToPv(best_move, s.getKey(), ply, a);
+		gi.variation.pushToPv(best_move, s.getKey(), ply, a);
 	}
 
 	U64 flag = a >= b ? FLAG_LOWER
@@ -305,54 +307,81 @@ int scout(State& s, SearchInfo& si, int depth, int ply, int alpha, int beta, boo
 	return a;
 }
 
+// int search(State& s, SearchInfo& si, GlobalInfo& gi, int depth, int ply, int alpha, int beta, bool isPv, bool isNull, bool isRoot)
+void parallel_search(State s, SearchInfo si, int depth, int alpha, int beta, int t) {
+	auto& [value, valid] = results[t];
+	auto& gi = global_info[t];
+	valid = false;
+	
+	value = search(s, si, gi, depth, 0, alpha, beta, false, false, false);
+	if (!THREAD_STOP) {
+		THREAD_STOP = true;
+		valid = true;
+	}
+}
+
 // CPW: https://www.chessprogramming.org/Iterative_Deepening
 Move iterative_deepening(State& s, SearchInfo& si) {
-	int score;
-	for (int d = 1; !si.quit; ++d) {
-		score = scout(s, si, d, 0, NEG_INF, POS_INF, true, false, true);
-
-		if (variation.getPvMove() == NULL_MOVE) {
-#ifdef DEBUG_ACCEPT_NULL_MOVE
-			std::cout << "bestmove 0000" << std::endl; // Something must be wrong
-#else
-			//MoveList mlist(s); // Try to make a (random?) move
-			//std::cout << "bestmove " << toString(mlist.getBestMove()) << " MAYBE ILLEGAL" << std::endl;
-			tt.clear();
-			D(std::cout << "CLEARED TRANSPOSITION TABLE" << std::endl;);
-			//engine_log << "CLEARED TRANSPOSITION TABLE" << std::endl;
-			//engine_output += "CLEARED TRANSPOSITION TABLE\n";
-			score = scout(s, si, d, 0, NEG_INF, POS_INF, true, false, true);
-#endif
-		}
+	for (int i = 0; i < MAX_THREADS; ++i) {
+		global_info[i].nodes = 0;
+		global_info[i].history.clear();
+		global_info[i].variation.clearPv();
 		
-		if (si.quit) {
+		results[i].first = 0;
+		results[i].second = false;
+	}
+
+	Move best_move = 0;
+	//int alpha = NEG_INF;
+	//int beta = POS_INF;
+	//int adelta = 0;
+	//int bdelta = 0;
+	int results_index;
+	//bool failed = false;
+	int score = 0;
+	for (int d = 1; !si.quit && d <= MAX_PLY; ++d) {
+		//adelta = 0;
+		//bdelta = 0;
+		//failed = false;
+		THREAD_STOP = false;
+		results_index = 0;
+		if (d > 4) {
+			for (int i = 1; i < NUM_THREADS; ++i) {
+				threads[i] = std::thread{parallel_search, s, si, d + (i & 1), NEG_INF, POS_INF, i};
+			}
+		
+			results[0].first = search(s, si, global_info[0], d, 0, NEG_INF, POS_INF, true, false, true);
+			THREAD_STOP = true;
+		
+			for (int i = 1; i < NUM_THREADS; ++i) {
+				threads[i].join();
+				if (results[i].second) {
+					results_index = i;
+				}
+			}
+		}
+		else {
+			results[0].first = search(s, si, global_info[0], d, 0, NEG_INF, POS_INF, true, false, true);
+		}
+		score = results[results_index].first;
+		if (si.quit || interrupt(si)) {
 			break;
 		}
-		
-		variation.checkPv(s);
+	
+		global_info[results_index].variation.checkPv(s);
 
-		// Print search info
 		std::cout << "info depth " << d;
-		//engine_log << "info depth " << d;
-		//engine_output += "info depth " + std::to_string(d);
-		if (variation.isMate()) {
-			int n = variation.getMateInN();
+		if (global_info[results_index].variation.isMate()) {
+			int n = global_info[results_index].variation.getMateInN();
 			std::cout << " score mate " << (score > 0 ? n : -n);
-			//engine_log << " score mate " << (score > 0 ? n : -n);
-			//engine_output += " score mate " + std::to_string(score > 0 ? n : -n);
 		}
 		else {
 			std::cout << " score cp " << score;
-			//engine_log << " score cp " << score;
-			//engine_output += " score cp " + std::to_string(score);
 		}
 
 		std::cout << " time " << si.clock.elapsed<std::chrono::milliseconds>() << " nodes " << si.nodes << " nps " << si.nodes / (si.clock.elapsed<std::chrono::milliseconds>() + 1) * 1000;
-		//engine_log << " time " << si.clock.elapsed<std::chrono::milliseconds>() << " nodes " << si.nodes << " nps " << si.nodes / (si.clock.elapsed<std::chrono::milliseconds>() + 1) * 1000;
-		//engine_output += " time " + std::to_string(si.clock.elapsed<std::chrono::milliseconds>()) + " nodes " + std::to_string(si.nodes) + " nps " + std::to_string(si.nodes / (si.clock.elapsed<std::chrono::milliseconds>() + 1) * 1000);
-		variation.printPv();
+		global_info[results_index].variation.printPv();
 		std::cout << std::endl;
-		//engine_log << std::endl;
 
 		if (si.nodes == si.prevNodes || si.nodes >= si.max_nodes || d >= si.depth) {
 			break;
@@ -363,19 +392,34 @@ Move iterative_deepening(State& s, SearchInfo& si) {
 
 		si.prevNodes = si.nodes;
 		si.nodes = 0;
+		
+		/*
+		if (score <= alpha) {
+			alpha = std::max(score - ASP_DELTA[adelta], NEG_INF);
+			adelta++;
+			failed = true;
+		}
+		else if (score >= beta) {
+			beta = std::min(score + ASP_DELTA[bdelta], POS_INF);
+			bdelta++;
+			failed = true;
+		}
+		*/
+		
+		//if (d > 4) {
+		//	alpha = score - 10;
+		//	beta = score + 10;
+		//}
 	}
 	
-	//std::cout << "bestmove " << toString(variation.getPvMove()) << std::endl;
-	//engine_log << "bestmove " << toString(variation.getPvMove()) << std::endl;
-	//engine_output += "bestmove " + toString(variation.getPvMove()) + "\n";
-	return variation.getPvMove();
+	return global_info[results_index].variation.getPvMove();
 }
 
 Move search(State& s, SearchInfo& si) {
 	tt.clear();
-	variation.clearPv();
+	//gi.variation.clearPv();
 	init_eval();
-	history.clear();
+	//gi.history.clear();
 	return iterative_deepening(s, si);
 }
 
