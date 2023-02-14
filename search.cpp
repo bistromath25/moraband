@@ -2,8 +2,9 @@
 #include "io.h"
 #include <string>
 #include <fstream>
-
 #include <thread>
+
+#define SINGLE_THREAD
 
 // CPW: https://www.chessprogramming.org/Futility_Pruning
 
@@ -240,51 +241,48 @@ int search(State& s, SearchInfo& si, GlobalInfo& gi, int depth, int ply, int alp
 			d++;
 		}
 
-		// Search first move
+		// Search PV move
 		if (first) {
 			best_move = m;
-			score = -search(c, si, gi, d, ply + 1, -b, -a, isPv, isNull, false);
+			score = -search(c, si, gi, d, ply + 1, -b, -a, isPv, isNull, true);
 			first = false;
 		}     
 		else {
-			// Late move reduction
-			// Seach with reduced depth under conditions described below
-			// CPW: https://www.chessprogramming.org/Late_Move_Reductions
-			if (count > LMR_COUNT && depth > LMR_DEPTH && !isPv && !s.inCheck() && !c.inCheck() && !s.isCapture(m) && !isPromotion(m)) {
+			if (d >= 1) {
 				score = -search(c, si, gi, d - 1, ply + 1, -(a + 1), -a, false, isNull, false);
 			}
-			else {
-				score = a + 1;
-			}
 			if (score > a) {
-				score = -search(c, si, gi, d, ply + 1, -(a + 1), -a, false, isNull, false);
-			}
-			// If an alpha improvement resulted in a fail-high, search again with a full window
-			if (a < score && b > score) {
-				score = -search(c, si, gi, d, ply + 1, -b, -a, true, isNull, false);
+				score = -search(c, si, gi, d, ply + 1, -b, -a, false, isNull, true);
 			}
 		}
 		
 		gi.history.pop(); // Pop move from gamelist
 
+		if (!(si.nodes & 2047) && (si.quit || interrupt(si))) {
+			return 0;
+		}
+		
 		if (score > bestScore) {
-			best_move = m;
 			bestScore = score;
-		}
+			best_move = m;
 
-		a = std::max(a, bestScore);
+			//gi.variation.clearPv();
+			gi.variation.pushToPv(best_move, s.getKey(), ply, bestScore);
 
-		// Alpha-Beta pruning
-		if (a >= b) {
-			a = b;
-			if (s.isQuiet(m)) {
-				gi.history.update(m, depth, ply, true);
+			a = std::max(a, bestScore);
+
+			// Alpha-Beta pruning
+			if (a >= b) {
+				a = b;
+				if (s.isQuiet(m)) {
+					gi.history.update(m, depth, ply, true);
+				}
+				break;
 			}
-			break;
-		}
-		else {
-			if (s.isQuiet(m)) {
-				gi.history.update(m, depth, ply, false);
+			else {
+				if (s.isQuiet(m)) {
+					gi.history.update(m, depth, ply, false);
+				}
 			}
 		}
 	}
@@ -292,19 +290,16 @@ int search(State& s, SearchInfo& si, GlobalInfo& gi, int depth, int ply, int alp
 	if (bestScore == NEG_INF) { // Either completely lost or (hopefully) a draw
 		return s.check() ? -CHECKMATE + ply : STALEMATE;
 	}
-	if (a > alpha && a < b && !si.quit) {
-		gi.variation.pushToPv(best_move, s.getKey(), ply, a);
-	}
 
-	U64 flag = a >= b ? FLAG_LOWER
-		: a > alpha ? FLAG_EXACT
+	U64 flag = bestScore >= b ? FLAG_LOWER
+		: bestScore > alpha ? FLAG_EXACT
 			: FLAG_UPPER;
 	
 	tt.insert(best_move, flag, depth, value_to_tt(bestScore, s.getFiftyMoveRule()), s.getKey());
 
 	// assert(variation.getPvMove() != NULL_MOVE);
 	// Fail-Hard alpha beta score
-	return a;
+	return bestScore;
 }
 
 // int search(State& s, SearchInfo& si, GlobalInfo& gi, int depth, int ply, int alpha, int beta, bool isPv, bool isNull, bool isRoot)
@@ -320,6 +315,76 @@ void parallel_search(State s, SearchInfo si, int depth, int alpha, int beta, int
 	}
 }
 
+// CPW: https://www.chessprogramming.org/Iterative_Deepening
+Move iterative_deepening(State& s, SearchInfo& si) {
+	global_info[0].nodes = 0;
+	results[0].first = 0;
+	results[0].second = false;
+
+	Move best_move = 0;
+	int alpha = NEG_INF;
+	int beta = POS_INF;
+	int adelta = 0;
+	int bdelta = 0;
+	int results_index;
+	bool failed = false;
+	int score = 0;
+	for (int d = 1; !si.quit && d <= MAX_PLY; ++d) {
+		adelta = 0;
+		bdelta = 0;
+		do {
+			failed = false;
+			results_index = 0;
+			
+			results[0].first = search(s, si, global_info[0], d, 0, NEG_INF, POS_INF, true, false, true);
+			score = results[results_index].first;
+			if (si.quit || interrupt(si)) {
+				break;
+			}
+		
+			global_info[results_index].variation.checkPv(s);
+
+			std::cout << "info depth " << d;
+			if (global_info[results_index].variation.isMate()) {
+				int n = global_info[results_index].variation.getMateInN();
+				std::cout << " score mate " << (score > 0 ? n : -n);
+			}
+			else {
+				std::cout << " score cp " << score;
+			}
+
+			std::cout << " time " << si.clock.elapsed<std::chrono::milliseconds>() << " nodes " << si.nodes << " nps " << si.nodes / (si.clock.elapsed<std::chrono::milliseconds>() + 1) * 1000;
+			global_info[results_index].variation.printPv();
+			std::cout << std::endl;
+
+			if (si.nodes == si.prevNodes || si.nodes >= si.max_nodes || d >= si.depth) {
+				break;
+			}
+			if (si.clock.elapsed<std::chrono::milliseconds>() * 2 > si.moveTime) {
+				break; // Insufficient time for next search iteration
+			}
+
+			si.prevNodes = si.nodes;
+			si.nodes = 0;
+			
+			// Aspiration window calculations
+			if (score <= alpha) {
+				alpha = std::max(score - ASP_DELTA[adelta], NEG_INF);
+				adelta++;
+				failed = true;
+			}
+			else if (score >= beta) {
+				beta = std::min(score + ASP_DELTA[bdelta], POS_INF);
+				bdelta++;
+				failed = true;
+			}
+		} while (failed);
+	} 
+	
+	return global_info[results_index].variation.getPvMove();
+}
+
+#ifndef SINGLE_THREAD
 // CPW: https://www.chessprogramming.org/Iterative_Deepening
 Move iterative_deepening(State& s, SearchInfo& si) {
 	for (int i = 0; i < MAX_THREADS; ++i) {
@@ -414,6 +479,7 @@ Move iterative_deepening(State& s, SearchInfo& si) {
 	
 	return global_info[results_index].variation.getPvMove();
 }
+#endif
 
 Move search(State& s, SearchInfo& si) {
 	tt.clear();
