@@ -14,6 +14,8 @@ info depth 21 score cp 0 time 467 nodes 2103985 nps 4495000 pv h8g7 a6b6 g7f6 h5
 bestmove h8g7
 */
 
+int NUM_THREADS = 1;
+
 // Validate incoming UCI move
 Move get_uci_move(std::string & token, State & s) {
 	Move m;
@@ -87,7 +89,7 @@ void go(std::istringstream & is, State & s) {
 		search_info.moveTime = allocate_time(search_info.time[s.getOurColor()], search_info.inc[s.getOurColor()], global_info[0].history.size() / 2, search_info.moves_to_go);
 	}
 	
-	m = search(s, search_info); // searching main only
+	m = search(s, search_info, NUM_THREADS); // searching main only
 	std::cout << "bestmove " << to_string(m) << std::endl;
 }
 
