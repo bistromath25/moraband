@@ -167,9 +167,18 @@ int search(State& s, SearchInfo& si, GlobalInfo& gi, int depth, int ply, int alp
 
 	int staticEval = 0;
 	if (!isPv) { // Evaluate current position statically if current node is NOT a PV node
-		// TODO: use tt entry here
-		Evaluate evaluate(s);
-		staticEval = evaluate.getScore();
+		if (tt_flag == FLAG_EXACT) { // Make use of previous TT score
+			staticEval = tt_score;
+		}
+		else {
+			Evaluate evaluate(s);
+			staticEval = evaluate.getScore();
+			if (tt_hit) {
+				if (staticEval < tt_score && tt_flag == FLAG_LOWER || staticEval > tt_score && tt_flag == FLAG_UPPER) {
+					staticEval = tt_score;
+				}
+			}
+		}
 	}
 	
 	// Reverse futility pruning
@@ -221,10 +230,25 @@ int search(State& s, SearchInfo& si, GlobalInfo& gi, int depth, int ply, int alp
 	while ((m = mlist.getBestMove())) {
 		d = depth - 1; // Early pruning
 		if (!isPv && bestScore > -CHECKMATE_BOUND && !s.inCheck() && !s.givesCheck(m) && s.getNonPawnPieceCount(s.getOurColor())) {
+			
+			// Futility pruning
+			if (depth < 8 && !isPv && staticEval + 100 * d <= a) {
+				continue;
+			}
+			
+			/*
 			// Futility pruning
 			if (depth == 1 && s.isQuiet(m) && !isPromotion(m) && staticEval + 300 < a) {
 				continue;
 			}
+			*/
+
+			// Late move reduction
+			if (depth > 2 && mlist.size() > (isPv ? 5 : 3) && !s.inCheck() && !s.isCapture(m) && !isPromotion(m)) {
+				d -= 1 + !isPv + (mlist.size() > 10);
+				d = std::max(1, d);
+			}
+
 			// SEE-based pruning (prune if SEE too low)
 			// Prune if see(move) < -(pawn * 2 ^ (depth - 1))
 			if (depth < 3 && s.see(m) < -PAWN_WEIGHT * (1 << (depth - 1))) {
