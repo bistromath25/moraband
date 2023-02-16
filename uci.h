@@ -11,6 +11,10 @@
 #include "search.h"
 #include "timer.h"
 
+#define ENGINE_NAME "Moraband"
+#define ENGINE_VERSION "1.1"
+#define ENGINE_AUTHOR "Brighten Zhang"
+
 const std::string START_FEN = "rnbqkbnr/pppppppp/8/8/8/8/PPPPPPPP/RNBQKBNR w KQkq";
 
 void uci();

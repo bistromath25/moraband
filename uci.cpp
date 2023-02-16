@@ -4,10 +4,6 @@
 //#include "book.h". // include book.h
 #include <fstream>
 
-#define ENGINE_NAME "Moraband"
-#define ENGINE_VERSION "1.0"
-#define ENGINE_AUTHOR "Brighten Zhang"
-
 //Book bookWhite, bookBlack; // define white and black books
 
 /* 

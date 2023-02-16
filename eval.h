@@ -128,9 +128,7 @@ inline void store(U64 pKey, const std::array<int, PLAYER_SIZE>& pStructure, cons
 class Evaluate {
 public:
 	Evaluate(const State& pState);
-	// Returns the score of a bishop or rook on an outpost square
-	template<PieceType PT>
-	int outpost(Square p, Color c);
+	//template<PieceType PT> int outpost(Square p, Color c);
 	void evalPawns(const Color c);
 	void evalPieces(const Color c);
 	void evalAttacks(Color c);
