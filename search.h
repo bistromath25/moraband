@@ -24,8 +24,9 @@ static const int LMR_DEPTH = 2;
 static const int NULL_MOVE_COUNT = 3;
 static const int NULL_MOVE_DEPTH = 3;
 static const int ASP_DELTA[] = { 10, 30, 50, 100, 200, 300, POS_INF };
+
 static const int MAX_THREADS = 16;
-static int NUM_THREADS = 1;
+//static int NUM_THREADS = 1;
 static bool THREAD_STOP = false;
 
 enum SearchType {
@@ -63,6 +64,6 @@ static std::pair<int, bool> results[MAX_THREADS];
 int search(State& s, SearchInfo& si, GlobalInfo& gi, int depth, int ply, int alpha, int beta, bool isPv, bool isNull, bool isRoot);
 //int search_main(State& s, SearchInfo& si, GlobalInfo& gi, int depth, int ply, int alpha, int beta, bool isPv, bool isNull, bool isRoot);
 Move iterative_deepening(State& s, SearchInfo& si);
-Move search(State& s, SearchInfo& si);
+Move search(State& s, SearchInfo& si, int NUM_THREADS);
 
 #endif  
