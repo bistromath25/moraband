@@ -241,7 +241,6 @@ void uci() {
 			is >> token;
 			perftTest(root, std::stoi(token));
 		}
-		/*
 		else if (token == "moves") {
 			MoveList mlist(root);
 			std::cout << mlist.size() << " possible moves:\n";
@@ -255,7 +254,9 @@ void uci() {
 			}
 			std::cout << "------------------" << std::endl;
 		}
-		*/
+		else {
+			std::cout << "unknown command" << std::endl;
+		}
 	}
 }
 
