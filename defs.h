@@ -6,6 +6,8 @@
 
 #include <sys/time.h>
 
+#define DEBUG
+
 #ifndef DEBUG
 #define ASSERT(x)
 #define D(x)
@@ -19,7 +21,7 @@ if (!(x)) { \
 	std::cout << "Line: " << __LINE__ << '\n'; \
 	std::exit(0); \
 }
-#define D(x) {x;}
+#define D(x) x
 #endif
 
 typedef unsigned long long U64;
@@ -75,7 +77,6 @@ static const int KNIGHT_WEIGHT_EG = 281;
 static const int BISHOP_WEIGHT_EG = 297;
 static const int ROOK_WEIGHT_EG = 512;
 static const int QUEEN_WEIGHT_EG = 936;
-*/
 
 static const int PAWN_WEIGHT = 88;
 static const int KNIGHT_WEIGHT = 309;
@@ -93,6 +94,7 @@ static const int PieceValue[] =  {
     KING_WEIGHT,
     0 // none
 };
+*/
 
 enum Square : uint32_t {
 	H1, G1, F1, E1, D1, C1, B1, A1,

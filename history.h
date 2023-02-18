@@ -15,8 +15,9 @@ class History {
 public:
 	History() : mKillers{}, mHistory{} {
 		mGameHistory.reserve(1024);
-		for (std::array<int, BOARD_SIZE>& arr : mButterfly)
+		for (std::array<int, BOARD_SIZE>& arr : mButterfly) {
 			arr.fill(1);
+		}
 	}
 	History(const State& pState) : mKillers{}, mHistory{} {
 		mGameHistory.reserve(1024);

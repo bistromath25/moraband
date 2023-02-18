@@ -16,17 +16,34 @@ static const int BISHOP_THREAT = 2;
 static const int ROOK_THREAT = 3;
 static const int QUEEN_THREAT = 5;
 
-static const int PAWN_WEIGHT_MG = 82;
+static const int PAWN_WEIGHT_MG = 84;
 static const int KNIGHT_WEIGHT_MG = 337;
 static const int BISHOP_WEIGHT_MG = 365;
 static const int ROOK_WEIGHT_MG = 477;
 static const int QUEEN_WEIGHT_MG = 1025;
 
-static const int PAWN_WEIGHT_EG = 94;
+static const int PAWN_WEIGHT_EG = 92;
 static const int KNIGHT_WEIGHT_EG = 281;
 static const int BISHOP_WEIGHT_EG = 297;
 static const int ROOK_WEIGHT_EG = 512;
 static const int QUEEN_WEIGHT_EG = 936;
+
+static const int PAWN_WEIGHT = (PAWN_WEIGHT_MG + PAWN_WEIGHT_EG) / 2;
+static const int KNIGHT_WEIGHT = (KNIGHT_WEIGHT_MG + KNIGHT_WEIGHT_EG) / 2;
+static const int BISHOP_WEIGHT = (BISHOP_WEIGHT_MG + BISHOP_WEIGHT_EG) / 2;
+static const int ROOK_WEIGHT = (ROOK_WEIGHT_MG + ROOK_WEIGHT_EG) / 2;
+static const int QUEEN_WEIGHT = (QUEEN_WEIGHT_MG + QUEEN_WEIGHT_EG) / 2;
+static const int KING_WEIGHT = 32767;
+
+static const int PieceValue[] =  {
+    PAWN_WEIGHT_MG,
+    KNIGHT_WEIGHT_MG,
+    BISHOP_WEIGHT_MG,
+    ROOK_WEIGHT_MG,
+    QUEEN_WEIGHT,
+    KING_WEIGHT,
+    0 // none
+};
 
 // Pawn eval
 static const int PAWN_PASSED = 20;
@@ -38,8 +55,8 @@ static const int PAWN_FULL_BACKWARDS = -15;
 static const int PAWN_BACKWARDS = -5;
 static const int BAD_BISHOP = -2;
 static const int TRAPPED_ROOK = -25;
-static const int STRONG_PAWN_ATTACK = 80; // -80
-static const int WEAK_PAWN_ATTACK = 40; // -40
+static const int STRONG_PAWN_ATTACK = -80; // -80
+static const int WEAK_PAWN_ATTACK = -40; // -40
 static const int HANGING = -25;
 
 // Assorted bonuses (maybe not used)
