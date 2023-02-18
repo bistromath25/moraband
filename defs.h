@@ -6,8 +6,6 @@
 
 #include <sys/time.h>
 
-#define DEBUG
-
 #ifndef DEBUG
 #define ASSERT(x)
 #define D(x)
