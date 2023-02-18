@@ -4,10 +4,6 @@
 #include <fstream>
 #include <thread>
 
-//#define SINGLE_THREAD
-
-// CPW: https://www.chessprogramming.org/Futility_Pruning
-
 //Variation variation;
 //History history;
 
@@ -232,16 +228,14 @@ int search(State& s, SearchInfo& si, GlobalInfo& gi, int depth, int ply, int alp
 		if (!isPv && bestScore > -CHECKMATE_BOUND && !s.inCheck() && !s.givesCheck(m) && s.getNonPawnPieceCount(s.getOurColor())) {
 			
 			// Futility pruning
-			if (depth < 8 && !isPv && staticEval + 100 * d <= a) {
-				continue;
-			}
+			//if (depth < 8 && !isPv && staticEval + 100 * d <= a) {
+			//	continue;
+			//}
 			
-			/*
 			// Futility pruning
 			if (depth == 1 && s.isQuiet(m) && !isPromotion(m) && staticEval + 300 < a) {
 				continue;
 			}
-			*/
 
 			// Late move reduction
 			if (depth > 2 && mlist.size() > (isPv ? 5 : 3) && !s.inCheck() && !s.isCapture(m) && !isPromotion(m)) {
@@ -272,9 +266,10 @@ int search(State& s, SearchInfo& si, GlobalInfo& gi, int depth, int ply, int alp
 			first = false;
 		}     
 		else {
-			if (d >= 1) {
-				score = -search(c, si, gi, d - 1, ply + 1, -(a + 1), -a, false, isNull, false);
-			}
+			//if (d >= 1) {
+			//	score = -search(c, si, gi, d - 1, ply + 1, -(a + 1), -a, false, isNull, false);
+			//}
+			score = -search(c, si, gi, d, ply + 1, -(a + 1), -a, false, isNull, false);
 			if (score > a) {
 				score = -search(c, si, gi, d, ply + 1, -b, -a, false, isNull, true);
 			}
@@ -289,24 +284,21 @@ int search(State& s, SearchInfo& si, GlobalInfo& gi, int depth, int ply, int alp
 		if (score > bestScore) {
 			bestScore = score;
 			best_move = m;
+		}
 
-			//gi.variation.clearPv();
-			gi.variation.pushToPv(best_move, s.getKey(), ply, bestScore);
+		a = std::max(a, bestScore);
 
-			a = std::max(a, bestScore);
-
-			// Alpha-Beta pruning
-			if (a >= b) {
-				a = b;
-				if (s.isQuiet(m)) {
-					gi.history.update(m, depth, ply, true);
-				}
-				break;
+		// Alpha-Beta pruning
+		if (a >= b) {
+			a = b;
+			if (s.isQuiet(m)) {
+				gi.history.update(m, depth, ply, true);
 			}
-			else {
-				if (s.isQuiet(m)) {
-					gi.history.update(m, depth, ply, false);
-				}
+			break;
+		}
+		else {
+			if (s.isQuiet(m)) {
+				gi.history.update(m, depth, ply, false);
 			}
 		}
 	}
@@ -315,15 +307,19 @@ int search(State& s, SearchInfo& si, GlobalInfo& gi, int depth, int ply, int alp
 		return s.check() ? -CHECKMATE + ply : STALEMATE;
 	}
 
-	U64 flag = bestScore >= b ? FLAG_LOWER
-		: bestScore > alpha ? FLAG_EXACT
+	if (a > alpha && a < b && !si.quit) {
+		gi.variation.pushToPv(best_move, s.getKey(), ply, a);
+	}
+
+	U64 flag = a >= b ? FLAG_LOWER
+		: a > alpha ? FLAG_EXACT
 			: FLAG_UPPER;
 	
-	tt.insert(best_move, flag, depth, value_to_tt(bestScore, s.getFiftyMoveRule()), s.getKey());
+	tt.insert(best_move, flag, depth, value_to_tt(a, s.getFiftyMoveRule()), s.getKey());
 
 	// assert(variation.getPvMove() != NULL_MOVE);
 	// Fail-Hard alpha beta score
-	return bestScore;
+	return a;
 }
 
 // int search(State& s, SearchInfo& si, GlobalInfo& gi, int depth, int ply, int alpha, int beta, bool isPv, bool isNull, bool isRoot)
@@ -364,10 +360,10 @@ Move iterative_deepening(State& s, SearchInfo& si, int NUM_THREADS) {
 			THREAD_STOP = false;
 			if (d > 4) {
 				for (int i = 1; i < NUM_THREADS; ++i) {
-					threads[i] = std::thread{parallel_search, s, si, d + (i & 1), NEG_INF, POS_INF, i};
+					threads[i] = std::thread{parallel_search, s, si, d + (i & 1), alpha, beta, i};
 				}
 			
-				results[0].first = search(s, si, global_info[0], d, 0, NEG_INF, POS_INF, true, false, true);
+				results[0].first = search(s, si, global_info[0], d, 0, alpha, beta, true, false, true);
 				THREAD_STOP = true;
 			
 				for (int i = 1; i < NUM_THREADS; ++i) {
@@ -378,7 +374,7 @@ Move iterative_deepening(State& s, SearchInfo& si, int NUM_THREADS) {
 				}
 			}
 			else {
-				results[0].first = search(s, si, global_info[0], d, 0, NEG_INF, POS_INF, true, false, true);
+				results[0].first = search(s, si, global_info[0], d, 0, alpha, beta, true, false, true);
 			}
 
 			score = results[results_index].first;
@@ -401,9 +397,9 @@ Move iterative_deepening(State& s, SearchInfo& si, int NUM_THREADS) {
 			global_info[results_index].variation.printPv();
 			std::cout << std::endl;
 
-			if (si.nodes == si.prevNodes || si.nodes >= si.max_nodes || d >= si.depth) {
-				break;
-			}
+			//if (si.nodes == si.prevNodes || si.nodes >= si.max_nodes || d >= si.depth) {
+			//	break;
+			//}
 			if (si.clock.elapsed<std::chrono::milliseconds>() * 2 > si.moveTime) {
 				break; // Insufficient time for next search iteration
 			}
@@ -440,10 +436,8 @@ Move iterative_deepening(State& s, SearchInfo& si, int NUM_THREADS) {
 }
 
 Move search(State& s, SearchInfo& si, int NUM_THREADS) {
-	tt.clear();
-	//gi.variation.clearPv();
+	//tt.clear();
 	init_eval();
-	//gi.history.clear();
 	return iterative_deepening(s, si, NUM_THREADS);
 }
 

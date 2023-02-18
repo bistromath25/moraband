@@ -1,4 +1,5 @@
 #include "state.h"
+#include "eval.h"
 #include "zobrist.h"
 #include <utility>
 
@@ -740,3 +741,5 @@ std::ostream & operator << (std::ostream & os, const State & s) {
 	
 	return os;
 }
+
+///
