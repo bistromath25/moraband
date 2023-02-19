@@ -25,10 +25,10 @@ inline int64_t allocate_time(int time_left, int inc, int moves, int moves_to_go)
 	int64_t search_time;
 	if (moves_to_go || inc) {
 		if (moves_to_go && moves_to_go < 8) {
-			search_time = std::min(int64_t((time_left - MOVE_OVERHEAD) / 2), int64_t((time_left - MOVE_OVERHEAD) / (moves_to_go + 12) + inc * 0.4));
+			search_time = std::min(int64_t((time_left - MOVE_OVERHEAD) / 2), int64_t((time_left - MOVE_OVERHEAD) / (moves_to_go + 8) + inc * 0.4));
 		}
 		else {
-			search_time = std::min(int64_t((time_left - MOVE_OVERHEAD) / 4), int64_t((time_left - MOVE_OVERHEAD) / 27 + inc * 0.9));
+			search_time = std::min(int64_t((time_left - MOVE_OVERHEAD) / 4), int64_t((time_left - MOVE_OVERHEAD) / 20 + inc * 0.9));
 		}
 	}
 	else {

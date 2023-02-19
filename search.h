@@ -25,10 +25,6 @@ static const int NULL_MOVE_COUNT = 3;
 static const int NULL_MOVE_DEPTH = 3;
 static const int ASP_DELTA[] = { 10, 30, 50, 100, 200, 300, POS_INF };
 
-static const int MAX_THREADS = 16;
-//static int NUM_THREADS = 1;
-static bool THREAD_STOP = false;
-
 enum SearchType {
 	qSearch,
 	scoutSearch
@@ -55,8 +51,9 @@ struct GlobalInfo {
 	Variation variation;
 };
 
-//extern History history;
-//extern Variation variation;
+static const int MAX_THREADS = 16;
+//static int NUM_THREADS = 1;
+static bool THREAD_STOP = false;
 static std::thread threads[MAX_THREADS];
 static GlobalInfo global_info[MAX_THREADS];
 static std::pair<int, bool> results[MAX_THREADS];
