@@ -51,7 +51,7 @@ void Evaluate::evalPawns(const Color c) {
 			break;
 		}
 
-		mMaterial[c] += ((PAWN_WEIGHT_MG * (256 - mGamePhase)) + PAWN_WEIGHT_EG * mGamePhase) / 256;
+		mMaterial[c] += PAWN_WEIGHT;
 
 		if (!((file_bb[p] | adj_files[p]) & in_front[c][p] & mState.getPieceBB<pawn>(!c))) {
 			mPawnStructure[c] += PAWN_PASSED; // No pawns in adjacent files or in front
@@ -114,7 +114,7 @@ void Evaluate::evalPieces(const Color c) {
 		if (p == no_sq) {
 			break;
 		}
-		mMaterial[c] += ((KNIGHT_WEIGHT_MG * (256 - mGamePhase)) + KNIGHT_WEIGHT_EG * mGamePhase) / 256;
+		mMaterial[c] += KNIGHT_WEIGHT;
 		if (square_bb[p] & pins) {
 			mMobility[c] += KNIGHT_MOBILITY[0];
 			continue;
@@ -132,7 +132,7 @@ void Evaluate::evalPieces(const Color c) {
 		if (p == no_sq) {
 			break;
 		}
-		mMaterial[c] += ((BISHOP_WEIGHT_MG * (256 - mGamePhase)) + BISHOP_WEIGHT_EG * mGamePhase) / 256;
+		mMaterial[c] += BISHOP_WEIGHT;
 		moves = mState.getAttackBB<bishop>(p);
 		if (square_bb[p] & pins) {
 			moves &= coplanar[p][kingSq];
@@ -150,7 +150,7 @@ void Evaluate::evalPieces(const Color c) {
 		if (p == no_sq) {
 			break;
 		}
-		mMaterial[c] += ((ROOK_WEIGHT_MG * (256 - mGamePhase)) + ROOK_WEIGHT_EG * mGamePhase) / 256;
+		mMaterial[c] += ROOK_WEIGHT;
 		moves = mState.getAttackBB<rook>(p);
 		if (square_bb[p] & pins) {
 			moves &= coplanar[p][kingSq];
@@ -164,6 +164,8 @@ void Evaluate::evalPieces(const Color c) {
 		//if (!(file_bb[p] & in_front[c][p] & mState.getPieceBB<pawn>(!c) & mState.getPieceBB<pawn>(c))) {
 		//	mMaterial[c] += ((ROOK_OPEN_FILE_MG * (256 - mGamePhase)) + ROOK_OPEN_FILE_EG * mGamePhase) / 256;
 		//}
+
+		/*
 		if (mState.getPieceBB<king>(c) & bottomRank && square_bb[p] & bottomRank) { // **NOTE** check if this is working properly
 			if ((kingSq > p && !mState.canCastleKingside(c) && square_bb[kingSq] & RIGHTSIDE) || (kingSq < p && !mState.canCastleQueenside(c) && square_bb[kingSq] & LEFTSIDE)) {
 				if (pop_count(moves & mobilityNet & ~(bottomRank)) <= 3) {
@@ -171,13 +173,14 @@ void Evaluate::evalPieces(const Color c) {
 				}
 			}
 		}
+		*/
 	}
 	
 	for (Square p : mState.getPieceList<queen>(c)) {
 		if (p == no_sq) {
 			break;
 		}
-		mMaterial[c] += ((QUEEN_WEIGHT_MG * (256 - mGamePhase)) + QUEEN_WEIGHT_EG * mGamePhase) / 256;
+		mMaterial[c] += QUEEN_WEIGHT;
 		moves = mState.getAttackBB<queen>(p);
 		if (square_bb[p] & pins) {
 			moves &= coplanar[p][kingSq];

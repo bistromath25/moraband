@@ -57,7 +57,7 @@ static const int BAD_BISHOP = -2;
 static const int TRAPPED_ROOK = -25;
 static const int STRONG_PAWN_ATTACK = -80; // -80
 static const int WEAK_PAWN_ATTACK = -40; // -40
-static const int HANGING = -25;
+static const int HANGING = -35;
 
 // Assorted bonuses (maybe not used)
 /*
@@ -91,6 +91,14 @@ static const int SAFETY_TABLE[100] =  {
 	500, 500, 500, 500, 500, 500, 500, 500, 500, 500,
 	500, 500, 500, 500, 500, 500, 500, 500, 500, 500,
 	500, 500, 500, 500, 500, 500, 500, 500, 500, 500
+};
+
+static const int PIECE_MOBILITY[5][28] = {
+	{ 0 },
+	{ -30, -15, -5, 0, 5, 10, 15, 20, 25 },
+	{ -30, -15, -5, 0, 5, 10, 15, 20, 25, 30, 35, 40, 45, 50 },
+	{ -30, -15, -5, 0, 5, 10, 15, 20, 25, 30, 35, 40, 45, 50, 50 },
+	{ -30, -15, -5, 0, 5, 10, 15, 20, 25, 30, 35, 40, 45, 50, 50, 50, 50, 50, 50, 50, 50, 50, 50, 50, 50, 50, 50, 50 }
 };
 
 static const int KNIGHT_MOBILITY[] = { // Number of squares attacked

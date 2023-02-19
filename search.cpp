@@ -4,9 +4,6 @@
 #include <fstream>
 #include <thread>
 
-//Variation variation;
-//History history;
-
 inline int value_to_tt(int value, int ply) {
 	if (value >= MAX_CHECKMATE) {
 		value += ply;
@@ -54,15 +51,16 @@ int qsearch(State& s, SearchInfo& si, GlobalInfo& gi, int ply, int alpha, int be
 		return DRAW; // Game must be a draw, return
 	}
 
+	if (!(si.nodes & 2047) && (si.quit || interrupt(si) || THREAD_STOP)) {
+		return 0;
+	}
+
 	Evaluate evaluate(s);
-
 	int qscore = evaluate.getScore();
-
 	// If a beta cutoff is found, return qscore
 	if (qscore >= beta) {
 		return beta;
 	}
-
 	// Update alpha
 	alpha = std::max(alpha, qscore);
 
@@ -89,17 +87,15 @@ int qsearch(State& s, SearchInfo& si, GlobalInfo& gi, int ply, int alpha, int be
 
 		gi.history.push(std::make_pair(m, c.getKey()));
 		score = -qsearch(c, si, gi, ply + 1, -beta, -alpha);
+		gi.history.pop();
 		if (!(si.nodes & 2047) && (si.quit || interrupt(si) || THREAD_STOP)) {
 			return 0;
 		}
 
-		gi.history.pop();
 		if (score >= bestScore) {
 			bestScore = score;
 		}
-
 		alpha = std::max(alpha, bestScore); // Update alpha value
-
 		if (alpha >= beta) {
 			return beta;
 		}
@@ -285,6 +281,7 @@ int search(State& s, SearchInfo& si, GlobalInfo& gi, int depth, int ply, int alp
 		if (score > bestScore) {
 			bestScore = score;
 			best_move = m;
+			gi.variation.pushToPv(best_move, s.getKey(), ply, a);
 		}
 
 		a = std::max(a, bestScore);
@@ -308,9 +305,11 @@ int search(State& s, SearchInfo& si, GlobalInfo& gi, int depth, int ply, int alp
 		return s.check() ? -CHECKMATE + ply : STALEMATE;
 	}
 
+	/*
 	if (a > alpha && a < b && !si.quit) {
 		gi.variation.pushToPv(best_move, s.getKey(), ply, a);
 	}
+	*/
 
 	U64 flag = a >= b ? FLAG_LOWER
 		: a > alpha ? FLAG_EXACT
@@ -326,6 +325,10 @@ int search(State& s, SearchInfo& si, GlobalInfo& gi, int depth, int ply, int alp
 int search_root(State& s, SearchInfo& si, GlobalInfo& gi, int depth, int ply, int alpha, int beta, bool isRoot) {
 	assert(depth >= 0);
 	si.nodes++;
+
+	if (gi.history.isThreefoldRepetition(s) || s.insufficientMaterial() || s.getFiftyMoveRule() > 99) {
+		return DRAW; // Game must be a draw, return
+	}
 
 	if (!(si.nodes & 2047) && (si.quit || interrupt(si) || THREAD_STOP)) {
 		return 0;
@@ -381,6 +384,7 @@ int search_root(State& s, SearchInfo& si, GlobalInfo& gi, int depth, int ply, in
 		if (score > bestScore) {
 			bestScore = score;
 			best_move = m;
+			gi.variation.pushToPv(best_move, s.getKey(), ply, a);
 		}
 
 		a = std::max(a, bestScore);
@@ -404,9 +408,12 @@ int search_root(State& s, SearchInfo& si, GlobalInfo& gi, int depth, int ply, in
 		return s.check() ? -CHECKMATE + ply : STALEMATE;
 	}
 
+	/*
 	if (a > alpha && a < b && !si.quit) {
 		gi.variation.pushToPv(best_move, s.getKey(), ply, a);
+		//gi.variation.checkPv(s);
 	}
+	*/
 
 	U64 flag = a >= b ? FLAG_LOWER
 		: a > alpha ? FLAG_EXACT
@@ -434,12 +441,6 @@ void parallel_search(State s, SearchInfo si, int depth, int alpha, int beta, int
 
 // CPW: https://www.chessprogramming.org/Iterative_Deepening
 Move iterative_deepening(State& s, SearchInfo& si, int NUM_THREADS) {
-	for (int i = 0; i < NUM_THREADS; ++i) {
-		global_info[i].nodes = 0;
-		results[i].first = 0;
-		results[i].second = false;
-	}
-
 	Move best_move = NULL_MOVE;
 	int alpha = NEG_INF;
 	int beta = POS_INF;
@@ -538,6 +539,13 @@ Move iterative_deepening(State& s, SearchInfo& si, int NUM_THREADS) {
 Move search(State& s, SearchInfo& si, int NUM_THREADS) {
 	tt.clear();
 	init_eval();
+	for (int i = 0; i < NUM_THREADS; ++i) {
+		global_info[i].variation.clearPv();
+		global_info[i].history.clear();
+		global_info[i].nodes = 0;
+		results[i].first = 0;
+		results[i].second = false;
+	}
 	return iterative_deepening(s, si, NUM_THREADS);
 }
 

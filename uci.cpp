@@ -102,6 +102,7 @@ void position(std::istringstream & is, State & s) {
 	for (int i = 0; i < NUM_THREADS; ++i) {
 		global_info[i].history.init();
 		global_info[i].history.push(std::make_pair(NULL_MOVE, s.getKey()));
+		global_info[i].variation.clearPv();
 	}
 
 	is >> token;
