@@ -25,9 +25,9 @@ inline int value_from_tt(int value, int ply) {
 }
 
 // Check if search should be stopped
-bool interrupt(SearchInfo& si) {
+bool stop_search(SearchInfo& si) {
 	// Not enough time left for search
-	if (si.clock.elapsed<std::chrono::milliseconds>() >= si.moveTime && !si.infinite) {
+	if (si.clock.elapsed<std::chrono::milliseconds>() >= si.moveTime) {
 		si.quit = true;
 		return true;
 	}
@@ -51,7 +51,7 @@ int qsearch(State& s, SearchInfo& si, GlobalInfo& gi, int ply, int alpha, int be
 		return DRAW; // Game must be a draw, return
 	}
 
-	if (!(si.nodes & 2047) && (si.quit || interrupt(si) || THREAD_STOP)) {
+	if (!(si.nodes & 2047) && (si.quit || stop_search(si) || THREAD_STOP)) {
 		return 0;
 	}
 
@@ -88,7 +88,7 @@ int qsearch(State& s, SearchInfo& si, GlobalInfo& gi, int ply, int alpha, int be
 		gi.history.push(std::make_pair(m, c.getKey()));
 		score = -qsearch(c, si, gi, ply + 1, -beta, -alpha);
 		gi.history.pop();
-		if (!(si.nodes & 2047) && (si.quit || interrupt(si) || THREAD_STOP)) {
+		if (!(si.nodes & 2047) && (si.quit || stop_search(si) || THREAD_STOP)) {
 			return 0;
 		}
 
@@ -116,7 +116,7 @@ int search(State& s, SearchInfo& si, GlobalInfo& gi, int depth, int ply, int alp
 	if (depth == 0) {
 		return qsearch(s, si, gi, ply, alpha, beta);
 	}
-	if (!isRoot && (gi.history.isThreefoldRepetition(s) || s.insufficientMaterial() || s.getFiftyMoveRule() > 99)) {
+	if (gi.history.isThreefoldRepetition(s) || s.insufficientMaterial() || s.getFiftyMoveRule() > 99) {
 		return DRAW;
 	}
 	
@@ -127,7 +127,7 @@ int search(State& s, SearchInfo& si, GlobalInfo& gi, int depth, int ply, int alp
 		return alpha;
 	}
 	
-	if (!(si.nodes & 2047) && (si.quit || interrupt(si) || THREAD_STOP)) {
+	if (!(si.nodes & 2047) && (si.quit || stop_search(si) || THREAD_STOP)) {
 		return 0;
 	}
 
@@ -174,7 +174,7 @@ int search(State& s, SearchInfo& si, GlobalInfo& gi, int depth, int ply, int alp
 	}
 
 	// Pruning
-	if (!isPv && /*forwardPruning &&*/ !s.inCheck() && s.getNonPawnPieceCount(s.getOurColor()) && beta > -CHECKMATE_BOUND) {
+	if (!isPv && !s.inCheck() && s.getNonPawnPieceCount(s.getOurColor()) && beta > -CHECKMATE_BOUND) {
 		// Reverse futility pruning
 		if (depth < 3 && staticEval - 200 * depth >= beta) {
 			return staticEval;
@@ -222,7 +222,6 @@ int search(State& s, SearchInfo& si, GlobalInfo& gi, int depth, int ply, int alp
 	Move m;
 	bool first = true;
 	int count = 0;
-	
 	while ((m = mlist.getBestMove())) {
 		d = depth - 1; // Early pruning
 
@@ -240,7 +239,7 @@ int search(State& s, SearchInfo& si, GlobalInfo& gi, int depth, int ply, int alp
 
 			// SEE-based pruning (prune if SEE too low)
 			// Prune if see(move) < -(pawn * 2 ^ (depth - 1))
-			if (depth < 3 && s.see(m) < -PAWN_WEIGHT * (1 << (depth - 1))) {
+			if (depth < 8 && s.see(m) < -PAWN_WEIGHT * (1 << (depth - 1))) {
 				continue;
 			}
 		}
@@ -268,35 +267,33 @@ int search(State& s, SearchInfo& si, GlobalInfo& gi, int depth, int ply, int alp
 				score = -search(c, si, gi, d, ply + 1, -(a + 1), -a, false, isNull, false);	
 			//} 
 			if (score > a) {
-				score = -search(c, si, gi, std::max(d, depth - 1), ply + 1, -b, -a, false, isNull, false);
+				score = -search(c, si, gi, std::max(d, depth - 1), ply + 1, -b, -a, isPv, isNull, false);
 			}
 		}
 		
 		gi.history.pop(); // Pop move from gamelist
 
-		if (!(si.nodes & 2047) && (si.quit || interrupt(si) || THREAD_STOP)) {
+		if (!(si.nodes & 2047) && (si.quit || stop_search(si) || THREAD_STOP)) {
 			return 0;
 		}
 		
 		if (score > bestScore) {
 			bestScore = score;
 			best_move = m;
-			gi.variation.pushToPv(best_move, s.getKey(), ply, a);
-		}
-
-		a = std::max(a, bestScore);
-
-		// Alpha-Beta pruning
-		if (a >= b) {
-			a = b;
-			if (s.isQuiet(m)) {
-				gi.history.update(m, depth, ply, true);
+			gi.variation.pushToPv(best_move, s.getKey(), ply, bestScore);
+			a = std::max(a, bestScore);
+			// Alpha-Beta pruning
+			if (a >= b) {
+				a = b;
+				if (s.isQuiet(m)) {
+					gi.history.update(m, depth, ply, true);
+				}
+				break;
 			}
-			break;
-		}
-		else {
-			if (s.isQuiet(m)) {
-				gi.history.update(m, depth, ply, false);
+			else {
+				if (s.isQuiet(m)) {
+					gi.history.update(m, depth, ply, false);
+				}
 			}
 		}
 	}
@@ -322,7 +319,7 @@ int search(State& s, SearchInfo& si, GlobalInfo& gi, int depth, int ply, int alp
 	return a;
 }
 
-int search_root(State& s, SearchInfo& si, GlobalInfo& gi, int depth, int ply, int alpha, int beta, bool isRoot) {
+int search_root(State& s, SearchInfo& si, GlobalInfo& gi, int depth, int ply, int alpha, int beta) {
 	assert(depth >= 0);
 	si.nodes++;
 
@@ -330,7 +327,7 @@ int search_root(State& s, SearchInfo& si, GlobalInfo& gi, int depth, int ply, in
 		return DRAW; // Game must be a draw, return
 	}
 
-	if (!(si.nodes & 2047) && (si.quit || interrupt(si) || THREAD_STOP)) {
+	if (!(si.nodes & 2047) && (si.quit || stop_search(si) || THREAD_STOP)) {
 		return 0;
 	}
 
@@ -347,7 +344,6 @@ int search_root(State& s, SearchInfo& si, GlobalInfo& gi, int depth, int ply, in
 	Move m, best_move;
 	bool first = true;
 	int count = 0;
-
 	while ((m = mlist.getBestMove())) {		
 		if (s.givesCheck(m)) {
 			continue;
@@ -365,42 +361,40 @@ int search_root(State& s, SearchInfo& si, GlobalInfo& gi, int depth, int ply, in
 
 		if (first) {
 			best_move = m;
-			score = -search(c, si, gi, d, ply + 1, -b, -a, true, false, isRoot);
+			score = -search(c, si, gi, d, ply + 1, -b, -a, true, false, true);
 			first = false;
 		}
 		else {
-			score = -search(c, si, gi, d, ply + 1, -(a + 1), -a, true, false, isRoot);
+			score = -search(c, si, gi, d, ply + 1, -(a + 1), -a, false, false, false);
 			if (score > a) {
-				score = -search(c, si, gi, std::max(d, depth - 1), ply + 1, -b, -a, false, false, isRoot);
+				score = -search(c, si, gi, std::max(d, depth - 1), ply + 1, -b, -a, true, false, true);
 			}
 		}
 
 		gi.history.pop(); // Pop move from gamelist
 
-		if (!(si.nodes & 2047) && (si.quit || interrupt(si) || THREAD_STOP)) {
+		if (!(si.nodes & 2047) && (si.quit || stop_search(si) || THREAD_STOP)) {
 			return 0;
 		}
 		
 		if (score > bestScore) {
 			bestScore = score;
 			best_move = m;
-			gi.variation.pushToPv(best_move, s.getKey(), ply, a);
-		}
-
-		a = std::max(a, bestScore);
-
-		// Alpha-Beta pruning
-		if (a >= b) {
-			a = b;
-			if (s.isQuiet(m)) {
-				gi.history.update(m, depth, ply, true);
+			gi.variation.pushToPv(best_move, s.getKey(), ply, bestScore); // Save pv move
+			a = std::max(a, bestScore);
+			// Alpha-Beta pruning
+			if (a >= b) {
+				a = b;
+				if (s.isQuiet(m)) {
+					gi.history.update(m, depth, ply, true);
+				}
+				break;
 			}
-			break;
-		}
-		else {
-			if (s.isQuiet(m)) {
-				gi.history.update(m, depth, ply, false);
-			}
+			else {
+				if (s.isQuiet(m)) {
+					gi.history.update(m, depth, ply, false);
+				}
+			}	
 		}
 	}
 
@@ -432,7 +426,8 @@ void parallel_search(State s, SearchInfo si, int depth, int alpha, int beta, int
 	auto& gi = global_info[t];
 	valid = false;
 	
-	value = search_root(s, si, gi, depth, 0, alpha, beta, false);
+	//value = search_root(s, si, gi, depth, 0, alpha, beta);
+	value = search(s, si, gi, depth, 0, alpha, beta, false, false, false);
 	if (!THREAD_STOP) {
 		THREAD_STOP = true;
 		valid = true;
@@ -449,6 +444,7 @@ Move iterative_deepening(State& s, SearchInfo& si, int NUM_THREADS) {
 	int results_index;
 	bool failed = false;
 	int score = 0;
+	//bool foundMate = false;
 	for (int d = 1; !si.quit && d <= MAX_PLY; ++d) {
 		adelta = 0;
 		bdelta = 0;
@@ -456,12 +452,14 @@ Move iterative_deepening(State& s, SearchInfo& si, int NUM_THREADS) {
 			failed = false;
 			results_index = 0;
 			THREAD_STOP = false;
+			//foundMate = false;
 			if (d > 4) {
 				for (int i = 1; i < NUM_THREADS; ++i) {
 					threads[i] = std::thread{parallel_search, s, si, d + (i & 1), alpha, beta, i};
 				}
 			
-				results[0].first = search_root(s, si, global_info[0], d, 0, alpha, beta, true);
+				//results[0].first = search_root(s, si, global_info[0], d, 0, alpha, beta);
+				results[0].first = search(s, si, global_info[0], d, 0, alpha, beta, true, false, true);
 				THREAD_STOP = true;
 			
 				for (int i = 1; i < NUM_THREADS; ++i) {
@@ -472,11 +470,12 @@ Move iterative_deepening(State& s, SearchInfo& si, int NUM_THREADS) {
 				}
 			}
 			else {
-				results[0].first = search_root(s, si, global_info[0], d, 0, alpha, beta, true);
+				//results[0].first = search_root(s, si, global_info[0], d, 0, alpha, beta);
+				results[0].first = search(s, si, global_info[0], d, 0, alpha, beta, true, false, true);
 			}
 
 			score = results[results_index].first;
-			if (si.quit || interrupt(si)) {
+			if (si.quit || stop_search(si)) {
 				break;
 			}
 			global_info[results_index].variation.checkPv(s);
@@ -491,7 +490,7 @@ Move iterative_deepening(State& s, SearchInfo& si, int NUM_THREADS) {
 			si.prevNodes = si.nodes;
 			si.nodes = 0;
 
-			// Aspiration window calculations)
+			// Aspiration window calculations
 			if (score <= alpha) {
 				alpha = std::max(score - ASP_DELTA[adelta], NEG_INF);
 				adelta++;
@@ -505,8 +504,11 @@ Move iterative_deepening(State& s, SearchInfo& si, int NUM_THREADS) {
 		} while (failed);
 
 		//score = results[results_index].first;
+		//global_info[results_index].variation.checkPv(s);
+		D(std::cout << "alpha beta score: " << alpha << ' ' << beta << ' ' << score << std::endl;);
 		std::cout << "info depth " << d;
 		if (global_info[results_index].variation.isMate()) {
+			//foundMate = true;
 			int n = global_info[results_index].variation.getMateInN();
 			std::cout << " score mate " << (score > 0 ? n : -n);
 		}
@@ -514,7 +516,9 @@ Move iterative_deepening(State& s, SearchInfo& si, int NUM_THREADS) {
 			std::cout << " score cp " << score;
 		}
 
-		std::cout << " time " << si.clock.elapsed<std::chrono::milliseconds>() << " nodes " << si.nodes << " nps " << si.nodes / (si.clock.elapsed<std::chrono::milliseconds>() + 1) * 1000;
+		std::cout << " time " << si.clock.elapsed<std::chrono::milliseconds>() 
+			<< " nodes " << si.nodes 
+				<< " nps " << si.nodes / (si.clock.elapsed<std::chrono::milliseconds>() + 1) * 1000;
 		global_info[results_index].variation.printPv();
 		std::cout << std::endl;
 
@@ -523,7 +527,7 @@ Move iterative_deepening(State& s, SearchInfo& si, int NUM_THREADS) {
 		if (si.clock.elapsed<std::chrono::milliseconds>() * 2 > si.moveTime) {
 			break; // Insufficient time for next search iteration
 		}
-		if (d > 1 && interrupt(si)) {
+		if (d > 1 && stop_search(si)) {
 			break;
 		}
 
@@ -537,8 +541,8 @@ Move iterative_deepening(State& s, SearchInfo& si, int NUM_THREADS) {
 }
 
 Move search(State& s, SearchInfo& si, int NUM_THREADS) {
-	tt.clear();
-	init_eval();
+	//tt.clear();
+	//init_eval();
 	for (int i = 0; i < NUM_THREADS; ++i) {
 		global_info[i].variation.clearPv();
 		global_info[i].history.clear();

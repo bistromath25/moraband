@@ -63,37 +63,6 @@ enum PieceType {
 	none
 };
 
-/*
-static const int PAWN_WEIGHT_MG = 82;
-static const int KNIGHT_WEIGHT_MG = 337;
-static const int BISHOP_WEIGHT_MG = 365;
-static const int ROOK_WEIGHT_MG = 477;
-static const int QUEEN_WEIGHT_MG = 1025;
-
-static const int PAWN_WEIGHT_EG = 94;
-static const int KNIGHT_WEIGHT_EG = 281;
-static const int BISHOP_WEIGHT_EG = 297;
-static const int ROOK_WEIGHT_EG = 512;
-static const int QUEEN_WEIGHT_EG = 936;
-
-static const int PAWN_WEIGHT = 88;
-static const int KNIGHT_WEIGHT = 309;
-static const int BISHOP_WEIGHT = 331;
-static const int ROOK_WEIGHT = 494;
-static const int QUEEN_WEIGHT = 980;
-static const int KING_WEIGHT = 32767;
-
-static const int PieceValue[] =  {
-    PAWN_WEIGHT,
-    KNIGHT_WEIGHT,
-    BISHOP_WEIGHT,
-    ROOK_WEIGHT,
-    QUEEN_WEIGHT,
-    KING_WEIGHT,
-    0 // none
-};
-*/
-
 enum Square : uint32_t {
 	H1, G1, F1, E1, D1, C1, B1, A1,
 	H2, G2, F2, E2, D2, C2, B2, A2,

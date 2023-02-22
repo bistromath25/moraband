@@ -9,7 +9,15 @@
 #include "uci.h"
 
 int main(int argc, char* argv[]) {
-	std::cout << "Moraband, known in antiquity as Korriban, was an Outer Rim planet that was home to the ancient Sith" << std::endl;
+	std::cout << " ___  ___                _                     _ \n \
+|  \\/  |               | |                   | | \n\
+ |      | ___  _ __ __ _| |__   __ _ _ __   __| | \n\
+ | |\\/| |/ _ \\| '__/ _` | '_ \\ / _` | '_ \\ / _` | \n\
+ | |  | | (_) | | | (_| | |_) | (_| | | | | (_| | \n\
+ \\_|  |_/\\___/|_|  \\__,_|_.__/ \\__,_|_| |_|\\__,_|" << std::endl;
+	
+	
+	std::cout << "Moraband, known in antiquity as Korriban, was an\n Outer Rim planet that was home to the ancient Sith\n" << std::endl;
 	mg_init();
 	Zobrist::init();
 	bb_init();
