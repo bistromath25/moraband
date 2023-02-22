@@ -79,9 +79,11 @@ void go(std::istringstream & is, State & s) {
 		else if (token == "movetime") {
 			is >> search_info.moveTime;
 		}
+		/*
 		else if (token == "infinite") {
 			search_info.infinite = true;
 		}
+		*/
 	}
 	
 	search_info.clock.set();
@@ -196,6 +198,7 @@ void uci() {
 		}
 		else if (token == "ucinewgame") {
 			tt.clear();
+			ptable.clear();
 		}
 		else if (token == "isready") {
 			std::cout << "readyok" << std::endl;

@@ -23,7 +23,7 @@ static const int LMR_COUNT = 3;
 static const int LMR_DEPTH = 2;
 static const int NULL_MOVE_COUNT = 3;
 static const int NULL_MOVE_DEPTH = 3;
-static const int ASP_DELTA[] = { 10, 30, 50, 100, 200, 300, POS_INF };
+static const int ASP_DELTA[] = { 10, 20, 40, 100, 200, 400, POS_INF };
 
 enum SearchType {
 	qSearch,
@@ -31,12 +31,12 @@ enum SearchType {
 };
 
 struct SearchInfo {
-	SearchInfo() : moveTime(0), nodes(0), prevNodes(0), moves_to_go(0), quit(false), infinite(false), depth(MAX_PLY), time{}, inc{} {}
+	SearchInfo() : moveTime(0), nodes(0), prevNodes(0), moves_to_go(0), quit(false), /*infinite(false),*/ depth(MAX_PLY), time{}, inc{} {}
 	int time[PLAYER_SIZE], inc[PLAYER_SIZE];
 	int moves_to_go, depth, max_nodes, nodes, prevNodes, mate;
 	int64_t moveTime;
 	Clock clock;
-	bool infinite, quit;
+	bool quit;
 	std::vector<Move> sm;
 };
 
@@ -59,7 +59,7 @@ static GlobalInfo global_info[MAX_THREADS];
 static std::pair<int, bool> results[MAX_THREADS];
 
 int search(State& s, SearchInfo& si, GlobalInfo& gi, int depth, int ply, int alpha, int beta, bool isPv, bool isNull, bool isRoot);
-int search_root(State& s, SearchInfo& si, GlobalInfo& gi, int depth, int ply, int alpha, int beta, bool isRoot);
+int search_root(State& s, SearchInfo& si, GlobalInfo& gi, int depth, int ply, int alpha, int beta);
 Move iterative_deepening(State& s, SearchInfo& si, int NUM_THREADS);
 Move search(State& s, SearchInfo& si, int NUM_THREADS);
 

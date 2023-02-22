@@ -1,10 +1,19 @@
 #include "eval.h"
 
-Evaluate::Evaluate(const State& pState) : mState(pState) , mMaterial{}, mPawnStructure{}, mMobility{}, mKingSafety{}, mAttacks{}, mPieceAttacksBB{}, mAllAttacksBB{} {
-	
+PawnHashTable ptable;
+
+Evaluate::Evaluate(const State& pState) : 
+	mState(pState), 
+	mMaterial{}, 
+	mPawnStructure{}, 
+	mMobility{}, 
+	mKingSafety{}, 
+	mAttacks{}, 
+	mPieceAttacksBB{}, 
+	mAllAttacksBB{} {
 	// Check for entry in pawn hash table
 	if (mState.getPieceCount<pawn>()) {
-		const PawnEntry* pawnEntry = probe(mState.getPawnKey());
+		const PawnEntry* pawnEntry = ptable.probe(mState.getPawnKey());
 		if (pawnEntry && pawnEntry->getKey() == mState.getPawnKey()) {
 			mPawnStructure = pawnEntry->getStructure();
 			mMaterial = pawnEntry->getMaterial();
@@ -12,7 +21,7 @@ Evaluate::Evaluate(const State& pState) : mState(pState) , mMaterial{}, mPawnStr
 		else {
 			evalPawns(WHITE);
 			evalPawns(BLACK);
-			store(mState.getPawnKey(), mPawnStructure, mMaterial);
+			ptable.store(mState.getPawnKey(), mPawnStructure, mMaterial);
 		}
 	}
 	
@@ -32,20 +41,37 @@ Evaluate::Evaluate(const State& pState) : mState(pState) , mMaterial{}, mPawnStr
 	evalAttacks(BLACK);
 
 	Color c = mState.getOurColor();
-	mScore = mMobility[c] - mMobility[!c] + mKingSafety[c] - mKingSafety[!c] + mPawnStructure[c] - mPawnStructure[!c] + mMaterial[c] - mMaterial[!c];
-	mScore += ((mState.getPstScore(MIDDLEGAME) * (256 - mGamePhase)) + mState.getPstScore(ENDGAME) * mGamePhase) / 256;
-	
-	mScore += TEMPO_BONUS; // Side-to-move bonus
+	mMgScore = mMobility[c] - mMobility[!c] + mKingSafety[c] - mKingSafety[!c] + mPawnStructure[c] - mPawnStructure[!c] + mMaterial[c] - mMaterial[!c] + mAttacks[c] - mAttacks[!c];
+	mEgScore = mMobility[c] - mMobility[!c] + mKingSafety[c] - mKingSafety[!c] + mPawnStructure[c] - mPawnStructure[!c] + mMaterial[c] - mMaterial[!c] + mAttacks[c] - mAttacks[!c];
+	mMgScore += mState.getPstScore(MIDDLEGAME);
+	mEgScore += mState.getPstScore(ENDGAME);
+	mMgScore += TEMPO_BONUS;
+	mEgScore += TEMPO_BONUS;
 }
 
 int Evaluate::getScore() const {
-	// return mScore;
-	return CONTEMPT ? mScore * CONTEMPT / 50 : mScore;
+	//return CONTEMPT ? mScore * CONTEMPT / 50 : mScore;
+	int score = (mMgScore * (256 - mState.getGamePhase()) + mEgScore * mState.getGamePhase()) / 256;
+	return CONTEMPT ? score * CONTEMPT / 50 : score;  
+}
+
+void Evaluate::evalOutpost(Square p, PieceType pt, Color c) {
+	if (!(p & outpost_area[c]) || !(pawn_attacks[!c][p] & mState.getPieceBB<pawn>(c)) || in_front[c][p] & adj_files[p] & mState.getPieceBB<pawn>(!c)) {
+		return;
+	}
+	if (!mState.getPieceBB<knight>(!c) && !mState.getPieceBB<bishop>(!c) & squares_of_color(p)) {
+		mMgScore += OUTPOST_BONUS * 2; // Cannot be attacked by opponent's minor pieces
+		mEgScore += OUTPOST_BONUS * 2;
+		return;
+	}
+	mMgScore += OUTPOST_BONUS;
+	mEgScore += OUTPOST_BONUS;
 }
 
 void Evaluate::evalPawns(const Color c) {
 	const int dir = c == WHITE ? 8 : -8;
-	
+	int mgScore = 0, egScore = 0;
+
 	for (Square p : mState.getPieceList<pawn>(c)) {
 		if (p == no_sq) {
 			break;
@@ -161,10 +187,8 @@ void Evaluate::evalPieces(const Color c) {
 			king_threats += ROOK_THREAT;
 		}
 		mMobility[c] += ROOK_MOBILITY[pop_count(moves & mobilityNet)];
-		//if (!(file_bb[p] & in_front[c][p] & mState.getPieceBB<pawn>(!c) & mState.getPieceBB<pawn>(c))) {
-		//	mMaterial[c] += ((ROOK_OPEN_FILE_MG * (256 - mGamePhase)) + ROOK_OPEN_FILE_EG * mGamePhase) / 256;
-		//}
-
+		// Rook on open file probably taken care of by mobility scores
+		//mMobility[c] += ROOK_OPEN_FILE * !(pop_count(file_bb[p] & mState.getPieceBB<pawn>(c)));
 		/*
 		if (mState.getPieceBB<king>(c) & bottomRank && square_bb[p] & bottomRank) { // **NOTE** check if this is working properly
 			if ((kingSq > p && !mState.canCastleKingside(c) && square_bb[kingSq] & RIGHTSIDE) || (kingSq < p && !mState.canCastleQueenside(c) && square_bb[kingSq] & LEFTSIDE)) {
@@ -194,10 +218,10 @@ void Evaluate::evalPieces(const Color c) {
 	}
 	
 	// Remaining evaluation values
-	// Bishop pair
-	//if (mState.getPieceCount<bishop>(c) >= 2 && mState.getPieceCount<bishop>(!c) < 2) {
-	//	mMaterial[c] += ((BISHOP_PAIR_MG * (256 - mGamePhase)) + BISHOP_PAIR_EG * mGamePhase) / 256;
-	//}
+	// Bishop pair, added only if position is "open"
+	if (mState.getPieceCount<bishop>(c) >= 2 && mState.getPieceCount<bishop>(!c) < 2 && mState.getPieceCount<pawn>() <= 10) {
+		mMaterial[c] += BISHOP_PAIR;
+	}
 	
 	mKingSafety[!c] -= SAFETY_TABLE[king_threats];
 }
@@ -265,7 +289,7 @@ std::ostream& operator<<(std::ostream& os, const Evaluate& e) {
 		<< std::setw(12) << pstMid + pstLate << " |\n"
 		<< "-------------------------------------------------------------\n"
 		<< "| Total           |             |             |"
-		<< std::setw(12) << e.mScore << " |\n"
+		<< std::setw(12) << e.mMgScore * (256 - e.mGamePhase) / 256 + e.mEgScore * e.mGamePhase / 256 << " |\n"
 		<< "-------------------------------------------------------------\n";
 
 	return os;

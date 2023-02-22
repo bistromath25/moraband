@@ -59,14 +59,11 @@ static const int STRONG_PAWN_ATTACK = -80; // -80
 static const int WEAK_PAWN_ATTACK = -40; // -40
 static const int HANGING = -35;
 
-// Assorted bonuses (maybe not used)
-/*
-static const int BISHOP_PAIR_MG = 7;
-static const int BISHOP_PAIR_EG = 10;
-static const int ROOK_OPEN_FILE_MG = 7;
-static const int ROOK_OPEN_FILE_EG = 8;
-static const int OUTPOST_BONUS = 5;
-*/
+// Assorted bonuses
+static const int BISHOP_PAIR = 22;
+static const int ROOK_OPEN_FILE = 12;
+static const int ROOK_ON_SEVENTH_RANK = 22;
+static const int OUTPOST_BONUS = 8;
 
 static const int CHECKMATE = 32767;
 static const int MAX_CHECKMATE = CHECKMATE + 2000;
@@ -134,35 +131,38 @@ struct PawnEntry {
 	std::array<int, PLAYER_SIZE> mMaterial;
 };
 
-static std::array<PawnEntry, PAWN_HASH_SIZE> pawnHash;
+struct PawnHashTable {
+	PawnHashTable() {}
+	void clear() {
+		std::fill(table.begin(), table.end(), PawnEntry());
+	}
+	PawnEntry* probe(U64 pKey) {
+		return &table[pKey % table.size()];
+	}
+	void store(U64 pKey, const std::array<int, PLAYER_SIZE>& pStructure, const std::array<int, PLAYER_SIZE>& pMaterial) {
+		table[pKey % table.size()].mKey = pKey;
+		table[pKey % table.size()].mStructure = pStructure;
+		table[pKey % table.size()].mMaterial = pMaterial;
+	}
+	std::array<PawnEntry, PAWN_HASH_SIZE> table;
+};
 
-inline void init_eval() {
-	std::fill(pawnHash.begin(), pawnHash.end(), PawnEntry());
-}
-
-inline PawnEntry* probe(U64 pKey) {
-	return &pawnHash[pKey % pawnHash.size()];
-}
-
-inline void store(U64 pKey, const std::array<int, PLAYER_SIZE>& pStructure, const std::array<int, PLAYER_SIZE>& pMaterial) {
-	pawnHash[pKey % pawnHash.size()].mKey = pKey;
-	pawnHash[pKey % pawnHash.size()].mStructure = pStructure;
-	pawnHash[pKey % pawnHash.size()].mMaterial = pMaterial;
-}
+extern PawnHashTable ptable;
 
 class Evaluate {
 public:
 	Evaluate(const State& pState);
-	//template<PieceType PT> int outpost(Square p, Color c);
 	void evalPawns(const Color c);
 	void evalPieces(const Color c);
 	void evalAttacks(Color c);
+	void evalOutpost(Square p, PieceType pt, Color c);
 	int getScore() const;
 	friend std::ostream& operator<<(std::ostream& o, const Evaluate& e);
 private:
 	int mGamePhase;
 	const State& mState;
-	int mScore;
+	int mMgScore;
+	int mEgScore;
 	std::array<int, PLAYER_SIZE> mMobility;
 	std::array<int, PLAYER_SIZE> mKingSafety;
 	std::array<int, PLAYER_SIZE> mPawnStructure;

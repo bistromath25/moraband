@@ -4,6 +4,8 @@
 #include <numeric>
 #include "perft.h"
 
+// https://www.chessprogramming.org/Perft_Results#Position_2
+
 static History history;
 
 int perft(State & s, int depth) { // Total
