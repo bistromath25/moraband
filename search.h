@@ -13,7 +13,7 @@
 #include "state.h"
 #include "defs.h"
 #include "tt.h"
-#include "timer.h"
+#include "timeman.h"
 #include "variation.h"
 #include "move.h"
 #include "history.h"
@@ -23,7 +23,33 @@ static const int LMR_COUNT = 3;
 static const int LMR_DEPTH = 2;
 static const int NULL_MOVE_COUNT = 3;
 static const int NULL_MOVE_DEPTH = 3;
+static const int NULL_MOVE_MARGIN = 100; // NMP pruning margin
+static const int REVERSE_FUTILITY_DEPTH = 3;
+static const int REVERSE_FUTILITY_MARGIN = 200;
+static const int RAZORING_DEPTH = 2;
+static const int RAZORING_MARGIN[] = { 0, 200, 400 };
+static const int TT_REDUCTION_DEPTH = 4;
 static const int ASP_DELTA[] = { 10, 20, 40, 100, 200, 400, POS_INF };
+
+inline int value_to_tt(int value, int ply) {
+	if (value >= CHECKMATE_BOUND) {
+		value += ply;
+	}
+	else if (value <= -CHECKMATE_BOUND) {
+		value -= ply;
+	}
+	return value;
+}
+
+inline int value_from_tt(int value, int ply) {
+	if (value >= CHECKMATE_BOUND) {
+		value -= ply;
+	}
+	else if (value <= -CHECKMATE_BOUND) {
+		value += ply;
+	}
+	return value;
+}
 
 enum SearchType {
 	qSearch,
@@ -31,12 +57,13 @@ enum SearchType {
 };
 
 struct SearchInfo {
-	SearchInfo() : moveTime(0), nodes(0), prevNodes(0), moves_to_go(0), quit(false), /*infinite(false),*/ depth(MAX_PLY), time{}, inc{} {}
+	SearchInfo() : moveTime(0), nodes(0), prevNodes(0), totalNodes(0), moves_to_go(0), quit(false), infinite(false), depth(MAX_PLY), time{}, inc{} {}
 	int time[PLAYER_SIZE], inc[PLAYER_SIZE];
 	int moves_to_go, depth, max_nodes, nodes, prevNodes, mate;
+	U64 totalNodes;
 	int64_t moveTime;
 	Clock clock;
-	bool quit;
+	bool quit, infinite;
 	std::vector<Move> sm;
 };
 
@@ -63,4 +90,4 @@ int search_root(State& s, SearchInfo& si, GlobalInfo& gi, int depth, int ply, in
 Move iterative_deepening(State& s, SearchInfo& si, int NUM_THREADS);
 Move search(State& s, SearchInfo& si, int NUM_THREADS);
 
-#endif  
+#endif

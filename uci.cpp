@@ -69,9 +69,11 @@ void go(std::istringstream & is, State & s) {
 		}
 		else if (token == "depth") {
 			is >> search_info.depth;
+			search_info.infinite = true;
 		}
 		else if (token == "nodes") {
 			is >> search_info.max_nodes;
+			search_info.infinite = true;
 		}
 		else if (token == "mate") {
 			is >> search_info.mate;
@@ -79,16 +81,17 @@ void go(std::istringstream & is, State & s) {
 		else if (token == "movetime") {
 			is >> search_info.moveTime;
 		}
-		/*
 		else if (token == "infinite") {
 			search_info.infinite = true;
 		}
-		*/
 	}
 	
 	search_info.clock.set();
-	if (!search_info.moveTime) {
-		search_info.moveTime = allocate_time(search_info.time[s.getOurColor()], search_info.inc[s.getOurColor()], global_info[0].history.size() / 2, search_info.moves_to_go);
+	if (search_info.infinite) {
+		search_info.moveTime = ONE_HOUR; // Search for one hour in infinite mode
+	}
+	else if (!search_info.moveTime) {
+		search_info.moveTime = get_search_time(search_info.time[s.getOurColor()], search_info.inc[s.getOurColor()], global_info[0].history.size() / 2, search_info.moves_to_go);
 	}
 	
 	m = search(s, search_info, NUM_THREADS); // searching main only
@@ -199,6 +202,7 @@ void uci() {
 		else if (token == "ucinewgame") {
 			tt.clear();
 			ptable.clear();
+			//tt.setAncient();
 		}
 		else if (token == "isready") {
 			std::cout << "readyok" << std::endl;
@@ -234,6 +238,9 @@ void uci() {
 		else if (token == "display") {
 			std::cout << root;
 		}
+		else if (token == "phase") {
+			std::cout << root.getGamePhase() << std::endl;
+		}
 		else if (token == "fen") {
 			std::cout << root.getFen() << std::endl;
 		}
@@ -243,7 +250,11 @@ void uci() {
 		}
 		else if (token == "perft") {
 			is >> token;
-			perftTest(root, std::stoi(token));
+			perftTest(root, std::stoi(token), false);
+		}
+		else if (token == "mtperft") {
+			is >> token;
+			perftTest(root, std::stoi(token), true);
 		}
 		else if (token == "moves") {
 			MoveList mlist(root);

@@ -1,11 +1,14 @@
-#ifndef TIMER_H
-#define TIMER_H
+#ifndef TIMEMAN_H
+#define TIMEMAN_H
 
 #include <chrono>
 #include <sys/time.h>
+#include <cstdlib>
 
 const int MIN_SEARCH_TIME = 500; // Absolute minimum time to spend searching
 static int MOVE_OVERHEAD = 500;
+const int ONE_MINUTE = 60000; // 1000 * 60
+const int ONE_HOUR = 3600000; // ONE_MINUTE * 60
 
 class Clock {
 public:
@@ -21,23 +24,15 @@ private:
 };
 
 // https://www.chessprogramming.org/Time_Management
-inline int64_t allocate_time(int time_left, int inc, int moves, int moves_to_go) {
+inline int64_t get_search_time(int time_left, int inc, int moves, int moves_to_go) {
 	int64_t search_time;
-	
 	if (moves_to_go) {
 		search_time = (time_left - MOVE_OVERHEAD) / moves_to_go;
 	}
 	else {
-		if (inc) {
-			search_time = (time_left - MOVE_OVERHEAD) / std::max(10, 40 - moves);
-		}
-		else {
-			search_time = (time_left - MOVE_OVERHEAD) / 40;
-		}
+		search_time = time_left / (moves <= 25 ? 40 - moves : 15) + 3 * inc / 4;
 	}
-	
-	search_time += 3 * (inc) / 4;
-	return search_time > MIN_SEARCH_TIME ? search_time : MIN_SEARCH_TIME - 150;
+	return search_time > MIN_SEARCH_TIME ? search_time : MIN_SEARCH_TIME;
 }
 
 #endif

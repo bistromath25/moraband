@@ -364,9 +364,8 @@ Move MoveList::getBestMove() {
 				Square src = getSrc(it1->move);
 				Square dst = getDst(it1->move);
 				PieceType toMove = mState.onSquare(src);
-				it1->score = PieceSquareTable::getTaperedScore(mState.getGamePhase(), 
-				toMove, mState.getOurColor(), dst) -
-			PieceSquareTable::getTaperedScore(mState.getGamePhase(), toMove, mState.getOurColor(), src);
+				it1->score = PieceSquareTable::getTaperedScore(toMove, mState.getOurColor(), dst, mState.getGamePhase()) -
+			PieceSquareTable::getTaperedScore(toMove, mState.getOurColor(), src, mState.getGamePhase());
 			}
 			std::stable_sort(mList.begin(), it2);
 			mStage++;
@@ -461,7 +460,8 @@ Move MoveList::getBestMove() {
 						Square src = getSrc(mList[i].move);
 						Square dst = getDst(mList[i].move);
 						PieceType piece = mState.onSquare(src);
-						mList[i].score = PieceSquareTable::getTaperedScore(mState.getGamePhase(), piece, mState.getOurColor(), dst) - PieceSquareTable::getTaperedScore(mState.getGamePhase(), piece, mState.getOurColor(), src);
+						mList[i].score = PieceSquareTable::getTaperedScore(piece, mState.getOurColor(), dst, mState.getGamePhase()) 
+										- PieceSquareTable::getTaperedScore(piece, mState.getOurColor(), src, mState.getGamePhase());
 					}
 				}
 			}

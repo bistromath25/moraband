@@ -143,8 +143,8 @@ const int pst[PIECE_TYPES_SIZE][GAMESTAGE_SIZE][BOARD_SIZE] = {
 			-17, -20, -12, -27, -30, -25, -14, -36,
 			-49, -1, -27, -39, -46, -44, -33, -51,
 			-14, -14, -22, -46, -44, -30, -15, -27,
-			1,  7, -8, -64, -43, -16,  9,  8,
-			-15, 36, 12, -54,  8, -28, 24, 14,
+			1,  7, -8, -64, -50, -20,  9,  8,
+			-15, 36, 12, -60,  8, -30, 24, 14,
 		},
 		// Endgame 
 		{
@@ -165,7 +165,7 @@ inline int getScore(PieceType p, GameStage g, Color c, Square sq) {
 }
 
 // Tapered static score
-inline int getTaperedScore(int phase, PieceType p, Color c, Square sq) {
+inline int getTaperedScore(PieceType p, Color c, Square sq, int phase) {
 	return c == WHITE ? ((pst[p][MIDDLEGAME][FLIP(sq)] * (256 - phase)) + pst[p][ENDGAME][FLIP(sq)] * phase) / 256 
 		: ((pst[p][MIDDLEGAME][sq] * (256 - phase)) + pst[p][ENDGAME][sq] * phase) / 256;
 }
