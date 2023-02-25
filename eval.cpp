@@ -3,13 +3,14 @@
 PawnHashTable ptable;
 
 Evaluate::Evaluate(const State& pState) : 
-	mState(pState), 
-	mMaterial{}, 
-	mPawnStructure{}, 
-	mMobility{}, 
-	mKingSafety{}, 
-	mAttacks{}, 
-	mPieceAttacksBB{}, 
+	mState(pState),
+	mMaterial{},
+	//mPst{},
+	mPawnStructure{},
+	mMobility{},
+	mKingSafety{},
+	mAttacks{},
+	mPieceAttacksBB{},
 	mAllAttacksBB{} {
 	// Check for entry in pawn hash table
 	if (mState.getPieceCount<pawn>()) {
@@ -41,18 +42,17 @@ Evaluate::Evaluate(const State& pState) :
 	evalAttacks(BLACK);
 
 	Color c = mState.getOurColor();
-	mMgScore = mMobility[c] - mMobility[!c] + mKingSafety[c] - mKingSafety[!c] + mPawnStructure[c] - mPawnStructure[!c] + mMaterial[c] - mMaterial[!c] + mAttacks[c] - mAttacks[!c];
-	mEgScore = mMobility[c] - mMobility[!c] + mKingSafety[c] - mKingSafety[!c] + mPawnStructure[c] - mPawnStructure[!c] + mMaterial[c] - mMaterial[!c] + mAttacks[c] - mAttacks[!c];
-	mMgScore += mState.getPstScore(MIDDLEGAME);
-	mEgScore += mState.getPstScore(ENDGAME);
-	mMgScore += TEMPO_BONUS;
-	mEgScore += TEMPO_BONUS;
+	mScore = mMobility[c] - mMobility[!c] + mKingSafety[c] - mKingSafety[!c] + mPawnStructure[c] - mPawnStructure[!c] + mMaterial[c] - mMaterial[!c] + mAttacks[c] - mAttacks[!c];
+	mScore += (mState.getPstScore(MIDDLEGAME) * (256 - mGamePhase) + mState.getPstScore(ENDGAME) * mGamePhase) / 256;
+	mScore += TEMPO_BONUS;
 }
 
 int Evaluate::getScore() const {
-	//return CONTEMPT ? mScore * CONTEMPT / 50 : mScore;
-	int score = (mMgScore * (256 - mState.getGamePhase()) + mEgScore * mState.getGamePhase()) / 256;
-	return CONTEMPT ? score * CONTEMPT / 50 : score;  
+	return mScore + CONTEMPT;
+}
+
+int Evaluate::getTaperedScore(int mg, int eg) {
+	return (mg * (256 - mGamePhase) + eg * mGamePhase) / 256;
 }
 
 void Evaluate::evalOutpost(Square p, PieceType pt, Color c) {
@@ -60,29 +60,25 @@ void Evaluate::evalOutpost(Square p, PieceType pt, Color c) {
 		return;
 	}
 	if (!mState.getPieceBB<knight>(!c) && !mState.getPieceBB<bishop>(!c) & squares_of_color(p)) {
-		mMgScore += OUTPOST_BONUS * 2; // Cannot be attacked by opponent's minor pieces
-		mEgScore += OUTPOST_BONUS * 2;
+		mScore += getTaperedScore(OUTPOST_BONUS_MG, OUTPOST_BONUS_EG) * 2; // Cannot be attacked by opponent's minor pieces
 		return;
 	}
-	mMgScore += OUTPOST_BONUS;
-	mEgScore += OUTPOST_BONUS;
+	mScore += getTaperedScore(OUTPOST_BONUS_MG, OUTPOST_BONUS_EG);
 }
 
 void Evaluate::evalPawns(const Color c) {
 	const int dir = c == WHITE ? 8 : -8;
-	int mgScore = 0, egScore = 0;
 
 	for (Square p : mState.getPieceList<pawn>(c)) {
 		if (p == no_sq) {
 			break;
 		}
 
-		mMaterial[c] += PAWN_WEIGHT;
+		mMaterial[c] += getTaperedScore(PAWN_WEIGHT_MG, PAWN_WEIGHT_EG);
 
 		if (!((file_bb[p] | adj_files[p]) & in_front[c][p] & mState.getPieceBB<pawn>(!c))) {
 			mPawnStructure[c] += PAWN_PASSED; // No pawns in adjacent files or in front
 		}
-		
 		else if (!(file_bb[p] & in_front[c][p] & mState.getPieceBB<pawn>(!c))) {
 			int sentries, helpers;
 			assert(p < 56 && p > 7);
@@ -140,7 +136,8 @@ void Evaluate::evalPieces(const Color c) {
 		if (p == no_sq) {
 			break;
 		}
-		mMaterial[c] += KNIGHT_WEIGHT;
+		mMaterial[c] += getTaperedScore(KNIGHT_WEIGHT_MG, KNIGHT_WEIGHT_EG);
+		//[c] += PieceSquareTable::getTaperedScore(knight, c, p, mGamePhase);
 		if (square_bb[p] & pins) {
 			mMobility[c] += KNIGHT_MOBILITY[0];
 			continue;
@@ -158,7 +155,8 @@ void Evaluate::evalPieces(const Color c) {
 		if (p == no_sq) {
 			break;
 		}
-		mMaterial[c] += BISHOP_WEIGHT;
+		mMaterial[c] += getTaperedScore(BISHOP_WEIGHT_MG, BISHOP_WEIGHT_EG);
+		//mPst[c] += PieceSquareTable::getTaperedScore(bishop, c, p, mGamePhase);
 		moves = mState.getAttackBB<bishop>(p);
 		if (square_bb[p] & pins) {
 			moves &= coplanar[p][kingSq];
@@ -176,7 +174,8 @@ void Evaluate::evalPieces(const Color c) {
 		if (p == no_sq) {
 			break;
 		}
-		mMaterial[c] += ROOK_WEIGHT;
+		mMaterial[c] += getTaperedScore(ROOK_WEIGHT_MG, ROOK_WEIGHT_EG);
+		//[c] += PieceSquareTable::getTaperedScore(rook, c, p, mGamePhase);
 		moves = mState.getAttackBB<rook>(p);
 		if (square_bb[p] & pins) {
 			moves &= coplanar[p][kingSq];
@@ -204,7 +203,8 @@ void Evaluate::evalPieces(const Color c) {
 		if (p == no_sq) {
 			break;
 		}
-		mMaterial[c] += QUEEN_WEIGHT;
+		mMaterial[c] += getTaperedScore(QUEEN_WEIGHT_MG, QUEEN_WEIGHT_EG);
+		//[c] += PieceSquareTable::getTaperedScore(queen, c, p, mGamePhase);
 		moves = mState.getAttackBB<queen>(p);
 		if (square_bb[p] & pins) {
 			moves &= coplanar[p][kingSq];
@@ -220,7 +220,7 @@ void Evaluate::evalPieces(const Color c) {
 	// Remaining evaluation values
 	// Bishop pair, added only if position is "open"
 	if (mState.getPieceCount<bishop>(c) >= 2 && mState.getPieceCount<bishop>(!c) < 2 && mState.getPieceCount<pawn>() <= 10) {
-		mMaterial[c] += BISHOP_PAIR;
+		mMaterial[c] += getTaperedScore(BISHOP_PAIR_MG, BISHOP_PAIR_EG);
 	}
 	
 	mKingSafety[!c] -= SAFETY_TABLE[king_threats];
@@ -289,7 +289,7 @@ std::ostream& operator<<(std::ostream& os, const Evaluate& e) {
 		<< std::setw(12) << pstMid + pstLate << " |\n"
 		<< "-------------------------------------------------------------\n"
 		<< "| Total           |             |             |"
-		<< std::setw(12) << e.mMgScore * (256 - e.mGamePhase) / 256 + e.mEgScore * e.mGamePhase / 256 << " |\n"
+		<< std::setw(12) << e.mScore << " |\n"
 		<< "-------------------------------------------------------------\n";
 
 	return os;

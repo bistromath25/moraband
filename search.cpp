@@ -149,6 +149,11 @@ int search(State& s, SearchInfo& si, GlobalInfo& gi, int depth, int ply, int alp
 			}
 		}
 	}
+	else {
+		if (isPv && depth >= TT_REDUCTION_DEPTH) { // *NOTE* check if this works
+			depth -= 1; // Reduce depth if we're on PV and no tt_hit
+		}
+	}
 
 	Move best_move = NULL_MOVE;
 
@@ -176,7 +181,7 @@ int search(State& s, SearchInfo& si, GlobalInfo& gi, int depth, int ply, int alp
 	// Pruning
 	if (!isPv && !s.inCheck() && s.getNonPawnPieceCount(s.getOurColor()) && beta > -CHECKMATE_BOUND) {
 		// Reverse futility pruning
-		if (depth < 3 && staticEval - 200 * depth >= beta) {
+		if (depth < REVERSE_FUTILITY_DEPTH && staticEval - REVERSE_FUTILITY_MARGIN * depth >= beta) {
 			return staticEval;
 		}
 
@@ -523,6 +528,10 @@ Move iterative_deepening(State& s, SearchInfo& si, int NUM_THREADS) {
 		std::cout << std::endl;
 
 		best_move = global_info[results_index].variation.getPvMove();
+		if (d > 4) {
+			alpha = score - 10;
+			beta = score + 10;
+		}
 
 		if (si.clock.elapsed<std::chrono::milliseconds>() * 2 > si.moveTime) {
 			break; // Insufficient time for next search iteration
@@ -530,10 +539,8 @@ Move iterative_deepening(State& s, SearchInfo& si, int NUM_THREADS) {
 		if (d > 1 && stop_search(si)) {
 			break;
 		}
-
-		if (d > 4) {
-			alpha = score - 10;
-			beta = score + 10;
+		if (si.depth && d == si.depth) {
+			break;
 		}
 	}
 

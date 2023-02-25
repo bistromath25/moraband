@@ -6,6 +6,8 @@
 
 const int MIN_SEARCH_TIME = 500; // Absolute minimum time to spend searching
 static int MOVE_OVERHEAD = 500;
+const int ONE_MINUTE = 60000; // 1000 * 60
+const int ONE_HOUR = 3600000; // ONE_MINUTE * 60
 
 class Clock {
 public:

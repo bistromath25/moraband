@@ -16,13 +16,13 @@ static const int BISHOP_THREAT = 2;
 static const int ROOK_THREAT = 3;
 static const int QUEEN_THREAT = 5;
 
-static const int PAWN_WEIGHT_MG = 84;
+static const int PAWN_WEIGHT_MG = 82;
 static const int KNIGHT_WEIGHT_MG = 337;
 static const int BISHOP_WEIGHT_MG = 365;
 static const int ROOK_WEIGHT_MG = 477;
 static const int QUEEN_WEIGHT_MG = 1025;
 
-static const int PAWN_WEIGHT_EG = 92;
+static const int PAWN_WEIGHT_EG = 94;
 static const int KNIGHT_WEIGHT_EG = 281;
 static const int BISHOP_WEIGHT_EG = 297;
 static const int ROOK_WEIGHT_EG = 512;
@@ -53,17 +53,36 @@ static const int PAWN_ISOLATED = -10;
 static const int PAWN_DOUBLED = -5;
 static const int PAWN_FULL_BACKWARDS = -15;
 static const int PAWN_BACKWARDS = -5;
-static const int BAD_BISHOP = -2;
+
+/*
+enum PASSED_PAWN_TYPES {
+	NO_ADVANCE,
+	UNSAFE_ADVANCE,
+	PROTECTED_ADVANCE,
+	SAFE_ADVANCE
+};
+
+static const int PASSED_PAWN_SCORES[][] = {
+	{ 0, 4, 8, 12, 27, 75, 100 }, // NO_ADVANCE
+	{ 0, 5, 10, 15, 30, 80, 120 }, // UNSAFE_ADVANCE
+	{ 0, 7, 12, 17, 35, 90, 130 }, // PROTECTED_ADVANCE
+	{ 0, 7, 15, 20, 40, 100, 150 } // SAFE_ADVANCE
+};
+*/
+
+static const int BAD_BISHOP = -20;
 static const int TRAPPED_ROOK = -25;
 static const int STRONG_PAWN_ATTACK = -80; // -80
 static const int WEAK_PAWN_ATTACK = -40; // -40
-static const int HANGING = -35;
+static const int HANGING = -20;
 
 // Assorted bonuses
-static const int BISHOP_PAIR = 22;
-static const int ROOK_OPEN_FILE = 12;
-static const int ROOK_ON_SEVENTH_RANK = 22;
-static const int OUTPOST_BONUS = 8;
+static const int BISHOP_PAIR_MG = 77;
+static const int BISHOP_PAIR_EG = 88;
+static const int ROOK_OPEN_FILE = 33;
+static const int ROOK_ON_SEVENTH_RANK = 44;
+static const int OUTPOST_BONUS_MG = 24;
+static const int OUTPOST_BONUS_EG = 10;
 
 static const int CHECKMATE = 32767;
 static const int MAX_CHECKMATE = CHECKMATE + 2000;
@@ -152,21 +171,23 @@ extern PawnHashTable ptable;
 class Evaluate {
 public:
 	Evaluate(const State& pState);
+	void evaluate();
 	void evalPawns(const Color c);
 	void evalPieces(const Color c);
 	void evalAttacks(Color c);
 	void evalOutpost(Square p, PieceType pt, Color c);
 	int getScore() const;
+	int getTaperedScore(int mg, int eg);
 	friend std::ostream& operator<<(std::ostream& o, const Evaluate& e);
 private:
 	int mGamePhase;
 	const State& mState;
-	int mMgScore;
-	int mEgScore;
+	int mScore;
 	std::array<int, PLAYER_SIZE> mMobility;
 	std::array<int, PLAYER_SIZE> mKingSafety;
 	std::array<int, PLAYER_SIZE> mPawnStructure;
 	std::array<int, PLAYER_SIZE> mMaterial;
+	//std::array<int, PLAYER_SIZE> mPst;
 	std::array<int, PLAYER_SIZE> mAttacks;
 	std::array<std::array<U64, PIECE_TYPES_SIZE>, PLAYER_SIZE> mPieceAttacksBB;
 	std::array<U64, PLAYER_SIZE> mAllAttacksBB;

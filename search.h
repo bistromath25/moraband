@@ -23,6 +23,9 @@ static const int LMR_COUNT = 3;
 static const int LMR_DEPTH = 2;
 static const int NULL_MOVE_COUNT = 3;
 static const int NULL_MOVE_DEPTH = 3;
+static const int REVERSE_FUTILITY_DEPTH = 3;
+static const int REVERSE_FUTILITY_MARGIN = 200;
+static const int TT_REDUCTION_DEPTH = 4;
 static const int ASP_DELTA[] = { 10, 20, 40, 100, 200, 400, POS_INF };
 
 enum SearchType {
@@ -31,12 +34,12 @@ enum SearchType {
 };
 
 struct SearchInfo {
-	SearchInfo() : moveTime(0), nodes(0), prevNodes(0), moves_to_go(0), quit(false), /*infinite(false),*/ depth(MAX_PLY), time{}, inc{} {}
+	SearchInfo() : moveTime(0), nodes(0), prevNodes(0), moves_to_go(0), quit(false), infinite(false), depth(MAX_PLY), time{}, inc{} {}
 	int time[PLAYER_SIZE], inc[PLAYER_SIZE];
 	int moves_to_go, depth, max_nodes, nodes, prevNodes, mate;
 	int64_t moveTime;
 	Clock clock;
-	bool quit;
+	bool quit, infinite;
 	std::vector<Move> sm;
 };
 

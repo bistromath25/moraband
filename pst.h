@@ -165,7 +165,7 @@ inline int getScore(PieceType p, GameStage g, Color c, Square sq) {
 }
 
 // Tapered static score
-inline int getTaperedScore(int phase, PieceType p, Color c, Square sq) {
+inline int getTaperedScore(PieceType p, Color c, Square sq, int phase) {
 	return c == WHITE ? ((pst[p][MIDDLEGAME][FLIP(sq)] * (256 - phase)) + pst[p][ENDGAME][FLIP(sq)] * phase) / 256 
 		: ((pst[p][MIDDLEGAME][sq] * (256 - phase)) + pst[p][ENDGAME][sq] * phase) / 256;
 }

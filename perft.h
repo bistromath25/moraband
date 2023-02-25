@@ -11,9 +11,9 @@
 #include "timer.h"
 #include "move.h"
 
-int perft(State & s, int depth);
+U64 perft(State & s, int depth);
 void test(State s, MoveList* mList, int depth, int id);
-int MTperft(State& s, int depth);
-void perftTest(State& s, int depth);
+U64 MTperft(State& s, int depth);
+void perftTest(State& s, int depth, bool mt);
 
 #endif

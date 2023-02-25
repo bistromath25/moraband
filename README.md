@@ -7,16 +7,15 @@ Moraband is a UCI chess engine written in C++, and may be used with any chess in
 ## Details 
 - Move Generation
     - [(Magic) Bitboards](https://www.chessprogramming.org/Bitboards)
-    - Legal move generation
+    - Pseudo-Legal move generation
     - [Zobrist Hashing](https://www.chessprogramming.org/Zobrist_Hashing)
 - Search
-    - [Nega-max search framework](https://www.chessprogramming.org/Negamax)
-    - [Traditional alpha-beta with scout search](https://www.chessprogramming.org/Scout)
+    - [Alpha-beta search in Nega-max framework](https://www.chessprogramming.org/Negamax)
     - [Iterative deepening and aspiration windows](https://www.chessprogramming.org/Internal_Iterative_Deepening)
     - [Transposition table](https://www.chessprogramming.org/Transposition_Table)
-    - [Killer moves](https://www.chessprogramming.org/Killer_Move)
     - [Quiescence](https://www.chessprogramming.org/Quiescence_Search)
     - [Capture order based on MVV-LVA](https://www.chessprogramming.org/MVV-LVA)
+    - [Killer moves](https://www.chessprogramming.org/Killer_Move)
     - [Check extension/evasion](https://www.chessprogramming.org/Check_Extensions)
     - [Pruning using futility, reverse-futility, null-move and late-moves](https://www.chessprogramming.org/Pruning)
 - Evaluation
