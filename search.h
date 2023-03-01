@@ -13,7 +13,7 @@
 #include "state.h"
 #include "defs.h"
 #include "tt.h"
-#include "timer.h"
+#include "timeman.h"
 #include "variation.h"
 #include "move.h"
 #include "history.h"
@@ -23,6 +23,7 @@ static const int LMR_COUNT = 3;
 static const int LMR_DEPTH = 2;
 static const int NULL_MOVE_COUNT = 3;
 static const int NULL_MOVE_DEPTH = 3;
+static const int NULL_MOVE_MARGIN = 100; // NMP pruning margin
 static const int REVERSE_FUTILITY_DEPTH = 3;
 static const int REVERSE_FUTILITY_MARGIN = 200;
 static const int TT_REDUCTION_DEPTH = 4;

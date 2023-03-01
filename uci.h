@@ -9,7 +9,7 @@
 #include "defs.h"
 #include "movegen.h"
 #include "search.h"
-#include "timer.h"
+#include "timeman.h"
 
 #define ENGINE_NAME "Moraband"
 #define ENGINE_VERSION "1.0"

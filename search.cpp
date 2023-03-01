@@ -45,7 +45,7 @@ bool stop_search(SearchInfo& si) {
 
 int qsearch(State& s, SearchInfo& si, GlobalInfo& gi, int ply, int alpha, int beta) {
 	si.nodes++;
-	assert(ply < MAX_PLY);
+	assert(ply <= MAX_PLY);
 
 	if (gi.history.isThreefoldRepetition(s) || s.insufficientMaterial() || s.getFiftyMoveRule() > 99) {
 		return DRAW; // Game must be a draw, return
@@ -149,11 +149,11 @@ int search(State& s, SearchInfo& si, GlobalInfo& gi, int depth, int ply, int alp
 			}
 		}
 	}
-	else {
-		if (isPv && depth >= TT_REDUCTION_DEPTH) { // *NOTE* check if this works
-			depth -= 1; // Reduce depth if we're on PV and no tt_hit
-		}
-	}
+	//else {
+	//	if (isPv && depth >= TT_REDUCTION_DEPTH) { // *NOTE* check if this works
+	//		depth -= 1; // Reduce depth if we're on PV and no tt_hit
+	//	}
+	//}
 
 	Move best_move = NULL_MOVE;
 
@@ -186,12 +186,8 @@ int search(State& s, SearchInfo& si, GlobalInfo& gi, int depth, int ply, int alp
 		}
 
 		// Null move pruning
-		// Make a null move and search to a reduced depth and check
-		//   Current node is not PV node
-		//   Current state not in check
-		//   Depth is high enough
-		//   Enough non-pawn pieces on board
-		if (!isPv && !isNull && !s.inCheck() && depth > NULL_MOVE_DEPTH && s.getNonPawnPieceCount(s.getOurColor()) > NULL_MOVE_COUNT) {
+		// Make a null move and search to a reduced depth
+		if (depth > NULL_MOVE_DEPTH && staticEval + NULL_MOVE_MARGIN >= beta) {
 			State n;
 			std::memmove(&n, &s, sizeof s);
 			n.makeNull();
@@ -209,7 +205,7 @@ int search(State& s, SearchInfo& si, GlobalInfo& gi, int depth, int ply, int alp
 
 	// Internal iterative deepening
 	// In case no best move was found, perform a shallower search to determine which move to properly seach first
-	if ((isPv || staticEval + 100 >= beta) && !isNull && /*!s.inCheck() &&*/ depth >= 5) {
+	if (!tt_move && (isPv || staticEval + 100 >= beta) && /*!isNull && !s.inCheck() &&*/ depth >= 5) {
 		search(s, si, gi, depth - 2, ply, alpha, beta, isPv, true, false);
 		tt_entry = tt.probe(s.getKey());
 		if (tt_entry.getKey() == s.getKey()) {
@@ -450,7 +446,7 @@ Move iterative_deepening(State& s, SearchInfo& si, int NUM_THREADS) {
 	bool failed = false;
 	int score = 0;
 	//bool foundMate = false;
-	for (int d = 1; !si.quit && d <= MAX_PLY; ++d) {
+	for (int d = 1; !si.quit && d < MAX_PLY; ++d) {
 		adelta = 0;
 		bdelta = 0;
 		do {

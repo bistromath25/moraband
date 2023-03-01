@@ -60,10 +60,10 @@ void Evaluate::evalOutpost(Square p, PieceType pt, Color c) {
 		return;
 	}
 	if (!mState.getPieceBB<knight>(!c) && !mState.getPieceBB<bishop>(!c) & squares_of_color(p)) {
-		mScore += getTaperedScore(OUTPOST_BONUS_MG, OUTPOST_BONUS_EG) * 2; // Cannot be attacked by opponent's minor pieces
+		mScore += (pt == knight ? KNIGHT_OUTPOST : BISHOP_OUTPOST) * 2; // Cannot be attacked by opponent's minor pieces
 		return;
 	}
-	mScore += getTaperedScore(OUTPOST_BONUS_MG, OUTPOST_BONUS_EG);
+	mScore += pt == knight ? KNIGHT_OUTPOST : BISHOP_OUTPOST;
 }
 
 void Evaluate::evalPawns(const Color c) {
@@ -139,13 +139,13 @@ void Evaluate::evalPieces(const Color c) {
 		mMaterial[c] += getTaperedScore(KNIGHT_WEIGHT_MG, KNIGHT_WEIGHT_EG);
 		//[c] += PieceSquareTable::getTaperedScore(knight, c, p, mGamePhase);
 		if (square_bb[p] & pins) {
-			mMobility[c] += KNIGHT_MOBILITY[0];
+			mMobility[c] += getTaperedScore(KNIGHT_MOBILITY[MIDDLEGAME][0], KNIGHT_MOBILITY[ENDGAME][0]);
 			continue;
 		}
 		moves = mState.getAttackBB<knight>(p);
 		mPieceAttacksBB[c][knight] |= moves & mState.getOccupancyBB();
 		mAllAttacksBB[c] |= mPieceAttacksBB[c][knight];
-		mMobility[c] += KNIGHT_MOBILITY[pop_count(moves & mobilityNet)];
+		mMobility[c] += getTaperedScore(KNIGHT_MOBILITY[MIDDLEGAME][pop_count(moves & mobilityNet)], KNIGHT_MOBILITY[ENDGAME][pop_count(moves & mobilityNet)]);
 		if (moves & king_net_bb[!c][mState.getKingSquare(!c)] & mobilityNet) {
 			king_threats += KNIGHT_THREAT;
 		}
@@ -166,7 +166,7 @@ void Evaluate::evalPieces(const Color c) {
 		if (moves & king_net_bb[!c][mState.getKingSquare(!c)] & mobilityNet) {
 			king_threats += BISHOP_THREAT;
 		}
-		mMobility[c] += BISHOP_MOBILITY[pop_count(moves & mobilityNet)];
+		mMobility[c] += getTaperedScore(BISHOP_MOBILITY[MIDDLEGAME][pop_count(moves & mobilityNet)], BISHOP_MOBILITY[ENDGAME][pop_count(moves & mobilityNet)]);
 		mMaterial[c] += BAD_BISHOP * pop_count(squares_of_color(p) & mState.getPieceBB<pawn>(c));
 	}
 	
@@ -185,7 +185,7 @@ void Evaluate::evalPieces(const Color c) {
 		if (moves & king_net_bb[!c][mState.getKingSquare(!c)] & mobilityNet) {
 			king_threats += ROOK_THREAT;
 		}
-		mMobility[c] += ROOK_MOBILITY[pop_count(moves & mobilityNet)];
+		mMobility[c] += getTaperedScore(ROOK_MOBILITY[MIDDLEGAME][pop_count(moves & mobilityNet)], ROOK_MOBILITY[ENDGAME][pop_count(moves & mobilityNet)]);
 		// Rook on open file probably taken care of by mobility scores
 		//mMobility[c] += ROOK_OPEN_FILE * !(pop_count(file_bb[p] & mState.getPieceBB<pawn>(c)));
 		/*
@@ -214,7 +214,7 @@ void Evaluate::evalPieces(const Color c) {
 		if (moves & king_net_bb[!c][mState.getKingSquare(!c)] & mobilityNet) {
 			king_threats += QUEEN_THREAT;
 		}
-		mMobility[c] += QUEEN_MOBILITY[pop_count(moves & mobilityNet)];
+		mMobility[c] += getTaperedScore(QUEEN_MOBILITY[MIDDLEGAME][pop_count(moves & mobilityNet)], QUEEN_MOBILITY[ENDGAME][pop_count(moves & mobilityNet)]);
 	}
 	
 	// Remaining evaluation values

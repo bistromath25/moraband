@@ -8,7 +8,7 @@
 #include "movegen.h"
 #include "state.h"
 #include "defs.h"
-#include "timer.h"
+#include "timeman.h"
 #include "move.h"
 
 U64 perft(State & s, int depth);
