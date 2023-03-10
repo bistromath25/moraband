@@ -16,15 +16,15 @@ static const int BISHOP_THREAT = 3;
 static const int ROOK_THREAT = 4;
 static const int QUEEN_THREAT = 5;
 
-static const int PAWN_WEIGHT_MG = 82;
-static const int KNIGHT_WEIGHT_MG = 343;
+static const int PAWN_WEIGHT_MG = 90;
+static const int KNIGHT_WEIGHT_MG = 310;
 static const int BISHOP_WEIGHT_MG = 351;
 static const int ROOK_WEIGHT_MG = 480;
 static const int QUEEN_WEIGHT_MG = 1139;
 
 static const int PAWN_WEIGHT_EG = 94;
-static const int KNIGHT_WEIGHT_EG = 324;
-static const int BISHOP_WEIGHT_EG = 361;
+static const int KNIGHT_WEIGHT_EG = 281;
+static const int BISHOP_WEIGHT_EG = 317;
 static const int ROOK_WEIGHT_EG = 645;
 static const int QUEEN_WEIGHT_EG = 1110;
 
@@ -61,8 +61,8 @@ static const int WEAK_PAWN_ATTACK = -40; // -40
 static const int HANGING = -30;
 
 // Assorted bonuses
-static const int BISHOP_PAIR_MG = 77;
-static const int BISHOP_PAIR_EG = 88;
+static const int BISHOP_PAIR_MG = 55;
+static const int BISHOP_PAIR_EG = 77;
 static const int ROOK_OPEN_FILE = 33;
 static const int ROOK_ON_SEVENTH_RANK = 44;
 static const int KNIGHT_OUTPOST = 26;

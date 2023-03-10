@@ -219,8 +219,14 @@ void Evaluate::evalPieces(const Color c) {
 	
 	// Remaining evaluation values
 	// Bishop pair, added only if position is "open"
-	if (mState.getPieceCount<bishop>(c) >= 2 && mState.getPieceCount<bishop>(!c) < 2 && mState.getPieceCount<pawn>() <= 10) {
-		mMaterial[c] += getTaperedScore(BISHOP_PAIR_MG, BISHOP_PAIR_EG);
+	if (mState.getPieceCount<bishop>(c) >= 2) {
+		//mMaterial[c] += getTaperedScore(BISHOP_PAIR_MG, BISHOP_PAIR_EG);
+		if (mState.getPieceCount<bishop>(!c) > 1) { // Less pawns, larger bonus
+			mMaterial[c] += getTaperedScore(BISHOP_PAIR_MG, BISHOP_PAIR_EG) * (16 - (mState.getPieceCount<pawn>())) / 16;
+		}
+		else {
+			mMaterial[c] += getTaperedScore(BISHOP_PAIR_MG, BISHOP_PAIR_EG) * (16 - (mState.getPieceCount<pawn>())) / 8;
+		}
 	}
 	
 	mKingSafety[!c] -= SAFETY_TABLE[king_threats];

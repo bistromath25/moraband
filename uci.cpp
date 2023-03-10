@@ -202,6 +202,7 @@ void uci() {
 		else if (token == "ucinewgame") {
 			tt.clear();
 			ptable.clear();
+			//tt.setAncient();
 		}
 		else if (token == "isready") {
 			std::cout << "readyok" << std::endl;
@@ -236,7 +237,9 @@ void uci() {
 		}
 		else if (token == "display") {
 			std::cout << root;
-			//std::cout << root.getGamePhase() << std::endl;
+		}
+		else if (token == "phase") {
+			std::cout << root.getGamePhase() << std::endl;
 		}
 		else if (token == "fen") {
 			std::cout << root.getFen() << std::endl;
