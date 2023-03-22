@@ -88,6 +88,7 @@ void perftTest(State& s, int depth, bool mt) {
 	time = clock.elapsed<std::chrono::microseconds>() / static_cast<double>(1000000);
 	std::cout << s << std::endl;
 	std::cout << s.getFen() << std::endl;
+	std::cout << "Time:  " << time << std::endl;
 	std::cout << "Nodes: " << nodes << std::endl;
 	std::cout << "NPS:   " << U64(static_cast<long double>(nodes) / time) << std::endl;
 }

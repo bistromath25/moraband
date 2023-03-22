@@ -27,7 +27,9 @@ private:
 inline int64_t get_search_time(int time_left, int inc, int moves, int moves_to_go) {
 	int64_t search_time;
 	if (moves_to_go) {
-		search_time = (time_left - MOVE_OVERHEAD) / moves_to_go;
+		float factor = 2 - (moves > 10 ? 10 : moves) / 10.0;
+		int64_t target = (time_left - MOVE_OVERHEAD) / moves_to_go;
+		search_time = factor * target;
 	}
 	else {
 		search_time = time_left / (moves <= 25 ? 40 - moves : 15) + 3 * inc / 4;
