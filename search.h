@@ -86,7 +86,6 @@ static GlobalInfo global_info[MAX_THREADS];
 static std::pair<int, bool> results[MAX_THREADS];
 
 int search(State& s, SearchInfo& si, GlobalInfo& gi, int depth, int ply, int alpha, int beta, bool isPv, bool isNull, bool isRoot, bool isPruning);
-int search_root(State& s, SearchInfo& si, GlobalInfo& gi, int depth, int ply, int alpha, int beta);
 Move iterative_deepening(State& s, SearchInfo& si, int NUM_THREADS);
 Move search(State& s, SearchInfo& si, int NUM_THREADS);
 
