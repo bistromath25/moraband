@@ -80,7 +80,7 @@ public:
 	void removePiece(Color pColor, PieceType pPiece, Square pSquare);
 	void swapTurn();
 
-	// Valid king moves and pins
+	// Valid PIECETYPE_KING moves and pins
 	U64 getCheckSquaresBB(PieceType pPiece) const;
 	void setCheckers();
 	void setPins(Color c);
@@ -170,11 +170,11 @@ inline int State::getGamePhase() const {
 
 inline void State::setGamePhase() {
 	int phase = totalPhase
-		- getPieceCount<pawn>() * pawnPhase
-			- getPieceCount<knight>() * knightPhase
-				- getPieceCount<bishop>() * bishopPhase
-					- getPieceCount<rook>() * rookPhase
-						- getPieceCount<queen>() * queenPhase;
+		- getPieceCount<PIECETYPE_PAWN>() * pawnPhase
+			- getPieceCount<PIECETYPE_KNIGHT>() * knightPhase
+				- getPieceCount<PIECETYPE_BISHOP>() * bishopPhase
+					- getPieceCount<PIECETYPE_ROOK>() * rookPhase
+						- getPieceCount<PIECETYPE_QUEEN>() * queenPhase;
 	mPhase = (phase * 256 + (totalPhase / 2)) / totalPhase;
 }
 
@@ -187,7 +187,7 @@ inline bool State::isQuiet(Move m) const {
 }
 
 inline bool State::isEnPassant(Move m) const {
-	return onSquare(getSrc(m)) == pawn && (square_bb[getDst(m)] & mEnPassant);
+	return onSquare(getSrc(m)) == PIECETYPE_PAWN && (square_bb[getDst(m)] & mEnPassant);
 }
 
 template<PieceType P> inline const std::array<Square, PIECE_MAX>& State::getPieceList(Color pColor) const {
@@ -211,7 +211,7 @@ inline void State::movePiece(Color pColor, PieceType pPiece, Square pSrc, Square
 	mPieces[pColor][pPiece] ^= square_bb[pSrc] | square_bb[pDst];
 	mOccupancy[pColor] ^= square_bb[pSrc] | square_bb[pDst];
 	mBoard[pDst] = pPiece;
-	mBoard[pSrc] = none;
+	mBoard[pSrc] = PIECETYPE_NONE;
 	mPieceIndex[pDst] = mPieceIndex[pSrc];
 	mPieceList[pColor][pPiece][mPieceIndex[pDst]] = pDst;
 
@@ -229,7 +229,7 @@ inline void State::removePiece(Color pColor, PieceType pPiece, Square pSquare) {
 
 	mPieces[pColor][pPiece] &= ~(square_bb[pSquare]);
 	mOccupancy[pColor] &= ~(square_bb[pSquare]);
-	mBoard[pSquare] = none;
+	mBoard[pSquare] = PIECETYPE_NONE;
 
 	pieceCount = --mPieceCount[pColor][pPiece];
 
@@ -267,11 +267,11 @@ template<PieceType P> inline int State::getPieceCount(Color c) const {
 }
 
 inline int State::getNonPawnPieceCount(Color c) const {
-	return mPieceCount[c][knight] + mPieceCount[c][bishop] + mPieceCount[c][rook]   + mPieceCount[c][queen];
+	return mPieceCount[c][PIECETYPE_KNIGHT] + mPieceCount[c][PIECETYPE_BISHOP] + mPieceCount[c][PIECETYPE_ROOK]   + mPieceCount[c][PIECETYPE_QUEEN];
 }
 
 inline Square State::getKingSquare(Color c) const {
-	return mPieceList[c][king][0];
+	return mPieceList[c][PIECETYPE_KING][0];
 }
 
 inline int State::getPstScore(GameStage g) const {
@@ -314,36 +314,36 @@ inline bool State::canCastleQueenside(Color c) const {
 	return c == WHITE ? mCastleRights & WHITE_QUEENSIDE_CASTLE : mCastleRights & BLACK_QUEENSIDE_CASTLE;
 }
 
-template<PieceType Pawn> inline U64 State::getAttackBB(Square s, Color c) const {
+template<PieceType PIECETYPE_PAWN> inline U64 State::getAttackBB(Square s, Color c) const {
 	return pawn_attacks[c][s];
 }
 
-template<> inline U64 State::getAttackBB<knight>(Square s, Color c) const {
+template<> inline U64 State::getAttackBB<PIECETYPE_KNIGHT>(Square s, Color c) const {
 	return KNIGHT_MOVES[s];
 }
 
-template<> inline U64 State::getAttackBB<bishop>(Square s, Color c) const {
+template<> inline U64 State::getAttackBB<PIECETYPE_BISHOP>(Square s, Color c) const {
 	return Bmagic(s, getOccupancyBB());
 }
 
-template<> inline U64 State::getAttackBB<rook>(Square s, Color c) const {
+template<> inline U64 State::getAttackBB<PIECETYPE_ROOK>(Square s, Color c) const {
 	return Rmagic(s, getOccupancyBB());
 }
 
-template<> inline U64 State::getAttackBB<queen>(Square s, Color c) const {
+template<> inline U64 State::getAttackBB<PIECETYPE_QUEEN>(Square s, Color c) const {
 	return Qmagic(s, getOccupancyBB());
 }
 
-template<> inline U64 State::getAttackBB<king>(Square s, Color c) const {
+template<> inline U64 State::getAttackBB<PIECETYPE_KING>(Square s, Color c) const {
 	return KING_MOVES[s];
 }
 
 inline U64 State::getAttackBB(PieceType pPiece, Square pSquare, U64 pOcc) const {
-	assert(pPiece != pawn);
-	assert(pPiece != king);
-	return pPiece == knight ? getAttackBB<knight>(pSquare) 
-		: pPiece == bishop ? Bmagic(pSquare, pOcc) 
-			: pPiece == rook ? Rmagic(pSquare, pOcc)
+	assert(pPiece != PIECETYPE_PAWN);
+	assert(pPiece != PIECETYPE_KING);
+	return pPiece == PIECETYPE_KNIGHT ? getAttackBB<PIECETYPE_KNIGHT>(pSquare) 
+		: pPiece == PIECETYPE_BISHOP ? Bmagic(pSquare, pOcc) 
+			: pPiece == PIECETYPE_ROOK ? Rmagic(pSquare, pOcc)
 				: Qmagic(pSquare, pOcc);
 }
 
@@ -353,34 +353,34 @@ inline U64 State::getCheckSquaresBB(PieceType pPiece) const {
 
 inline void State::setCheckers() {
 	mCheckers = getAttackersBB(getKingSquare(mUs), mThem);
-	mCheckSquares[pawn] = getAttackBB<pawn>(getKingSquare(mThem), mThem);
-	mCheckSquares[knight] = getAttackBB<knight>(getKingSquare(mThem));
-	mCheckSquares[bishop] = getAttackBB<bishop>(getKingSquare(mThem));
-	mCheckSquares[rook] = getAttackBB<rook>(getKingSquare(mThem));
-	mCheckSquares[queen] = mCheckSquares[bishop] | mCheckSquares[rook];
+	mCheckSquares[PIECETYPE_PAWN] = getAttackBB<PIECETYPE_PAWN>(getKingSquare(mThem), mThem);
+	mCheckSquares[PIECETYPE_KNIGHT] = getAttackBB<PIECETYPE_KNIGHT>(getKingSquare(mThem));
+	mCheckSquares[PIECETYPE_BISHOP] = getAttackBB<PIECETYPE_BISHOP>(getKingSquare(mThem));
+	mCheckSquares[PIECETYPE_ROOK] = getAttackBB<PIECETYPE_ROOK>(getKingSquare(mThem));
+	mCheckSquares[PIECETYPE_QUEEN] = mCheckSquares[PIECETYPE_BISHOP] | mCheckSquares[PIECETYPE_ROOK];
 }
 
 inline bool State::defended(Square s, Color c) const {
-	return getAttackBB<pawn>(s, !c) & getPieceBB< pawn >(c)
-		|| getAttackBB<knight>(s) & getPieceBB<knight>(c)
-			|| getAttackBB<bishop>(s) & (getPieceBB<bishop>(c) | getPieceBB<queen>(c))
-				|| getAttackBB< rook >(s) & (getPieceBB< rook >(c) | getPieceBB<queen>(c));
+	return getAttackBB<PIECETYPE_PAWN>(s, !c) & getPieceBB<PIECETYPE_PAWN>(c)
+		|| getAttackBB<PIECETYPE_KNIGHT>(s) & getPieceBB<PIECETYPE_KNIGHT>(c)
+			|| getAttackBB<PIECETYPE_BISHOP>(s) & (getPieceBB<PIECETYPE_BISHOP>(c) | getPieceBB<PIECETYPE_QUEEN>(c))
+				|| getAttackBB<PIECETYPE_ROOK>(s) & (getPieceBB<PIECETYPE_ROOK>(c) | getPieceBB<PIECETYPE_QUEEN>(c));
 }
 
 inline bool State::isAttacked(Square pSquare, Color pColor, U64 pChange) const {
 	U64 occupancy = getOccupancyBB() ^ pChange;
-	return getAttackBB<pawn>(pSquare, pColor) & getPieceBB<pawn>(!pColor)
-		|| getAttackBB<knight>(pSquare) & getPieceBB<knight>(!pColor)
-			|| Bmagic(pSquare, occupancy) & (getPieceBB<bishop>(!pColor) | getPieceBB<queen>(!pColor))
-				|| Rmagic(pSquare, occupancy) & (getPieceBB<rook>(!pColor) | getPieceBB<queen>(!pColor))
-					|| getAttackBB<king>(pSquare) & getPieceBB<king>(!pColor);
+	return getAttackBB<PIECETYPE_PAWN>(pSquare, pColor) & getPieceBB<PIECETYPE_PAWN>(!pColor)
+		|| getAttackBB<PIECETYPE_KNIGHT>(pSquare) & getPieceBB<PIECETYPE_KNIGHT>(!pColor)
+			|| Bmagic(pSquare, occupancy) & (getPieceBB<PIECETYPE_BISHOP>(!pColor) | getPieceBB<PIECETYPE_QUEEN>(!pColor))
+				|| Rmagic(pSquare, occupancy) & (getPieceBB<PIECETYPE_ROOK>(!pColor) | getPieceBB<PIECETYPE_QUEEN>(!pColor))
+					|| getAttackBB<PIECETYPE_KING>(pSquare) & getPieceBB<PIECETYPE_KING>(!pColor);
 }
 
 inline bool State::attacked(Square s) const {
-	return getAttackBB< pawn >(s, mUs) &  getPieceBB< pawn >(mThem)
-		|| getAttackBB<knight>(s) &  getPieceBB<knight>(mThem)
-			|| getAttackBB<bishop>(s) & (getPieceBB<bishop>(mThem) | getPieceBB<queen>(mThem))
-				|| getAttackBB< rook >(s) & (getPieceBB< rook >(mThem) | getPieceBB<queen>(mThem));
+	return getAttackBB< PIECETYPE_PAWN >(s, mUs) &  getPieceBB< PIECETYPE_PAWN >(mThem)
+		|| getAttackBB<PIECETYPE_KNIGHT>(s) &  getPieceBB<PIECETYPE_KNIGHT>(mThem)
+			|| getAttackBB<PIECETYPE_BISHOP>(s) & (getPieceBB<PIECETYPE_BISHOP>(mThem) | getPieceBB<PIECETYPE_QUEEN>(mThem))
+				|| getAttackBB<PIECETYPE_ROOK>(s) & (getPieceBB<PIECETYPE_ROOK>(mThem) | getPieceBB<PIECETYPE_QUEEN>(mThem));
 }
 
 inline bool State::inCheck() const {
@@ -396,33 +396,33 @@ inline bool State::check() const {
 }
 
 inline U64 State::getAttackersBB(Square s, Color c) const {
-	return (getAttackBB<pawn>(s, !c) & getPieceBB< pawn >(c))
-		| (getAttackBB<knight>(s) & getPieceBB<knight>(c))
-			| (getAttackBB<bishop>(s) & (getPieceBB<bishop>(c) | getPieceBB<queen>(c)))
-				| (getAttackBB< rook >(s) & (getPieceBB< rook >(c) | getPieceBB<queen>(c)));
+	return (getAttackBB<PIECETYPE_PAWN>(s, !c) & getPieceBB< PIECETYPE_PAWN >(c))
+		| (getAttackBB<PIECETYPE_KNIGHT>(s) & getPieceBB<PIECETYPE_KNIGHT>(c))
+			| (getAttackBB<PIECETYPE_BISHOP>(s) & (getPieceBB<PIECETYPE_BISHOP>(c) | getPieceBB<PIECETYPE_QUEEN>(c)))
+				| (getAttackBB<PIECETYPE_ROOK>(s) & (getPieceBB<PIECETYPE_ROOK>(c) | getPieceBB<PIECETYPE_QUEEN>(c)));
 }
 
 inline U64 State::allAttackers(Square s) const {
-	return (getAttackBB<pawn>(s, mUs) & getPieceBB<pawn>(mThem))
-		| (getAttackBB<pawn>(s, mThem) & getPieceBB<pawn>(mUs))
-			| (getAttackBB<knight>(s) & getPieceBB<knight>())
-				| (getAttackBB<bishop>(s) & (getPieceBB<bishop>() | getPieceBB<queen>()))
-					| (getAttackBB<rook>(s) & (getPieceBB<rook>() | getPieceBB<queen>()))
-						| (getAttackBB<king>(s) & getPieceBB<king>());
+	return (getAttackBB<PIECETYPE_PAWN>(s, mUs) & getPieceBB<PIECETYPE_PAWN>(mThem))
+		| (getAttackBB<PIECETYPE_PAWN>(s, mThem) & getPieceBB<PIECETYPE_PAWN>(mUs))
+			| (getAttackBB<PIECETYPE_KNIGHT>(s) & getPieceBB<PIECETYPE_KNIGHT>())
+				| (getAttackBB<PIECETYPE_BISHOP>(s) & (getPieceBB<PIECETYPE_BISHOP>() | getPieceBB<PIECETYPE_QUEEN>()))
+					| (getAttackBB<PIECETYPE_ROOK>(s) & (getPieceBB<PIECETYPE_ROOK>() | getPieceBB<PIECETYPE_QUEEN>()))
+						| (getAttackBB<PIECETYPE_KING>(s) & getPieceBB<PIECETYPE_KING>());
 }
 
 inline bool State::check(U64 change) const {
-	return (Bmagic(getKingSquare(mUs), getOccupancyBB() ^ change) & (getPieceBB<bishop>(mThem) | getPieceBB<queen>(mThem))) 
-		|| (Rmagic(getKingSquare(mUs), getOccupancyBB() ^ change) & (getPieceBB< rook >(mThem) | getPieceBB<queen>(mThem)));
+	return (Bmagic(getKingSquare(mUs), getOccupancyBB() ^ change) & (getPieceBB<PIECETYPE_BISHOP>(mThem) | getPieceBB<PIECETYPE_QUEEN>(mThem))) 
+		|| (Rmagic(getKingSquare(mUs), getOccupancyBB() ^ change) & (getPieceBB< PIECETYPE_ROOK >(mThem) | getPieceBB<PIECETYPE_QUEEN>(mThem)));
 }
 
 inline bool State::check(U64 change, Color c) const {
-	return (Bmagic(getKingSquare(c), getOccupancyBB() ^ change) & (getPieceBB<bishop>(!c) | getPieceBB<queen>(!c))) 
-		|| (Rmagic(getKingSquare(c), getOccupancyBB() ^ change) & (getPieceBB< rook >(!c) | getPieceBB<queen>(!c)));
+	return (Bmagic(getKingSquare(c), getOccupancyBB() ^ change) & (getPieceBB<PIECETYPE_BISHOP>(!c) | getPieceBB<PIECETYPE_QUEEN>(!c))) 
+		|| (Rmagic(getKingSquare(c), getOccupancyBB() ^ change) & (getPieceBB< PIECETYPE_ROOK >(!c) | getPieceBB<PIECETYPE_QUEEN>(!c)));
 }
 
 inline U64 State::getXRayAttacks(Square square) const {
-	return bishopMoves[square] & (getPieceBB<bishop>() | getPieceBB<queen>()) | rookMoves[square] & (getPieceBB<rook>() | getPieceBB<queen>());
+	return bishopMoves[square] & (getPieceBB<PIECETYPE_BISHOP>() | getPieceBB<PIECETYPE_QUEEN>()) | rookMoves[square] & (getPieceBB<PIECETYPE_ROOK>() | getPieceBB<PIECETYPE_QUEEN>());
 }
 
 /*

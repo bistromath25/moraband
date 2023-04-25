@@ -65,16 +65,16 @@ State::State(const std::string & fen) {
 			c = isupper(*it) ? WHITE : BLACK;
 			s = last_sq - position;
 			char t = tolower(*it);
-			p = t == 'p' ? pawn
-				: t == 'n' ? knight
-					: t == 'b' ? bishop
-						: t == 'r' ? rook
-							: t == 'q' ? queen
-								: king;
+			p = t == 'p' ? PIECETYPE_PAWN
+				: t == 'n' ? PIECETYPE_KNIGHT
+					: t == 'b' ? PIECETYPE_BISHOP
+						: t == 'r' ? PIECETYPE_ROOK
+							: t == 'q' ? PIECETYPE_QUEEN
+								: PIECETYPE_KING;
 			addPiece(c, p, s);
 			mKey ^= Zobrist::key(c, p, s);
-			if (p == pawn) {
-				mPawnKey ^= Zobrist::key(c, pawn, s);
+			if (p == PIECETYPE_PAWN) {
+				mPawnKey ^= Zobrist::key(c, PIECETYPE_PAWN, s);
 			}
 			position++;
 		}
@@ -147,7 +147,7 @@ void State::init() {
 	mPinned.fill({});
 	mOccupancy.fill({});
 	mPieceIndex.fill({});
-	mBoard.fill(none);
+	mBoard.fill(PIECETYPE_NONE);
 	mPieces.fill({});
 	mPieceCount.fill({});
 	mPstScore.fill({});
@@ -163,7 +163,7 @@ void State::setPins(Color c) {
 	Square kingSq = getKingSquare(c);
 	mPinned[c] = 0;
 
-	pinners = bishopMoves[kingSq] & (getPieceBB<bishop>(!c) | getPieceBB<queen>(!c));
+	pinners = bishopMoves[kingSq] & (getPieceBB<PIECETYPE_BISHOP>(!c) | getPieceBB<PIECETYPE_QUEEN>(!c));
 
 	while (pinners) {
 		ray = between_dia[pop_lsb(pinners)][kingSq] & getOccupancyBB();
@@ -172,7 +172,7 @@ void State::setPins(Color c) {
 		}
 	}
 
-	pinners = rookMoves[kingSq] & (getPieceBB<rook>(!c) | getPieceBB<queen>(!c));
+	pinners = rookMoves[kingSq] & (getPieceBB<PIECETYPE_ROOK>(!c) | getPieceBB<PIECETYPE_QUEEN>(!c));
 
 	while (pinners) {
 		ray = between_hor[pop_lsb(pinners)][kingSq] & getOccupancyBB();
@@ -186,7 +186,7 @@ U64 State::getDiscoveredChecks(Color c) const {
 	U64 pinners, ray, discover = 0;
 	Square kingSq = getKingSquare(!c);
 
-	pinners = bishopMoves[kingSq] & (getPieceBB<bishop>(c) | getPieceBB<queen>(c));
+	pinners = bishopMoves[kingSq] & (getPieceBB<PIECETYPE_BISHOP>(c) | getPieceBB<PIECETYPE_QUEEN>(c));
 
 	while (pinners) {
 		ray = between_dia[pop_lsb(pinners)][kingSq] & getOccupancyBB();
@@ -195,7 +195,7 @@ U64 State::getDiscoveredChecks(Color c) const {
 		}
 	}
 
-	pinners = rookMoves[kingSq] & (getPieceBB<rook>(c) | getPieceBB<queen>(c));
+	pinners = rookMoves[kingSq] & (getPieceBB<PIECETYPE_ROOK>(c) | getPieceBB<PIECETYPE_QUEEN>(c));
 
 	while (pinners) {
 		ray = between_hor[pop_lsb(pinners)][kingSq] & getOccupancyBB();
@@ -211,18 +211,18 @@ bool State::isLegal(Move pMove) const {
 	Square src = getSrc(pMove);
 	Square dst = getDst(pMove);
 
-	if (square_bb[src] & mPinned[mUs] && !(coplanar[src][dst] & getPieceBB<king>(mUs))) {
+	if (square_bb[src] & mPinned[mUs] && !(coplanar[src][dst] & getPieceBB<PIECETYPE_KING>(mUs))) {
 		return false;
 	}
 
-	if (onSquare(src) == pawn && square_bb[dst] & mEnPassant) {
+	if (onSquare(src) == PIECETYPE_PAWN && square_bb[dst] & mEnPassant) {
 		U64 change = mUs == WHITE ? square_bb[src] | square_bb[dst - 8] : square_bb[src] | square_bb[dst + 8];
 		if (check(change)) {
 			return false;
 		}
 	}
 
-	if (onSquare(src) == king && !isCastle(pMove)) {
+	if (onSquare(src) == PIECETYPE_KING && !isCastle(pMove)) {
 		U64 change = square_bb[src];
 		if (isAttacked(dst, mUs, change)) {
 			return false;
@@ -246,10 +246,10 @@ bool State::isValid(Move pMove, U64 pValidMoves) const {
 	if (pMove == NULL_MOVE) {
 		return false;
 	}
-	if (getPiecePromotion(pMove) && (onSquare(src) != pawn)) {
+	if (getPiecePromotion(pMove) && (onSquare(src) != PIECETYPE_PAWN)) {
 		return false;
 	}
-	if (isCastle(pMove) && onSquare(src) != king) {
+	if (isCastle(pMove) && onSquare(src) != PIECETYPE_KING) {
 		return false;
 	}
 	if (!(square_bb[src] & getOccupancyBB(mUs)) || (square_bb[dst]  & getOccupancyBB(mUs)) || dst == getKingSquare(mThem)) {
@@ -260,7 +260,7 @@ bool State::isValid(Move pMove, U64 pValidMoves) const {
 	assert(dst != getKingSquare(mUs));
 
 	switch (onSquare(src)) {
-		case pawn:
+		case PIECETYPE_PAWN:
 		{
 			if ((square_bb[dst] & RANK_PROMOTION) && !getPiecePromotion(pMove)) {
 				return false;
@@ -283,16 +283,16 @@ bool State::isValid(Move pMove, U64 pValidMoves) const {
 			}
 		}
 		
-		case knight:
-			return getAttackBB<knight>(src) & square_bb[dst] & pValidMoves;
-		case bishop:
-			return getAttackBB<bishop>(src) & square_bb[dst] & pValidMoves;
-		case rook:
-			return getAttackBB<rook>(src) & square_bb[dst] & pValidMoves;
-		case queen:
-			return getAttackBB<queen>(src) & square_bb[dst] & pValidMoves;
+		case PIECETYPE_KNIGHT:
+			return getAttackBB<PIECETYPE_KNIGHT>(src) & square_bb[dst] & pValidMoves;
+		case PIECETYPE_BISHOP:
+			return getAttackBB<PIECETYPE_BISHOP>(src) & square_bb[dst] & pValidMoves;
+		case PIECETYPE_ROOK:
+			return getAttackBB<PIECETYPE_ROOK>(src) & square_bb[dst] & pValidMoves;
+		case PIECETYPE_QUEEN:
+			return getAttackBB<PIECETYPE_QUEEN>(src) & square_bb[dst] & pValidMoves;
 
-		case king:
+		case PIECETYPE_KING:
 		{
 			Square k = getKingSquare(mUs);
 			if (isCastle(pMove)) {
@@ -322,7 +322,7 @@ bool State::givesCheck(Move pMove) const {
 	}
 
 	// Discovered check
-	if ((getDiscoveredChecks(mUs) & square_bb[src]) && !(coplanar[src][dst] & getPieceBB<king>(mThem))) {
+	if ((getDiscoveredChecks(mUs) & square_bb[src]) && !(coplanar[src][dst] & getPieceBB<PIECETYPE_KING>(mThem))) {
 		return true;
 	}
 
@@ -333,11 +333,11 @@ bool State::givesCheck(Move pMove) const {
 	}
 	else if (isCastle(pMove)) {
 		Square rookSquare = src > dst ? dst + 1 : dst - 1;
-		return getAttackBB(rook, rookSquare, getOccupancyBB() ^ square_bb[src]) & getPieceBB<king>(mThem);
+		return getAttackBB(PIECETYPE_ROOK, rookSquare, getOccupancyBB() ^ square_bb[src]) & getPieceBB<PIECETYPE_KING>(mThem);
 	}
 	else if (isPromotion(pMove)) {
 		PieceType promo = getPiecePromotion(pMove);
-		return getAttackBB(promo, dst, getOccupancyBB() ^ square_bb[src]) &	getPieceBB<king>(mThem);
+		return getAttackBB(promo, dst, getOccupancyBB() ^ square_bb[src]) &	getPieceBB<PIECETYPE_KING>(mThem);
 	}
 	
 	return false;
@@ -357,10 +357,10 @@ int State::see(Move m) const {
 	dst = getDst(m);
 	from = square_bb[src];
 	// Check if the move is en passant
-	if (onSquare(src) == pawn && square_bb[dst] & mEnPassant) {
-		gain[d] = PieceValue[pawn];
+	if (onSquare(src) == PIECETYPE_PAWN && square_bb[dst] & mEnPassant) {
+		gain[d] = PieceValue[PIECETYPE_PAWN];
 	}
-	else if (getPiecePromotion(m) == queen) {
+	else if (getPiecePromotion(m) == PIECETYPE_QUEEN) {
 		gain[d] = QUEEN_WEIGHT - PAWN_WEIGHT;
 	}
 	else {
@@ -392,7 +392,7 @@ int State::see(Move m) const {
 		attackers ^= from;
 		occupancy ^= from;
 
-		if (target != knight) {
+		if (target != PIECETYPE_KNIGHT) {
 			xRay &= occupancy;
 			potential = coplanar[src][dst] & xRay;
 			while (potential) {
@@ -410,23 +410,23 @@ int State::see(Move m) const {
 			break;
 		}
 
-		if (attackers & getPieceBB<pawn>(color)) {
-			from = get_lsb_bb(attackers & getPieceBB<pawn>(color));
+		if (attackers & getPieceBB<PIECETYPE_PAWN>(color)) {
+			from = get_lsb_bb(attackers & getPieceBB<PIECETYPE_PAWN>(color));
 		}
-		else if (attackers & getPieceBB<knight>(color)) {
-			from = get_lsb_bb(attackers & getPieceBB<knight>(color));
+		else if (attackers & getPieceBB<PIECETYPE_KNIGHT>(color)) {
+			from = get_lsb_bb(attackers & getPieceBB<PIECETYPE_KNIGHT>(color));
 		}
-		else if (attackers & getPieceBB<bishop>(color)) {
-			from = get_lsb_bb(attackers & getPieceBB<bishop>(color));
+		else if (attackers & getPieceBB<PIECETYPE_BISHOP>(color)) {
+			from = get_lsb_bb(attackers & getPieceBB<PIECETYPE_BISHOP>(color));
 		}
-		else if (attackers & getPieceBB<rook>(color)) {
-			from = get_lsb_bb(attackers & getPieceBB<rook>(color));
+		else if (attackers & getPieceBB<PIECETYPE_ROOK>(color)) {
+			from = get_lsb_bb(attackers & getPieceBB<PIECETYPE_ROOK>(color));
 		}
-		else if (attackers & getPieceBB<queen>(color)) {
-			from = get_lsb_bb(attackers & getPieceBB<queen>(color));
+		else if (attackers & getPieceBB<PIECETYPE_QUEEN>(color)) {
+			from = get_lsb_bb(attackers & getPieceBB<PIECETYPE_QUEEN>(color));
 		}
 		else {
-			from = get_lsb_bb(attackers & getPieceBB<king>(color));
+			from = get_lsb_bb(attackers & getPieceBB<PIECETYPE_KING>(color));
 			if (attackers & getOccupancyBB(!color)) {
 				break;
 			}
@@ -453,9 +453,9 @@ void State::makeMove(Move pMove) {
 	src = getSrc(pMove);
 	dst = getDst(pMove);
 	moved = onSquare(src);
-	assert(moved != none);
+	assert(moved != PIECETYPE_NONE);
 	captured = onSquare(dst);
-	assert(captured != king);
+	assert(captured != PIECETYPE_KING);
 
 	// Update the Fifty Move Rule
 	mFiftyMoveRule++;
@@ -466,11 +466,11 @@ void State::makeMove(Move pMove) {
 	}
 	mKey ^= Zobrist::key(mCastleRights);
 
-	if (captured != none && !isCastle(pMove)) {
+	if (captured != PIECETYPE_NONE && !isCastle(pMove)) {
 		mFiftyMoveRule = 0;
 		removePiece(mThem, captured, dst);
-		if (captured == pawn) {
-			mPawnKey ^= Zobrist::key(mThem, pawn, dst);
+		if (captured == PIECETYPE_PAWN) {
+			mPawnKey ^= Zobrist::key(mThem, PIECETYPE_PAWN, dst);
 		}
 		gamePhase = true;
 	}
@@ -478,24 +478,24 @@ void State::makeMove(Move pMove) {
 	if (isCastle(pMove)) {
 		// Short castle
 		if (dst < src) {
-			movePiece(mUs, rook, src-3, dst+1);
-			movePiece(mUs, king, src, dst);
+			movePiece(mUs, PIECETYPE_ROOK, src-3, dst+1);
+			movePiece(mUs, PIECETYPE_KING, src, dst);
 		}
 		// Long castle
 		else {
-			movePiece(mUs, rook, src+4, dst-1);
-			movePiece(mUs, king, src, dst);
+			movePiece(mUs, PIECETYPE_ROOK, src+4, dst-1);
+			movePiece(mUs, PIECETYPE_KING, src, dst);
 		}
 	}
 	else {
 		movePiece(mUs, moved, src, dst);
 	}
 	
-	if (moved == pawn) {
+	if (moved == PIECETYPE_PAWN) {
 		mFiftyMoveRule = 0;
-		mPawnKey ^= Zobrist::key(mUs, pawn, src, dst);
+		mPawnKey ^= Zobrist::key(mUs, PIECETYPE_PAWN, src, dst);
 
-		// Check for double pawn push
+		// Check for double PIECETYPE_PAWN push
 		if (int(std::max(src, dst)) - int(std::min(src, dst)) == 16) {
 			mEnPassant = mUs == WHITE ? square_bb[dst - 8] : square_bb[dst + 8];
 
@@ -503,15 +503,15 @@ void State::makeMove(Move pMove) {
 			epFlag = true;
 		}
 		else if (getPiecePromotion(pMove)) {
-			mPawnKey ^= Zobrist::key(mUs, pawn, dst);
-			removePiece(mUs, pawn, dst);
+			mPawnKey ^= Zobrist::key(mUs, PIECETYPE_PAWN, dst);
+			removePiece(mUs, PIECETYPE_PAWN, dst);
 			addPiece(mUs, getPiecePromotion(pMove), dst);
 			gamePhase = true;
 		}
 		else if (mEnPassant & square_bb[dst]) {
 			Square epCapture = (mUs == WHITE) ? dst - 8 : dst + 8;
-			mPawnKey ^= Zobrist::key(mThem, pawn, epCapture);
-			removePiece(mThem, pawn, epCapture);
+			mPawnKey ^= Zobrist::key(mThem, PIECETYPE_PAWN, epCapture);
+			removePiece(mThem, PIECETYPE_PAWN, epCapture);
 			gamePhase = true;
 		}
 	}
@@ -551,32 +551,32 @@ void State::makeNull() {
 	swapTurn();
 
 	// Set check squares
-	mCheckSquares[pawn] = getAttackBB<pawn>(getKingSquare(mThem), mThem);
-	mCheckSquares[knight] = getAttackBB<knight>(getKingSquare(mThem));
-	mCheckSquares[bishop] = getAttackBB<bishop>(getKingSquare(mThem));
-	mCheckSquares[rook] = getAttackBB<rook>(getKingSquare(mThem));
-	mCheckSquares[queen] = mCheckSquares[bishop] | mCheckSquares[rook];
+	mCheckSquares[PIECETYPE_PAWN] = getAttackBB<PIECETYPE_PAWN>(getKingSquare(mThem), mThem);
+	mCheckSquares[PIECETYPE_KNIGHT] = getAttackBB<PIECETYPE_KNIGHT>(getKingSquare(mThem));
+	mCheckSquares[PIECETYPE_BISHOP] = getAttackBB<PIECETYPE_BISHOP>(getKingSquare(mThem));
+	mCheckSquares[PIECETYPE_ROOK] = getAttackBB<PIECETYPE_ROOK>(getKingSquare(mThem));
+	mCheckSquares[PIECETYPE_QUEEN] = mCheckSquares[PIECETYPE_BISHOP] | mCheckSquares[PIECETYPE_ROOK];
 }
 
 bool State::insufficientMaterial() const {
 	bool res = false;
 	
-	if (getPieceCount<pawn>() + getPieceCount<rook>() + getPieceCount<queen>() == 0) {
-		switch (getPieceCount<knight>()) {
+	if (getPieceCount<PIECETYPE_PAWN>() + getPieceCount<PIECETYPE_ROOK>() + getPieceCount<PIECETYPE_QUEEN>() == 0) {
+		switch (getPieceCount<PIECETYPE_KNIGHT>()) {
 			case 0:
-				if ((getPieceBB<bishop>() & DARK_SQUARES) == getPieceBB<bishop>() || (getPieceBB<bishop>() & LIGHT_SQUARES) == getPieceBB<bishop>()) {
+				if ((getPieceBB<PIECETYPE_BISHOP>() & DARK_SQUARES) == getPieceBB<PIECETYPE_BISHOP>() || (getPieceBB<PIECETYPE_BISHOP>() & LIGHT_SQUARES) == getPieceBB<PIECETYPE_BISHOP>()) {
 					res = true;
 				}
 				break;
 				               
 			case 1:
-				if (!getPieceCount<bishop>()) {
+				if (!getPieceCount<PIECETYPE_BISHOP>()) {
 					res = true;
 				}
 				break;
 				
 			case 2:
-				if (getPieceCount<knight>(WHITE) && getPieceCount<knight>(BLACK) && !getPieceCount<bishop>())
+				if (getPieceCount<PIECETYPE_KNIGHT>(WHITE) && getPieceCount<PIECETYPE_KNIGHT>(BLACK) && !getPieceCount<PIECETYPE_BISHOP>())
 					res = true;
 				break;
 				
@@ -604,18 +604,18 @@ std::string State::getFen() { // Current FEN
 			fen += '/';
 		}
 		
-		char p = bit & getPieceBB<pawn>(WHITE) ? 'P'
-			: bit & getPieceBB<knight>(WHITE) ? 'N'
-				: bit & getPieceBB<bishop>(WHITE) ? 'B'
-					: bit & getPieceBB<rook>(WHITE) ? 'R'
-						: bit & getPieceBB<queen>(WHITE) ? 'Q'
-							: bit & getPieceBB<king>(WHITE) ? 'K'
-								: bit & getPieceBB<pawn>(BLACK) ? 'p'
-									: bit & getPieceBB<knight>(BLACK) ? 'n'
-										: bit & getPieceBB<bishop>(BLACK) ? 'b'
-											: bit & getPieceBB<rook>(BLACK) ? 'r'
-												: bit & getPieceBB<queen>(BLACK) ? 'q'
-													: bit & getPieceBB<king>(BLACK) ? 'k' 
+		char p = bit & getPieceBB<PIECETYPE_PAWN>(WHITE) ? 'P'
+			: bit & getPieceBB<PIECETYPE_KNIGHT>(WHITE) ? 'N'
+				: bit & getPieceBB<PIECETYPE_BISHOP>(WHITE) ? 'B'
+					: bit & getPieceBB<PIECETYPE_ROOK>(WHITE) ? 'R'
+						: bit & getPieceBB<PIECETYPE_QUEEN>(WHITE) ? 'Q'
+							: bit & getPieceBB<PIECETYPE_KING>(WHITE) ? 'K'
+								: bit & getPieceBB<PIECETYPE_PAWN>(BLACK) ? 'p'
+									: bit & getPieceBB<PIECETYPE_KNIGHT>(BLACK) ? 'n'
+										: bit & getPieceBB<PIECETYPE_BISHOP>(BLACK) ? 'b'
+											: bit & getPieceBB<PIECETYPE_ROOK>(BLACK) ? 'r'
+												: bit & getPieceBB<PIECETYPE_QUEEN>(BLACK) ? 'q'
+													: bit & getPieceBB<PIECETYPE_KING>(BLACK) ? 'k' 
 														: 'e';
 		if (p == 'e') {
 			++e;
@@ -664,11 +664,9 @@ std::string State::getFen() { // Current FEN
 	
 	// Check pMove could result in enpassant
 	bool enpass = false;
-	if (moved == pawn && int(std::max(src, dst)) - int(std::min(src, dst)) == 16) {
-		// Double pawn push
-		for (Square p : getPieceList<pawn>(mUs)) {
+	if (moved == PIECETYPE_PAWN && int(std::max(src, dst)) - int(std::min(src, dst)) == 16) {
+		for (Square p : getPieceList<PIECETYPE_PAWN>(mUs)) {
 			if (rank(p) == rank(dst) && std::max(file(p), file(dst)) - std::min(file(p), file(dst)) == 1) {
-				D(std::cout << SQUARE_TO_STRING[p] << ' ' << SQUARE_TO_STRING[dst] << std::endl;);
 				fen += SQUARE_TO_STRING[dst + (mUs == WHITE ? 8 : -8)];
 				enpass = true;
 				break;
@@ -708,18 +706,18 @@ std::ostream & operator << (std::ostream & os, const State & s) {
 			os << nums[i / 8] << " | ";
 		}
 		
-		os << (bit & s.getPieceBB<pawn>(WHITE) ? W_pawn
-			: bit & s.getPieceBB<knight>(WHITE) ? W_knight
-				: bit & s.getPieceBB<bishop>(WHITE) ? W_bishop
-					: bit & s.getPieceBB<rook>(WHITE) ? W_rook
-						: bit & s.getPieceBB<queen>(WHITE) ? W_queen
-							: bit & s.getPieceBB<king>(WHITE) ? W_king
-								: bit & s.getPieceBB<pawn>(BLACK) ? B_pawn
-									: bit & s.getPieceBB<knight>(BLACK) ? B_knight
-										: bit & s.getPieceBB<bishop>(BLACK) ? B_bishop
-											: bit & s.getPieceBB<rook>(BLACK) ? B_rook
-												: bit & s.getPieceBB<queen>(BLACK) ? B_queen
-													: bit & s.getPieceBB<king>(BLACK) ? B_king
+		os << (bit & s.getPieceBB<PIECETYPE_PAWN>(WHITE) ? W_pawn
+			: bit & s.getPieceBB<PIECETYPE_KNIGHT>(WHITE) ? W_knight
+				: bit & s.getPieceBB<PIECETYPE_BISHOP>(WHITE) ? W_bishop
+					: bit & s.getPieceBB<PIECETYPE_ROOK>(WHITE) ? W_rook
+						: bit & s.getPieceBB<PIECETYPE_QUEEN>(WHITE) ? W_queen
+							: bit & s.getPieceBB<PIECETYPE_KING>(WHITE) ? W_king
+								: bit & s.getPieceBB<PIECETYPE_PAWN>(BLACK) ? B_pawn
+									: bit & s.getPieceBB<PIECETYPE_KNIGHT>(BLACK) ? B_knight
+										: bit & s.getPieceBB<PIECETYPE_BISHOP>(BLACK) ? B_bishop
+											: bit & s.getPieceBB<PIECETYPE_ROOK>(BLACK) ? B_rook
+												: bit & s.getPieceBB<PIECETYPE_QUEEN>(BLACK) ? B_queen
+													: bit & s.getPieceBB<PIECETYPE_KING>(BLACK) ? B_king
 														: Empty) << " | ";
 		
 		if (i % 8 == 0) {

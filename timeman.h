@@ -26,17 +26,11 @@ private:
 // https://www.chessprogramming.org/Time_Management
 inline int64_t get_search_time(int time_left, int inc, int moves, int moves_to_go) {
 	int64_t search_time;
-	if (moves_to_go || inc) {
-		if (moves_to_go && moves_to_go < 8) {
-			search_time = std::min((time_left - MOVE_OVERHEAD) / 2, time_left / (moves_to_go + 12) + inc / 2);
-		}
-		else {
-			search_time = std::min((time_left - MOVE_OVERHEAD) / 4, time_left / 27 + 3 * inc / 4);
-		}
+	if (moves_to_go > 0) {
+		search_time = (time_left - MOVE_OVERHEAD) / (moves <= 25 ? moves_to_go : 15) + 3 * inc / 4;
 	}
 	else {
-		//search_time = (time_left - MOVE_OVERHEAD) / (moves <= 25 ? 40 - moves : 15) + 3 * inc / 4;
-		search_time = (time_left - MOVE_OVERHEAD) / 40;
+		search_time = (time_left - MOVE_OVERHEAD) / (moves <= 25 ? 40 - moves : 15) + 3 * inc / 4;
 	}
 	return search_time > MIN_SEARCH_TIME ? search_time : MIN_SEARCH_TIME;
 }

@@ -42,72 +42,72 @@ template<MoveType T> void MoveList::pushPromotion(Square src, Square dst) {
 	const Color C = mState.getOurColor();
 	if (square_bb[dst] & NOT_A_FILE && square_bb[dst + 1] & mState.getOccupancyBB(!C)) {
 		if (T == MoveType::Attacks || T == MoveType::All) {
-			push(makeMove(src, dst + 1, queen));
+			push(makeMove(src, dst + 1, PIECETYPE_QUEEN));
 		}
 		if (T == MoveType::Quiets || T == MoveType::All) {
-			push(makeMove(src, dst + 1, knight));
-			push(makeMove(src, dst + 1, rook));
-			push(makeMove(src, dst + 1, bishop));
+			push(makeMove(src, dst + 1, PIECETYPE_KNIGHT));
+			push(makeMove(src, dst + 1, PIECETYPE_ROOK));
+			push(makeMove(src, dst + 1, PIECETYPE_BISHOP));
 		}
 		if (T == MoveType::Evasions) {
 			if (square_bb[dst + 1] & mValid) {
-				push(makeMove(src, dst + 1, queen));
-				push(makeMove(src, dst + 1, knight));
-				push(makeMove(src, dst + 1, rook));
-				push(makeMove(src, dst + 1, bishop));
+				push(makeMove(src, dst + 1, PIECETYPE_QUEEN));
+				push(makeMove(src, dst + 1, PIECETYPE_KNIGHT));
+				push(makeMove(src, dst + 1, PIECETYPE_ROOK));
+				push(makeMove(src, dst + 1, PIECETYPE_BISHOP));
 			}
 		}
 		if (T == MoveType::QuietChecks)	{
-			if (mState.getCheckSquaresBB(knight) & square_bb[dst + 1]) {
-				push(makeMove(src, dst + 1, knight));
+			if (mState.getCheckSquaresBB(PIECETYPE_KNIGHT) & square_bb[dst + 1]) {
+				push(makeMove(src, dst + 1, PIECETYPE_KNIGHT));
 			}
 		}
 	}
 
 	if (square_bb[dst] & NOT_H_FILE && square_bb[dst - 1] & mState.getOccupancyBB(!C)) {
 		if (T == MoveType::Attacks || T == MoveType::All) {
-			push(makeMove(src, dst - 1, queen));
+			push(makeMove(src, dst - 1, PIECETYPE_QUEEN));
 		}
 		if (T == MoveType::Quiets || T == MoveType::All) {
-			push(makeMove(src, dst - 1, knight));
-			push(makeMove(src, dst - 1, rook));
-			push(makeMove(src, dst - 1, bishop));
+			push(makeMove(src, dst - 1, PIECETYPE_KNIGHT));
+			push(makeMove(src, dst - 1, PIECETYPE_ROOK));
+			push(makeMove(src, dst - 1, PIECETYPE_BISHOP));
 		}
 		if (T == MoveType::Evasions) {
 			if (square_bb[dst - 1] & mValid) {
-				push(makeMove(src, dst - 1, queen));
-				push(makeMove(src, dst - 1, knight));
-				push(makeMove(src, dst - 1, rook));
-				push(makeMove(src, dst - 1, bishop));
+				push(makeMove(src, dst - 1, PIECETYPE_QUEEN));
+				push(makeMove(src, dst - 1, PIECETYPE_KNIGHT));
+				push(makeMove(src, dst - 1, PIECETYPE_ROOK));
+				push(makeMove(src, dst - 1, PIECETYPE_BISHOP));
 			}
 		}
 		if (T == MoveType::QuietChecks) {
-			if (mState.getCheckSquaresBB(knight) & square_bb[dst - 1]) {
-				push(makeMove(src, dst - 1, knight));
+			if (mState.getCheckSquaresBB(PIECETYPE_KNIGHT) & square_bb[dst - 1]) {
+				push(makeMove(src, dst - 1, PIECETYPE_KNIGHT));
 			}
 		}
 	}
 
 	if (square_bb[dst] & mState.getEmptyBB()) {
 		if (T == MoveType::Attacks || T == MoveType::All) {
-			push(makeMove(src, dst, queen));
+			push(makeMove(src, dst, PIECETYPE_QUEEN));
 		}
 		if (T == MoveType::Quiets || T == MoveType::All) {
-			push(makeMove(src, dst, knight));
-			push(makeMove(src, dst, rook));
-			push(makeMove(src, dst, bishop));
+			push(makeMove(src, dst, PIECETYPE_KNIGHT));
+			push(makeMove(src, dst, PIECETYPE_ROOK));
+			push(makeMove(src, dst, PIECETYPE_BISHOP));
 		}
 		if (T == MoveType::Evasions) {
 			if (square_bb[dst] & mValid) {
-				push(makeMove(src, dst, queen));
-				push(makeMove(src, dst, knight));
-				push(makeMove(src, dst, rook));
-				push(makeMove(src, dst, bishop));
+				push(makeMove(src, dst, PIECETYPE_QUEEN));
+				push(makeMove(src, dst, PIECETYPE_KNIGHT));
+				push(makeMove(src, dst, PIECETYPE_ROOK));
+				push(makeMove(src, dst, PIECETYPE_BISHOP));
 			}
 		}
 		if (T == MoveType::QuietChecks) {
-			if (mState.getCheckSquaresBB(knight) & square_bb[dst]) {
-				push(makeMove(src, dst, knight));
+			if (mState.getCheckSquaresBB(PIECETYPE_KNIGHT) & square_bb[dst]) {
+				push(makeMove(src, dst, PIECETYPE_KNIGHT));
 			}
 		}
 	}
@@ -126,7 +126,7 @@ template<MoveType T, PieceType P> void MoveList::pushMoves() {
 
 		if (T == MoveType::QuietChecks) {
 			if (square_bb[src] & mDiscover) {
-				if (P == king) {
+				if (P == PIECETYPE_KING) {
 					m &= ~coplanar[src][mState.getKingSquare(!c)];
 				}
 			}
@@ -139,7 +139,7 @@ template<MoveType T, PieceType P> void MoveList::pushMoves() {
 			push(makeMove(src, pop_lsb(m)));
 		}
 
-		if (P == king && T != MoveType::Attacks && T != MoveType::Evasions) {
+		if (P == PIECETYPE_KING && T != MoveType::Attacks && T != MoveType::Evasions) {
 			pushCastle<T>();
 		}
 	}
@@ -152,7 +152,7 @@ template<MoveType T, Color C> void MoveList::pushPawnMoves() {
 
 	U64 promo, pawns;
 	Square dst;
-	pawns = mState.getPieceBB<pawn>(C);
+	pawns = mState.getPieceBB<PIECETYPE_PAWN>(C);
 	promo = (C == WHITE ? pawns << 8 : pawns >> 8) & RANK_PROMOTION;
 
 	while (promo) {
@@ -196,8 +196,8 @@ template<MoveType T, Color C> void MoveList::pushPawnMoves() {
 		if (T == MoveType::QuietChecks) {
 			U64 dis;
 
-			up  &= mState.getCheckSquaresBB(pawn);
-			dbl &= mState.getCheckSquaresBB(pawn);
+			up  &= mState.getCheckSquaresBB(PIECETYPE_PAWN);
+			dbl &= mState.getCheckSquaresBB(PIECETYPE_PAWN);
 
 			dis = mDiscover & pawns & ~file_bb[mState.getKingSquare(!C)];
 			dis = (C == WHITE ? dis << 8 : dis >> 8) & empty;
@@ -221,7 +221,7 @@ template<MoveType T> void MoveList::pushCastle() {
 	Square k = mState.getKingSquare(mState.getOurColor());
 	if (mState.canCastleKingside() && !(between_hor[k][k-3] & mState.getOccupancyBB()) && !mState.attacked(k - 1) && !mState.attacked(k-2)) {
 		if (T == MoveType::QuietChecks) {
-			if (square_bb[k - 1] & mState.getCheckSquaresBB(rook)) {
+			if (square_bb[k - 1] & mState.getCheckSquaresBB(PIECETYPE_ROOK)) {
 				push(makeCastle(k, k-2));
 			}
 		}
@@ -231,7 +231,7 @@ template<MoveType T> void MoveList::pushCastle() {
 	}
 	if (mState.canCastleQueenside() && !(between_hor[k][k+4] & mState.getOccupancyBB()) && !mState.attacked(k + 1) && !mState.attacked(k+2)) {
 		if (T == MoveType::QuietChecks) {
-			if (square_bb[k + 1] & mState.getCheckSquaresBB(rook)) {
+			if (square_bb[k + 1] & mState.getCheckSquaresBB(PIECETYPE_ROOK)) {
 				push(makeCastle(k, k+2));
 			}
 		}
@@ -258,11 +258,11 @@ template<MoveType T> void MoveList::generateMoves() {
 	mValid = T == MoveType::Attacks ? mState.getOccupancyBB(mState.getTheirColor()) : mState.getEmptyBB();
 
 	mState.getOurColor() == WHITE ? pushPawnMoves<T, WHITE>() : pushPawnMoves<T, BLACK>();
-	pushMoves<T, knight>();
-	pushMoves<T, bishop>();
-	pushMoves<T, rook>();
-	pushMoves<T, queen>();
-	pushMoves<T, king>();
+	pushMoves<T, PIECETYPE_KNIGHT>();
+	pushMoves<T, PIECETYPE_BISHOP>();
+	pushMoves<T, PIECETYPE_ROOK>();
+	pushMoves<T, PIECETYPE_QUEEN>();
+	pushMoves<T, PIECETYPE_KING>();
 }
 
 template<> void MoveList::generateMoves<MoveType::Evasions>() {
@@ -271,7 +271,7 @@ template<> void MoveList::generateMoves<MoveType::Evasions>() {
 	Square k, c;
 
 	mValid = mState.getOccupancyBB(mState.getTheirColor()) | mState.getEmptyBB();
-	pushMoves<MoveType::Evasions, king>();
+	pushMoves<MoveType::Evasions, PIECETYPE_KING>();
 
 	if (mState.inDoubleCheck()) {
 		return;
@@ -282,10 +282,10 @@ template<> void MoveList::generateMoves<MoveType::Evasions>() {
 	mValid = between[k][c] | mState.getCheckersBB();
 
 	mState.getOurColor() == WHITE ? pushPawnMoves<MoveType::Evasions, WHITE>() : pushPawnMoves<MoveType::Evasions, BLACK>();
-	pushMoves<MoveType::Evasions, knight>();
-	pushMoves<MoveType::Evasions, bishop>();
-	pushMoves<MoveType::Evasions, rook>();
-	pushMoves<MoveType::Evasions, queen>();
+	pushMoves<MoveType::Evasions, PIECETYPE_KNIGHT>();
+	pushMoves<MoveType::Evasions, PIECETYPE_BISHOP>();
+	pushMoves<MoveType::Evasions, PIECETYPE_ROOK>();
+	pushMoves<MoveType::Evasions, PIECETYPE_QUEEN>();
 }
 
 template<> void MoveList::generateMoves<MoveType::All>() {
@@ -297,11 +297,11 @@ template<> void MoveList::generateMoves<MoveType::All>() {
 	mValid = mState.getOccupancyBB(mState.getTheirColor()) | mState.getEmptyBB();
 
 	mState.getOurColor() == WHITE ? pushPawnMoves<MoveType::All, WHITE>() : pushPawnMoves<MoveType::All, BLACK>();
-	pushMoves<MoveType::All, knight>();
-	pushMoves<MoveType::All, bishop>();
-	pushMoves<MoveType::All, rook>();
-	pushMoves<MoveType::All, queen>();
-	pushMoves<MoveType::All, king>();
+	pushMoves<MoveType::All, PIECETYPE_KNIGHT>();
+	pushMoves<MoveType::All, PIECETYPE_BISHOP>();
+	pushMoves<MoveType::All, PIECETYPE_ROOK>();
+	pushMoves<MoveType::All, PIECETYPE_QUEEN>();
+	pushMoves<MoveType::All, PIECETYPE_KING>();
 }
 
 Move MoveList::getBestMove() {

@@ -12,7 +12,7 @@ namespace Zobrist {
 
 	void init() {
 		srand(6736199);
-		for (PieceType p = pawn; p < none; ++p) {
+		for (PieceType p = PIECETYPE_PAWN; p < PIECETYPE_NONE; ++p) {
 			for (Square s = first_sq; s <= last_sq; ++s) {
 				piece_rand[WHITE][p][s] = rand_64();
 				piece_rand[BLACK][p][s] = rand_64();

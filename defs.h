@@ -54,13 +54,13 @@ enum Color {
 };
 
 enum PieceType {
-	pawn,
-	knight,
-	bishop,
-	rook,
-	queen,
-	king,
-	none
+	PIECETYPE_PAWN,
+	PIECETYPE_KNIGHT,
+	PIECETYPE_BISHOP,
+	PIECETYPE_ROOK,
+	PIECETYPE_QUEEN,
+	PIECETYPE_KING,
+	PIECETYPE_NONE
 };
 
 enum Square : uint32_t {
@@ -145,16 +145,16 @@ const std::string SQUARE_TO_STRING[64] = {
 };
 
 enum Prop : uint32_t {
-	quiet,
-	attack,
-	dbl_push,
-	kingside_castle,
-	queenside_castle,
-	queen_promotion,
-	knight_promotion,
-	rook_promotion,
-	bishop_promotion,
-	en_passant
+	PROP_QUIET,
+	PROP_ATTACK,
+	PROP_DOUBLE_PUSH,
+	PROP_KINGSIDE_CASTLE,
+	PROP_QUEENSIDE_CASTLE,
+	PROP_QUEEN_PROMOTION,
+	PROP_KNIGHT_PROMOTION,
+	PROP_ROOK_PROMOTION,
+	PROP_BISHOP_PROMOTION,
+	PROP_EN_PASSANT
 };
 
 const int NEG_INF = -50000;
@@ -187,19 +187,19 @@ inline std::string to_string(Rank r) {
 }
 
 inline std::string to_string(Prop p) {
-	return p == queen_promotion ? "q"
-		: p == knight_promotion ? "k"
-			: p == rook_promotion ? "r"
-				: p == bishop_promotion ? "b"
+	return p == PROP_QUEEN_PROMOTION ? "q"
+		: p == PROP_KNIGHT_PROMOTION ? "k"
+			: p == PROP_ROOK_PROMOTION ? "r"
+				: p == PROP_BISHOP_PROMOTION ? "b"
 					: "";
 }
 
 inline std::string to_string(PieceType p) {
-	return p == pawn ? "P"
-		: p == knight ? "N"
-			: p == bishop ? "B"
-				: p == rook ? "R"
-					: p == queen ? "Q"
+	return p == PIECETYPE_PAWN ? "P"
+		: p == PIECETYPE_KNIGHT ? "N"
+			: p == PIECETYPE_BISHOP ? "B"
+				: p == PIECETYPE_ROOK ? "R"
+					: p == PIECETYPE_QUEEN ? "Q"
 						: "K";
 }
 
