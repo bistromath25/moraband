@@ -77,16 +77,16 @@ inline std::string to_string(Move m) {
 	res = SQUARE_TO_STRING[src] + SQUARE_TO_STRING[dst];
 
 	switch (getPiecePromotion(m)) {
-		case knight:
+		case PIECETYPE_KNIGHT:
 			res += "n";
 			break;
-		case bishop:
+		case PIECETYPE_BISHOP:
 			res += "b";
 			break;
-		case rook:
+		case PIECETYPE_ROOK:
 			res += "r";
 			break;
-		case queen:
+		case PIECETYPE_QUEEN:
 			res += "q";
 			break;
 		default:
