@@ -4,6 +4,8 @@
 #include <chrono>
 #include <sys/time.h>
 #include <cstdlib>
+#include <utility>
+#include "defs.h"
 
 const int MIN_SEARCH_TIME = 500; // Absolute minimum time to spend searching
 static int MOVE_OVERHEAD = 500;
@@ -24,10 +26,10 @@ private:
 };
 
 // https://www.chessprogramming.org/Time_Management
-inline int64_t get_search_time(int time_left, int inc, int moves, int moves_to_go) {
-	int64_t search_time;
-	if (moves_to_go > 0) {
-		search_time = (time_left - MOVE_OVERHEAD) / (moves <= 25 ? moves_to_go : 15) + 3 * inc / 4;
+inline U64 get_search_time(int time_left, int inc, int moves, int moves_to_go) {
+	U64 search_time = MIN_SEARCH_TIME;
+	if (moves_to_go) {
+		search_time = (time_left - MOVE_OVERHEAD) / moves_to_go + 3 * inc / 4;
 	}
 	else {
 		search_time = (time_left - MOVE_OVERHEAD) / (moves <= 25 ? 40 - moves : 15) + 3 * inc / 4;
