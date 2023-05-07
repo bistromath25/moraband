@@ -122,8 +122,8 @@ void bb_init() {
 			between[sq_src][sq_dst] = b_attacks | r_attacks;
 		}
 	}
-	outpost_area[WHITE] = RANK_4 | RANK_5 | RANK_6 | RANK_7;
-	outpost_area[BLACK] = RANK_2 | RANK_3 | RANK_4 | RANK_5;
+	outpost_area[WHITE] = RANK_4 | RANK_5 | RANK_6;
+	outpost_area[BLACK] = RANK_3 | RANK_4 | RANK_5;
 }
 
 void print_bb(U64 bb) {
