@@ -361,7 +361,7 @@ int State::see(Move m) const {
 		gain[d] = PieceValue[PIECETYPE_PAWN];
 	}
 	else if (getPiecePromotion(m) == PIECETYPE_QUEEN) {
-		gain[d] = QUEEN_WEIGHT - PAWN_WEIGHT;
+		gain[d] = QUEEN_WEIGHT_MG - PAWN_WEIGHT_MG;
 	}
 	else {
 		gain[d] = PieceValue[onSquare(dst)];

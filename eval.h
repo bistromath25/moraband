@@ -28,11 +28,6 @@ static const int BISHOP_WEIGHT_EG = 317;
 static const int ROOK_WEIGHT_EG = 645;
 static const int QUEEN_WEIGHT_EG = 1110;
 
-static const int PAWN_WEIGHT = (PAWN_WEIGHT_MG + PAWN_WEIGHT_EG) / 2;
-static const int KNIGHT_WEIGHT = (KNIGHT_WEIGHT_MG + KNIGHT_WEIGHT_EG) / 2;
-static const int BISHOP_WEIGHT = (BISHOP_WEIGHT_MG + BISHOP_WEIGHT_EG) / 2;
-static const int ROOK_WEIGHT = (ROOK_WEIGHT_MG + ROOK_WEIGHT_EG) / 2;
-static const int QUEEN_WEIGHT = (QUEEN_WEIGHT_MG + QUEEN_WEIGHT_EG) / 2;
 static const int KING_WEIGHT = 32767;
 
 static const int PieceValue[] =  {
@@ -40,7 +35,7 @@ static const int PieceValue[] =  {
     KNIGHT_WEIGHT_MG,
     BISHOP_WEIGHT_MG,
     ROOK_WEIGHT_MG,
-    QUEEN_WEIGHT,
+    QUEEN_WEIGHT_MG,
     KING_WEIGHT,
     0 // none
 };

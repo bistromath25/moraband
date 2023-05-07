@@ -9,7 +9,7 @@ namespace PieceSquareTable {
 
 // Values from Rofchade
 // TalkChess: http://www.talkchess.com/forum3/viewtopic.php?f=2&t=68311&start=19
-const int pst[PIECE_TYPES_SIZE][GAMESTAGE_SIZE][BOARD_SIZE] = {
+const int PST[PIECE_TYPES_SIZE][GAMESTAGE_SIZE][BOARD_SIZE] = {
 	// Pawns
 	{
 		// Middlegame
@@ -161,13 +161,13 @@ const int pst[PIECE_TYPES_SIZE][GAMESTAGE_SIZE][BOARD_SIZE] = {
 };
 
 inline int getScore(PieceType p, GameStage g, Color c, Square sq) {
-	return c == WHITE ? pst[p][g][FLIP(sq)] : pst[p][g][sq];
+	return c == WHITE ? PST[p][g][FLIP(sq)] : PST[p][g][sq];
 }
 
 // Tapered static score
 inline int getTaperedScore(PieceType p, Color c, Square sq, int phase) {
-	return c == WHITE ? ((pst[p][MIDDLEGAME][FLIP(sq)] * (256 - phase)) + pst[p][ENDGAME][FLIP(sq)] * phase) / 256 
-		: ((pst[p][MIDDLEGAME][sq] * (256 - phase)) + pst[p][ENDGAME][sq] * phase) / 256;
+	return c == WHITE ? ((PST[p][MIDDLEGAME][FLIP(sq)] * (256 - phase)) + PST[p][ENDGAME][FLIP(sq)] * phase) / 256 
+		: ((PST[p][MIDDLEGAME][sq] * (256 - phase)) + PST[p][ENDGAME][sq] * phase) / 256;
 }
 
 }

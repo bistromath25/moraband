@@ -223,7 +223,7 @@ int search(State& s, SearchInfo& si, GlobalInfo& gi, int depth, int ply, int alp
 			}
 			// SEE-based pruning (prune if SEE too low)
 			// Prune if see(move) < -(pawn * 2 ^ (depth - 1))
-			if (depth <= 8 && s.see(m) < -PAWN_WEIGHT * (1 << (depth - 1))) {
+			if (depth <= 8 && s.see(m) < -PAWN_WEIGHT_MG * (1 << (depth - 1))) {
 				continue;
 			}
 		}
