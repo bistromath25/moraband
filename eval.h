@@ -30,7 +30,7 @@ static const int QUEEN_WEIGHT_EG = 1110;
 
 static const int KING_WEIGHT = 32767;
 
-static const int PieceValue[] =  {
+static const int PieceValue[7] =  {
     PAWN_WEIGHT_MG,
     KNIGHT_WEIGHT_MG,
     BISHOP_WEIGHT_MG,
@@ -41,6 +41,12 @@ static const int PieceValue[] =  {
 };
 
 // Pawn eval
+enum PAWN_PASSED_TYPES {
+	CANNOT_ADVANCE,
+	UNSAFE_ADVANCE,
+	PROTECTED_ADVANCE,
+	SAFE_ADVANCE
+};
 static const int PAWN_PASSED = 20;
 static const int PAWN_PASSED_CANDIDATE = 10;
 static const int PAWN_CONNECTED = 10;
@@ -49,10 +55,29 @@ static const int PAWN_DOUBLED = -5;
 static const int PAWN_FULL_BACKWARDS = -15;
 static const int PAWN_BACKWARDS = -5;
 
+static const int PAWN_PASSED_ADVANCE[4][2][7] = {
+	{ // Cannot advance
+		{ 0, 4, 8, 12, 27, 75, 100 }, // Middlegame
+		{ 0, 4, 8, 18, 35, 110, 220 } // Endgame
+	},
+	{ // Unsafe advance
+		{ 0, 5, 10, 15, 30, 80, 120 },
+		{ 0, 5, 10, 20, 40, 120, 250 }
+	},
+	{ // Protected advance
+		{ 0, 7, 12, 17, 35, 90, 130 },
+		{ 0, 7, 12, 22, 45, 160, 300 }
+	},
+	{ // Safe advance
+		{ 0, 7, 15, 20, 40, 100, 150 },
+		{ 0, 7, 15, 25, 50, 200, 400 }
+	}
+};
+
 static const int BAD_BISHOP = -20;
 static const int TRAPPED_ROOK = -25;
-static const int STRONG_PAWN_ATTACK = -80; // -80
-static const int WEAK_PAWN_ATTACK = -40; // -40
+static const int STRONG_PAWN_ATTACK = -80;
+static const int WEAK_PAWN_ATTACK = -40;
 static const int HANGING = -30;
 
 // Assorted bonuses
@@ -64,14 +89,9 @@ static const int KNIGHT_OUTPOST = 26;
 static const int BISHOP_OUTPOST = 14;
 
 static const int CHECKMATE = 32767;
-static const int MAX_CHECKMATE = CHECKMATE + 2000;
 static const int CHECKMATE_BOUND = CHECKMATE - MAX_PLY;
 static const int STALEMATE = 0;
 static const int DRAW = 0;
-
-// Game phase calculations
-static const int MIDDLEGAME_LIMIT = 4500;
-static const int ENDGAME_LIMIT = 2500;
 
 static const size_t PAWN_HASH_SIZE = 8192;
 
@@ -148,8 +168,8 @@ public:
 	void evaluate();
 	void evalPawns(const Color c);
 	void evalPieces(const Color c);
-	void evalAttacks(Color c);
-	void evalOutpost(Square p, PieceType pt, Color c);
+	void evalAttacks(const Color c);
+	void evalOutposts(const Color c);
 	int getScore() const;
 	int getTaperedScore(int mg, int eg);
 	friend std::ostream& operator<<(std::ostream& o, const Evaluate& e);

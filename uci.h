@@ -4,6 +4,7 @@
 #include <iostream>
 #include <string>
 #include <sstream>
+#include <utility>
 #include "state.h"
 #include "tt.h"
 #include "defs.h"

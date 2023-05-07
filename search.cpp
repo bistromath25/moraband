@@ -19,8 +19,7 @@ bool stop_search(SearchInfo& si) {
 			return true;
 		}
 	}
-
-	return false; // No interrupt
+	return false;
 }
 
 int qsearch(State& s, SearchInfo& si, GlobalInfo& gi, int ply, int alpha, int beta) {
@@ -86,19 +85,29 @@ int qsearch(State& s, SearchInfo& si, GlobalInfo& gi, int ply, int alpha, int be
 	if (bestScore == NEG_INF && s.check()) {
 		return -CHECKMATE + ply;
 	}
+	
 	return alpha;
 }
 
 int search(State& s, SearchInfo& si, GlobalInfo& gi, int depth, int ply, int alpha, int beta, bool isPv, bool isNull, bool isRoot, bool isPruning) {
 	assert(depth >= 0);
-	si.nodes++;
-	si.totalNodes++;
-
+	
 	if (depth == 0 || ply > MAX_PLY) { // Perform qsearch when regular search is completed
 		return qsearch(s, si, gi, ply, alpha, beta);
 	}
+
+	si.nodes++;
+	si.totalNodes++;
+
 	if (gi.history.isThreefoldRepetition(s) || s.insufficientMaterial() || s.getFiftyMoveRule() > 99) {
 		return DRAW;
+	}
+
+	Evaluate evaluate(s);
+	int staticEval = evaluate.getScore();
+
+	if (ply >= MAX_PLY) {
+		return staticEval;
 	}
 	
 	// Mate distance pruning
@@ -133,7 +142,6 @@ int search(State& s, SearchInfo& si, GlobalInfo& gi, int depth, int ply, int alp
 
 	int score = NEG_INF;
 	int bestScore = NEG_INF;
-	int staticEval = 0;
 	Move best_move = NULL_MOVE;
 
 	// Check PV variation
@@ -191,7 +199,7 @@ int search(State& s, SearchInfo& si, GlobalInfo& gi, int depth, int ply, int alp
 
 	// Internal iterative deepening
 	// In case no best move was found, perform a shallower search to determine which move to properly seach first
-	if (!tt_move && (isPv || staticEval + 100 >= beta) && depth >= 5) {
+	if (!tt_move && !s.inCheck() && (isPv || staticEval + 100 >= beta) && depth >= 5) {
 		search(s, si, gi, depth - 2, ply, alpha, beta, isPv, true, false, false);
 		tt_entry = tt.probe(s.getKey());
 		if (tt_entry.getKey() == s.getKey()) {
@@ -201,15 +209,15 @@ int search(State& s, SearchInfo& si, GlobalInfo& gi, int depth, int ply, int alp
 	}
 
 	MoveList mlist(s, best_move, &(gi.history), ply);
+	int legalMoves = 0;
 	int a = alpha;
 	int b = beta;
-	int d;
 	Move m;
 	bool first = true;
-	int count = 0;
+	int d;
 	while ((m = mlist.getBestMove())) {
 		d = depth - 1; // Early pruning
-		count++;
+		legalMoves++;
 
 		if (!isPv && bestScore > -CHECKMATE_BOUND && !s.inCheck() && !s.givesCheck(m) && s.getNonPawnPieceCount(s.getOurColor())) {
 			// Futility pruning
@@ -217,13 +225,13 @@ int search(State& s, SearchInfo& si, GlobalInfo& gi, int depth, int ply, int alp
 				continue;
 			}
 			// Late move reduction
-			if (depth > 2 && count > (isPv ? 5 : 3) && !s.inCheck()) {
+			if (depth > 2 && legalMoves > (isPv ? 5 : 3) && !s.inCheck()) {
 				d -= 1 + !isPv + (mlist.size() > 10);
 				d = std::max(1, d);
 			}
 			// SEE-based pruning (prune if SEE too low)
 			// Prune if see(move) < -(pawn * 2 ^ (depth - 1))
-			if (depth <= 8 && s.see(m) < -PAWN_WEIGHT_MG * (1 << (depth - 1))) {
+			if (depth <= 8 && s.see(m) < PAWN_WEIGHT_MG * (1 << (depth - 1))) { // m != tt_move
 				continue;
 			}
 		}
@@ -239,7 +247,7 @@ int search(State& s, SearchInfo& si, GlobalInfo& gi, int depth, int ply, int alp
 		// Search PV move
 		if (first) {
 			best_move = m;
-			score = -search(c, si, gi, d, ply + 1, -b, -a, isPv, isNull, true, true);
+			score = -search(c, si, gi, d, ply + 1, -b, -a, isPv, isNull, true, false);
 			first = false;
 		}     
 		else {
@@ -344,10 +352,10 @@ Move iterative_deepening(State& s, SearchInfo& si, int NUM_THREADS) {
 			}
 
 			score = results[results_index].first;
+			global_info[results_index].variation.checkPv(s);
 			if (si.quit || stop_search(si)) {
 				break;
 			}
-			global_info[results_index].variation.checkPv(s);
 
 			if (si.nodes == si.prevNodes || si.nodes >= si.max_nodes || d >= si.depth) {
 				break;

@@ -61,7 +61,7 @@ struct SearchInfo {
 	int time[PLAYER_SIZE], inc[PLAYER_SIZE];
 	int moves_to_go, depth, max_nodes, nodes, prevNodes, mate;
 	U64 totalNodes;
-	int64_t moveTime;
+	U64 moveTime;
 	Clock clock;
 	bool quit, infinite;
 	std::vector<Move> sm;
@@ -79,7 +79,7 @@ struct GlobalInfo {
 };
 
 static const int MAX_THREADS = 16;
-//static int NUM_THREADS = 1;
+static int NUM_THREADS = 1;
 static bool THREAD_STOP = false;
 static std::thread threads[MAX_THREADS];
 static GlobalInfo global_info[MAX_THREADS];

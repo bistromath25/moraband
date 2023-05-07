@@ -6,7 +6,7 @@ Variation::Variation() : mMatingLine(false), mSize(0) {}
 
 void Variation::pushToPv(Move pMove, U64 pKey, int pPly, int pScore) {
 	// Check if this is a mating line
-	mMatingLine = std::abs(pScore) + MAX_PLY >= CHECKMATE_BOUND ? true : false;
+	mMatingLine = std::abs(pScore) >= CHECKMATE_BOUND ? true : false;
 
 	// Find the indicies using the triangular forumla
 	int copyTo = triangularIndex(pPly);

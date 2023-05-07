@@ -26,11 +26,12 @@ Evaluate::Evaluate(const State& pState) :
 		}
 	}
 	
-	mGamePhase = mState.getGamePhase(); // Tapered-evaluation, game phase between 0 (Opening/Middlegame) and 255 (Endgame)
+	// Tapered-evaluation with 256 phases, 0 (Opening/Middlegame) and 255 (Endgame)
+	mGamePhase = mState.getGamePhase();
 	evalPieces(WHITE);
 	evalPieces(BLACK);
 
-	// PIECETYPE_PAWN attacks
+	// Pawn attacks
 	mPieceAttacksBB[WHITE][PIECETYPE_PAWN] |= (mState.getPieceBB<PIECETYPE_PAWN>(WHITE) & NOT_A_FILE) << 9 & mState.getOccupancyBB();
 	mPieceAttacksBB[WHITE][PIECETYPE_PAWN] |= (mState.getPieceBB<PIECETYPE_PAWN>(WHITE) & NOT_H_FILE) << 7 & mState.getOccupancyBB();
 	mPieceAttacksBB[BLACK][PIECETYPE_PAWN] |= (mState.getPieceBB<PIECETYPE_PAWN>(BLACK) & NOT_A_FILE) >> 7 & mState.getOccupancyBB();
@@ -40,10 +41,9 @@ Evaluate::Evaluate(const State& pState) :
 
 	evalAttacks(WHITE);
 	evalAttacks(BLACK);
-
 	Color c = mState.getOurColor();
 	mScore = mMobility[c] - mMobility[!c] + mKingSafety[c] - mKingSafety[!c] + mPawnStructure[c] - mPawnStructure[!c] + mMaterial[c] - mMaterial[!c] + mAttacks[c] - mAttacks[!c];
-	mScore += (mState.getPstScore(MIDDLEGAME) * (256 - mGamePhase) + mState.getPstScore(ENDGAME) * mGamePhase) / 256;
+	mScore += getTaperedScore(mState.getPstScore(MIDDLEGAME), mState.getPstScore(ENDGAME));
 	mScore += TEMPO_BONUS;
 }
 
@@ -55,29 +55,54 @@ int Evaluate::getTaperedScore(int mg, int eg) {
 	return (mg * (256 - mGamePhase) + eg * mGamePhase) / 256;
 }
 
-void Evaluate::evalOutpost(Square p, PieceType pt, Color c) {
-	if (!(p & outpost_area[c]) || !(pawn_attacks[!c][p] & mState.getPieceBB<PIECETYPE_PAWN>(c)) || in_front[c][p] & adj_files[p] & mState.getPieceBB<PIECETYPE_PAWN>(!c)) {
-		return;
+void Evaluate::evalOutposts(const Color c) {
+	for (Square p : mState.getPieceList<PIECETYPE_KNIGHT>(c)) {
+		if (!(p & outpost_area[c]) || !(pawn_attacks[!c][p] & mState.getPieceBB<PIECETYPE_PAWN>(c)) || in_front[c][p] & adj_files[p] & mState.getPieceBB<PIECETYPE_PAWN>(!c)) {
+			continue;
+		}
+		mMaterial[c] += KNIGHT_OUTPOST;
+		if (!mState.getPieceBB<PIECETYPE_KNIGHT>(!c) && !mState.getPieceBB<PIECETYPE_BISHOP>(!c) & squares_of_color(p)) {
+			mMaterial[c] += KNIGHT_OUTPOST;
+		}
 	}
-	if (!mState.getPieceBB<PIECETYPE_KNIGHT>(!c) && !mState.getPieceBB<PIECETYPE_BISHOP>(!c) & squares_of_color(p)) {
-		mScore += (pt == PIECETYPE_KNIGHT ? KNIGHT_OUTPOST : BISHOP_OUTPOST) * 2; // Cannot be attacked by opponent's minor pieces
-		return;
+	for (Square p : mState.getPieceList<PIECETYPE_BISHOP>(c)) {
+		if (!(p & outpost_area[c]) || !(pawn_attacks[!c][p] & mState.getPieceBB<PIECETYPE_PAWN>(c)) || in_front[c][p] & adj_files[p] & mState.getPieceBB<PIECETYPE_PAWN>(!c)) {
+			continue;
+		}
+		mMaterial[c] += BISHOP_OUTPOST;
+		if (!mState.getPieceBB<PIECETYPE_KNIGHT>(!c) && !mState.getPieceBB<PIECETYPE_BISHOP>(!c) & squares_of_color(p)) {
+			mMaterial[c] += BISHOP_OUTPOST;
+		}
 	}
-	mScore += pt == PIECETYPE_KNIGHT ? KNIGHT_OUTPOST : BISHOP_OUTPOST;
 }
 
 void Evaluate::evalPawns(const Color c) {
 	const int dir = c == WHITE ? 8 : -8;
+	//U64 occupancy = mState.getOccupancyBB();
 
 	for (Square p : mState.getPieceList<PIECETYPE_PAWN>(c)) {
 		if (p == no_sq) {
 			break;
 		}
+		int r = c == WHITE ? rank(p) : 8 - rank(p);
 
 		mMaterial[c] += getTaperedScore(PAWN_WEIGHT_MG, PAWN_WEIGHT_EG);
 
-		if (!((file_bb[p] | adj_files[p]) & in_front[c][p] & mState.getPieceBB<PIECETYPE_PAWN>(!c))) {
-			mPawnStructure[c] += PAWN_PASSED; // No pawns in adjacent files or in front
+		if (!((file_bb[p] | adj_files[p]) & mState.getPieceBB<PIECETYPE_PAWN>(!c))) {
+			mPawnStructure[c] += getTaperedScore(PAWN_PASSED_ADVANCE[CANNOT_ADVANCE][MIDDLEGAME][r], PAWN_PASSED_ADVANCE[CANNOT_ADVANCE][ENDGAME][r]);
+		}
+		else if (!((file_bb[p] | adj_files[p]) & in_front[c][p] & mState.getPieceBB<PIECETYPE_PAWN>(!c))) {
+			if (!mState.attacked(p + 8)) {
+				mPawnStructure[c] += getTaperedScore(PAWN_PASSED_ADVANCE[SAFE_ADVANCE][MIDDLEGAME][r], PAWN_PASSED_ADVANCE[SAFE_ADVANCE][ENDGAME][r]);
+			}
+			else {
+				if (mState.defended(p + 8, c)) {
+					mPawnStructure[c] += getTaperedScore(PAWN_PASSED_ADVANCE[PROTECTED_ADVANCE][MIDDLEGAME][r], PAWN_PASSED_ADVANCE[PROTECTED_ADVANCE][ENDGAME][r]);
+				}
+				else {
+					mPawnStructure[c] += getTaperedScore(PAWN_PASSED_ADVANCE[UNSAFE_ADVANCE][MIDDLEGAME][r], PAWN_PASSED_ADVANCE[UNSAFE_ADVANCE][ENDGAME][r]);
+				}
+			}
 		}
 		else if (!(file_bb[p] & in_front[c][p] & mState.getPieceBB<PIECETYPE_PAWN>(!c))) {
 			int sentries, helpers;
@@ -137,7 +162,6 @@ void Evaluate::evalPieces(const Color c) {
 			break;
 		}
 		mMaterial[c] += getTaperedScore(KNIGHT_WEIGHT_MG, KNIGHT_WEIGHT_EG);
-		//[c] += PieceSquareTable::getTaperedScore(PIECETYPE_KNIGHT, c, p, mGamePhase);
 		if (square_bb[p] & pins) {
 			mMobility[c] += getTaperedScore(KNIGHT_MOBILITY[MIDDLEGAME][0], KNIGHT_MOBILITY[ENDGAME][0]);
 			continue;
@@ -156,7 +180,6 @@ void Evaluate::evalPieces(const Color c) {
 			break;
 		}
 		mMaterial[c] += getTaperedScore(BISHOP_WEIGHT_MG, BISHOP_WEIGHT_EG);
-		//mPst[c] += PieceSquareTable::getTaperedScore(PIECETYPE_BISHOP, c, p, mGamePhase);
 		moves = mState.getAttackBB<PIECETYPE_BISHOP>(p);
 		if (square_bb[p] & pins) {
 			moves &= coplanar[p][kingSq];
@@ -175,7 +198,6 @@ void Evaluate::evalPieces(const Color c) {
 			break;
 		}
 		mMaterial[c] += getTaperedScore(ROOK_WEIGHT_MG, ROOK_WEIGHT_EG);
-		//[c] += PieceSquareTable::getTaperedScore(PIECETYPE_ROOK, c, p, mGamePhase);
 		moves = mState.getAttackBB<PIECETYPE_ROOK>(p);
 		if (square_bb[p] & pins) {
 			moves &= coplanar[p][kingSq];
@@ -186,8 +208,7 @@ void Evaluate::evalPieces(const Color c) {
 			king_threats += ROOK_THREAT;
 		}
 		mMobility[c] += getTaperedScore(ROOK_MOBILITY[MIDDLEGAME][pop_count(moves & mobilityNet)], ROOK_MOBILITY[ENDGAME][pop_count(moves & mobilityNet)]);
-		// PIECETYPE_ROOK on open file probably taken care of by mobility scores
-		//mMobility[c] += ROOK_OPEN_FILE * !(pop_count(file_bb[p] & mState.getPieceBB<PIECETYPE_PAWN>(c)));
+		// Trapped rooks
 		/*
 		if (mState.getPieceBB<PIECETYPE_KING>(c) & bottomRank && square_bb[p] & bottomRank) { // **NOTE** check if this is working properly
 			if ((kingSq > p && !mState.canCastleKingside(c) && square_bb[kingSq] & RIGHTSIDE) || (kingSq < p && !mState.canCastleQueenside(c) && square_bb[kingSq] & LEFTSIDE)) {
@@ -204,7 +225,6 @@ void Evaluate::evalPieces(const Color c) {
 			break;
 		}
 		mMaterial[c] += getTaperedScore(QUEEN_WEIGHT_MG, QUEEN_WEIGHT_EG);
-		//[c] += PieceSquareTable::getTaperedScore(PIECETYPE_QUEEN, c, p, mGamePhase);
 		moves = mState.getAttackBB<PIECETYPE_QUEEN>(p);
 		if (square_bb[p] & pins) {
 			moves &= coplanar[p][kingSq];
@@ -217,22 +237,15 @@ void Evaluate::evalPieces(const Color c) {
 		mMobility[c] += getTaperedScore(QUEEN_MOBILITY[MIDDLEGAME][pop_count(moves & mobilityNet)], QUEEN_MOBILITY[ENDGAME][pop_count(moves & mobilityNet)]);
 	}
 	
-	// Remaining evaluation values
-	// PIECETYPE_BISHOP pair, added only if position is "open"
+	// Bishop pair
 	if (mState.getPieceCount<PIECETYPE_BISHOP>(c) >= 2) {
-		//mMaterial[c] += getTaperedScore(BISHOP_PAIR_MG, BISHOP_PAIR_EG);
-		if (mState.getPieceCount<PIECETYPE_BISHOP>(!c) > 1) { // Less pawns, larger bonus
-			mMaterial[c] += getTaperedScore(BISHOP_PAIR_MG, BISHOP_PAIR_EG) * (16 - (mState.getPieceCount<PIECETYPE_PAWN>())) / 16;
-		}
-		else {
-			mMaterial[c] += getTaperedScore(BISHOP_PAIR_MG, BISHOP_PAIR_EG) * (16 - (mState.getPieceCount<PIECETYPE_PAWN>())) / 8;
-		}
+		mMaterial[c] += getTaperedScore(BISHOP_PAIR_MG, BISHOP_PAIR_EG);
 	}
 	
 	mKingSafety[!c] -= SAFETY_TABLE[king_threats];
 }
 
-void Evaluate::evalAttacks(Color c) {
+void Evaluate::evalAttacks(const Color c) {
 	U64 attackedByPawn, hanging;
 	attackedByPawn = mPieceAttacksBB[!c][PIECETYPE_PAWN] & (mState.getOccupancyBB(c) ^ mState.getPieceBB<PIECETYPE_PAWN>(c));
 
@@ -273,13 +286,13 @@ std::ostream& operator<<(std::ostream& os, const Evaluate& e) {
 		<< std::setw(12) << e.mMobility[!c] << " |"
 		<< std::setw(12) << e.mMobility[c] - e.mMobility[!c] << " |\n"
 		<< "-------------------------------------------------------------\n"
-		<< "| PIECETYPE_PAWN Structure  |"
+		<< "| Pawn Structure  |"
 		<< std::setw(12) << e.mPawnStructure[c] << " |" 
 		<< std::setw(12) << e.mPawnStructure[!c] << " |"
 		<< std::setw(12) << e.mPawnStructure[c] - e.mPawnStructure[!c] 
 		<< " |\n"
 		<< "-------------------------------------------------------------\n"
-		<< "| PIECETYPE_KING Safety     |"
+		<< "| King Safety     |"
 		<< std::setw(12) << e.mKingSafety[c] << " |" 
 		<< std::setw(12) << e.mKingSafety[!c] << " |"
 		<< std::setw(12) << e.mKingSafety[c] - e.mKingSafety[!c] << " |\n"
