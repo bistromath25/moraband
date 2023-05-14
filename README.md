@@ -25,12 +25,12 @@ Moraband is a UCI chess engine written in C++, and may be used with any chess in
     - [Tapered evaluation](https://www.chessprogramming.org/Tapered_Eval)
 
 ## Compiling
-Use the provided makefile. It may be necesarry to replace `-mcpu=apple-m1` with `-march=native`.
+Use the provided makefile. It may be necessary to replace `-mcpu=apple-m1` with `-march=native`.
 
 ## Background
 Like everyone else, I found myself playing a great deal of chess online during the 2020 lockdowns, encouraged by the advent of Netflix's *Queen's Gambit* and a general lack of things to do. It was also during this time that I developed an interest in algorithmic problem solving, and it wasn't soon before I decided to try my hand at writing my own chess-playing program, a suitable sparring partner, following along closely to BlueFeverSoft's video tutorials. Eventually I lost interest in my endeavor, weighed down by my final years of high school and the (somewhat?) easing Covid restrictions.
 
-I "restarted" this project during the current winter break, having just completed my Fall 2022 1A term at the University of Waterloo. As was the case a few years ago, writing my own chess program is an excellent way to combine passion of chess with my love of computer programming, and no doubt bolster my rather experience-less resume. Morever, it would be an excellent opportunity to practice developing "professional" software in anticipation of my first co-op. 
+I "restarted" this project during the current winter break, having just completed my Fall 2022 1A term at the University of Waterloo. As was the case a few years ago, writing my own chess program is an excellent way to combine passion of chess with my love of computer programming, and no doubt bolster my rather experience-less resume. Morever, it would be an excellent opportunity to practice developing and testing "professional" software in anticipation of my first co-op. 
 
 ## Credit and Resources
 - [Vice chess engine tutorial](https://www.chessprogramming.org/Vice)
