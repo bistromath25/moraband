@@ -229,8 +229,16 @@ bool State::isLegal(Move pMove) const {
 		}
 	}
 
-	assert(dst != getKingSquare(mThem));
-	assert((square_bb[dst] & mOccupancy[mUs]) == 0);
+	if (dst == getKingSquare(mThem)) {
+		return false;
+	}
+
+	if ((square_bb[dst] & mOccupancy[mUs]) != 0) {
+		return false;
+	}
+
+	//assert(dst != getKingSquare(mThem));
+	//assert((square_bb[dst] & mOccupancy[mUs]) == 0);
 	return true;
 }
 
@@ -727,8 +735,9 @@ std::ostream & operator << (std::ostream & os, const State & s) {
 
 	os << "    a   b   c   d   e   f   g   h\n";
 	
-	// os << "mKey:     " << s.mKey << '\n';
-	// os << "mPawnKey: " << s.mPawnKey << '\n';
+	os << "mKey:      " << s.mKey << '\n';
+	os << "mPawnKey:  " << s.mPawnKey << '\n';
+	os << "gamePhase: " << s.getGamePhase() << '\n';
 	os << "previous move: " << to_string(s.mPreviousMove) << '\n';
 	if (s.mUs == WHITE) {
 		os << "White to move\n";

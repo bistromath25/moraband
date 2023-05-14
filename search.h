@@ -59,12 +59,11 @@ enum SearchType {
 struct SearchInfo {
 	SearchInfo() : moveTime(0), nodes(0), prevNodes(0), totalNodes(0), moves_to_go(0), quit(false), infinite(false), depth(MAX_PLY), time{}, inc{} {}
 	int time[PLAYER_SIZE], inc[PLAYER_SIZE];
-	int moves_to_go, depth, max_nodes, nodes, prevNodes, mate;
+	int moves_to_go, depth, max_nodes, nodes, prevNodes;
 	U64 totalNodes;
 	U64 moveTime;
 	Clock clock;
 	bool quit, infinite;
-	std::vector<Move> sm;
 };
 
 struct GlobalInfo {
@@ -86,7 +85,8 @@ static GlobalInfo global_info[MAX_THREADS];
 static std::pair<int, bool> results[MAX_THREADS];
 
 int search(State& s, SearchInfo& si, GlobalInfo& gi, int depth, int ply, int alpha, int beta, bool isPv, bool isNull, bool isRoot, bool isPruning);
-Move iterative_deepening(State& s, SearchInfo& si, int NUM_THREADS);
-Move search(State& s, SearchInfo& si, int NUM_THREADS);
+int search_root(State& s, SearchInfo& si, GlobalInfo& gi, int depth, int ply, int alpha, int beta);
+Move iterative_deepening(State& s, SearchInfo& si);
+Move search(State& s, SearchInfo& si);
 
 #endif

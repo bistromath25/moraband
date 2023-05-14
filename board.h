@@ -20,6 +20,7 @@ extern U64 between_hor[BOARD_SIZE][BOARD_SIZE];
 extern U64 between[BOARD_SIZE][BOARD_SIZE];
 extern U64 coplanar[BOARD_SIZE][BOARD_SIZE];
 extern U64 adj_files[BOARD_SIZE];
+extern U64 adj_ranks[BOARD_SIZE];
 extern U64 in_front[PLAYER_SIZE][BOARD_SIZE];
 extern U64 king_net_bb[PLAYER_SIZE][BOARD_SIZE];
 extern U64 outpost_area[PLAYER_SIZE];

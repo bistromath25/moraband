@@ -2,17 +2,11 @@
 
 PawnHashTable ptable;
 
-Evaluate::Evaluate(const State& pState) : 
-	mState(pState),
-	mMaterial{},
-	//mPst{},
-	mPawnStructure{},
-	mMobility{},
-	mKingSafety{},
-	mAttacks{},
-	mPieceAttacksBB{},
-	mAllAttacksBB{} {
-	// Check for entry in PIECETYPE_PAWN hash table
+Evaluate::Evaluate(const State& pState) : mState(pState), mMaterial{}, mPawnStructure{}, mMobility{}, mKingSafety{}, mAttacks{}, mPieceAttacksBB{}, mAllAttacksBB{} {
+	// Tapered-evaluation with 256 phases, 0 (Opening/Middlegame) and 255 (Endgame)
+	mGamePhase = mState.getGamePhase();
+	Color c = mState.getOurColor();
+	// Check for entry in pawn hash table
 	if (mState.getPieceCount<PIECETYPE_PAWN>()) {
 		const PawnEntry* pawnEntry = ptable.probe(mState.getPawnKey());
 		if (pawnEntry && pawnEntry->getKey() == mState.getPawnKey()) {
@@ -25,9 +19,7 @@ Evaluate::Evaluate(const State& pState) :
 			ptable.store(mState.getPawnKey(), mPawnStructure, mMaterial);
 		}
 	}
-	
-	// Tapered-evaluation with 256 phases, 0 (Opening/Middlegame) and 255 (Endgame)
-	mGamePhase = mState.getGamePhase();
+
 	evalPieces(WHITE);
 	evalPieces(BLACK);
 
@@ -41,7 +33,6 @@ Evaluate::Evaluate(const State& pState) :
 
 	evalAttacks(WHITE);
 	evalAttacks(BLACK);
-	Color c = mState.getOurColor();
 	mScore = mMobility[c] - mMobility[!c] + mKingSafety[c] - mKingSafety[!c] + mPawnStructure[c] - mPawnStructure[!c] + mMaterial[c] - mMaterial[!c] + mAttacks[c] - mAttacks[!c];
 	mScore += getTaperedScore(mState.getPstScore(MIDDLEGAME), mState.getPstScore(ENDGAME));
 	mScore += TEMPO_BONUS;
@@ -57,6 +48,9 @@ int Evaluate::getTaperedScore(int mg, int eg) {
 
 void Evaluate::evalOutposts(const Color c) {
 	for (Square p : mState.getPieceList<PIECETYPE_KNIGHT>(c)) {
+		if (p == no_sq) {
+			break;
+		}
 		if (!(p & outpost_area[c]) || !(pawn_attacks[!c][p] & mState.getPieceBB<PIECETYPE_PAWN>(c)) || in_front[c][p] & adj_files[p] & mState.getPieceBB<PIECETYPE_PAWN>(!c)) {
 			continue;
 		}
@@ -66,6 +60,9 @@ void Evaluate::evalOutposts(const Color c) {
 		}
 	}
 	for (Square p : mState.getPieceList<PIECETYPE_BISHOP>(c)) {
+		if (p == no_sq) {
+			break;
+		}
 		if (!(p & outpost_area[c]) || !(pawn_attacks[!c][p] & mState.getPieceBB<PIECETYPE_PAWN>(c)) || in_front[c][p] & adj_files[p] & mState.getPieceBB<PIECETYPE_PAWN>(!c)) {
 			continue;
 		}
@@ -78,31 +75,35 @@ void Evaluate::evalOutposts(const Color c) {
 
 void Evaluate::evalPawns(const Color c) {
 	const int dir = c == WHITE ? 8 : -8;
-	//U64 occupancy = mState.getOccupancyBB();
 
 	for (Square p : mState.getPieceList<PIECETYPE_PAWN>(c)) {
 		if (p == no_sq) {
 			break;
 		}
-		int r = c == WHITE ? rank(p) : 8 - rank(p);
+		int r = c == WHITE ? rank(p) : 8 - rank(p) - 1;
 
 		mMaterial[c] += getTaperedScore(PAWN_WEIGHT_MG, PAWN_WEIGHT_EG);
 
-		if (!((file_bb[p] | adj_files[p]) & mState.getPieceBB<PIECETYPE_PAWN>(!c))) {
-			mPawnStructure[c] += getTaperedScore(PAWN_PASSED_ADVANCE[CANNOT_ADVANCE][MIDDLEGAME][r], PAWN_PASSED_ADVANCE[CANNOT_ADVANCE][ENDGAME][r]);
-		}
-		else if (!((file_bb[p] | adj_files[p]) & in_front[c][p] & mState.getPieceBB<PIECETYPE_PAWN>(!c))) {
-			if (!mState.attacked(p + 8)) {
-				mPawnStructure[c] += getTaperedScore(PAWN_PASSED_ADVANCE[SAFE_ADVANCE][MIDDLEGAME][r], PAWN_PASSED_ADVANCE[SAFE_ADVANCE][ENDGAME][r]);
+		if (!((file_bb[p] | adj_files[p]) & in_front[c][p] & mState.getPieceBB<PIECETYPE_PAWN>(!c))) {
+			mMaterial[c] += PAWN_PASSED;
+		
+			if ((rank_bb[p] | adj_ranks[p]) & in_front[c][p] & mState.getOccupancyBB()) {
+				mPawnStructure[c] += getTaperedScore(PAWN_PASSED_ADVANCE[CANNOT_ADVANCE][MIDDLEGAME][r], PAWN_PASSED_ADVANCE[CANNOT_ADVANCE][ENDGAME][r]);
 			}
 			else {
-				if (mState.defended(p + 8, c)) {
-					mPawnStructure[c] += getTaperedScore(PAWN_PASSED_ADVANCE[PROTECTED_ADVANCE][MIDDLEGAME][r], PAWN_PASSED_ADVANCE[PROTECTED_ADVANCE][ENDGAME][r]);
+				if (!mState.attacked(p + dir)) {
+					mPawnStructure[c] += getTaperedScore(PAWN_PASSED_ADVANCE[SAFE_ADVANCE][MIDDLEGAME][r], PAWN_PASSED_ADVANCE[SAFE_ADVANCE][ENDGAME][r]);
 				}
 				else {
-					mPawnStructure[c] += getTaperedScore(PAWN_PASSED_ADVANCE[UNSAFE_ADVANCE][MIDDLEGAME][r], PAWN_PASSED_ADVANCE[UNSAFE_ADVANCE][ENDGAME][r]);
+					if (mState.defended(p + dir, c)) {
+						mPawnStructure[c] += getTaperedScore(PAWN_PASSED_ADVANCE[PROTECTED_ADVANCE][MIDDLEGAME][r], PAWN_PASSED_ADVANCE[PROTECTED_ADVANCE][ENDGAME][r]);
+					}
+					else {
+						mPawnStructure[c] += getTaperedScore(PAWN_PASSED_ADVANCE[UNSAFE_ADVANCE][MIDDLEGAME][r], PAWN_PASSED_ADVANCE[UNSAFE_ADVANCE][ENDGAME][r]);
+					}
 				}
 			}
+
 		}
 		else if (!(file_bb[p] & in_front[c][p] & mState.getPieceBB<PIECETYPE_PAWN>(!c))) {
 			int sentries, helpers;

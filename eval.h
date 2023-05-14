@@ -165,7 +165,6 @@ extern PawnHashTable ptable;
 class Evaluate {
 public:
 	Evaluate(const State& pState);
-	void evaluate();
 	void evalPawns(const Color c);
 	void evalPieces(const Color c);
 	void evalAttacks(const Color c);

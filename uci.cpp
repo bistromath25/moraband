@@ -31,25 +31,14 @@ Move get_uci_move(std::string & token, State & s) {
 	return NULL_MOVE;
 }
 
+// UCI go command
 void go(std::istringstream & is, State & s) {
 	std::string token;
 	SearchInfo search_info;
 	Move m;
 
 	while (is >> token) {
-		if (token == "searchmoves") {
-			while (is >> token) {
-				m = get_uci_move(token, s);
-				if (m != NULL_MOVE) {
-					search_info.sm.push_back(m);
-				}
-				else {
-					std::cout << "illegal move found: " << token << '\n';
-					return;
-				}
-			}
-		}
-		else if (token == "wtime") {
+		if (token == "wtime") {
 			is >> search_info.time[WHITE];
 		}
 		else if (token == "btime") {
@@ -72,9 +61,6 @@ void go(std::istringstream & is, State & s) {
 			is >> search_info.max_nodes;
 			search_info.infinite = true;
 		}
-		else if (token == "mate") {
-			is >> search_info.mate;
-		}
 		else if (token == "movetime") {
 			is >> search_info.moveTime;
 		}
@@ -91,7 +77,7 @@ void go(std::istringstream & is, State & s) {
 		search_info.moveTime = get_search_time(search_info.time[s.getOurColor()], search_info.inc[s.getOurColor()], global_info[0].history.size() / 2, search_info.moves_to_go);
 	}
 	
-	m = search(s, search_info, NUM_THREADS); // searching main only
+	m = search(s, search_info);
 	std::cout << "bestmove " << to_string(m) << std::endl;
 }
 
@@ -136,8 +122,6 @@ void position(std::istringstream & is, State & s) {
 			}
 		}
 	}
-	
-	//std::cout << s;
 }
 
 // UCI setoption command
@@ -171,10 +155,10 @@ void set_option(std::string & name, std::string & value) {
 	else if (name == "Contempt") {
 		CONTEMPT = std::stoi(value);
 		if (CONTEMPT < -100) {
-			CONTEMPT = 100;
+			CONTEMPT = -100;
 		}
 		else if (CONTEMPT > 100) {
-			CONTEMPT = -100;
+			CONTEMPT = 100;
 		}
 		D(std::cout << "Contempt set to value " << CONTEMPT << std::endl;);
 	}

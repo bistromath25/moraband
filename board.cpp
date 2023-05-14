@@ -11,6 +11,7 @@ U64 between_hor[BOARD_SIZE][BOARD_SIZE];
 U64 between[BOARD_SIZE][BOARD_SIZE];
 U64 coplanar[BOARD_SIZE][BOARD_SIZE];
 U64 adj_files[BOARD_SIZE];
+U64 adj_ranks[BOARD_SIZE];
 U64 in_front[PLAYER_SIZE][BOARD_SIZE];
 U64 king_net_bb[PLAYER_SIZE][BOARD_SIZE];
 U64 outpost_area[PLAYER_SIZE];
@@ -99,6 +100,15 @@ void bb_init() {
 								: sq_dst & FILE_F ? FILE_E | FILE_G
 									: sq_dst & FILE_G ? FILE_F | FILE_H
 										: FILE_G;
+			
+			adj_ranks[sq_dst] = sq_dst & RANK_1 ? RANK_2
+				: sq_dst & RANK_2 ? RANK_1 | RANK_3
+					: sq_dst & RANK_3 ? RANK_4 | RANK_2
+						: sq_dst & RANK_4 ? RANK_3 | RANK_5
+							: sq_dst & RANK_5 ? RANK_4 | RANK_6
+								: sq_dst & RANK_6 ? FILE_E | RANK_7
+									: sq_dst & RANK_7 ? RANK_6 | RANK_8
+										: RANK_7;
 
 			U64 r_attacks, b_attacks, occ;
 			occ = 1ULL << sq_src | 1ULL << sq_dst;
