@@ -139,14 +139,10 @@ int search(State& s, SearchInfo& si, GlobalInfo& gi, int depth, int ply, int alp
 		}
 	}
 
-	int score = NEG_INF;
-	int bestScore = NEG_INF;
-	Move best_move = NULL_MOVE;
-
 	// Try getting the pv move
-	if (gi.variation.getPvKey(ply) == s.getKey()) {
-		best_move = gi.variation.getPvMove(ply);
-	}
+	//if (gi.variation.getPvKey(ply) == s.getKey()) {
+	//	best_move = gi.variation.getPvMove(ply);
+	//}
 	
 	if (!isPv) { // Evaluate current position statically if current node is NOT a PV node
 		if (tt_flag == FLAG_EXACT) { // Make use of previous TT score
@@ -171,12 +167,12 @@ int search(State& s, SearchInfo& si, GlobalInfo& gi, int depth, int ply, int alp
 		}
 		
 		// Razoring
-		//if (depth <= RAZORING_DEPTH && staticEval + RAZORING_MARGIN[depth] <= alpha) {
-		//	int rscore = qsearch(s, si, gi, ply + 1, alpha - RAZORING_MARGIN[depth], beta - RAZORING_MARGIN[depth]);
-		//	if (rscore + RAZORING_MARGIN[depth] <= alpha) {
-		//		return rscore;
-		//	}
-		//}
+		if (depth <= RAZORING_DEPTH && staticEval <= alpha - RAZORING_MARGIN[depth]) {
+			int rscore = qsearch(s, si, gi, 0, alpha - RAZORING_MARGIN[depth], alpha - RAZORING_MARGIN[depth] + 1);
+			if (rscore <= alpha - RAZORING_MARGIN[depth]) {
+				return rscore;
+			}
+		}
 
 		// Null move pruning
 		// Make a null move and search to a reduced depth
@@ -185,7 +181,7 @@ int search(State& s, SearchInfo& si, GlobalInfo& gi, int depth, int ply, int alp
 			std::memmove(&n, &s, sizeof s);
 			n.makeNull();
 			gi.history.push(std::make_pair(NULL_MOVE, n.getKey()));
-			int nullScore = -search(n, si, gi, depth - 3, ply + 1, -(alpha + 1), -alpha, false, true, false, false);
+			int nullScore = -search(n, si, gi, depth - 3, ply + 1, -beta, -(beta - 1), false, true, false, false);
 			gi.history.pop();
 			if (nullScore >= beta) {
 				if (nullScore >= CHECKMATE_BOUND) {
@@ -194,20 +190,22 @@ int search(State& s, SearchInfo& si, GlobalInfo& gi, int depth, int ply, int alp
 				return nullScore;
 			}
 		}
-	}		
+	}
 
 	// Internal iterative deepening
 	// In case no best move was found, perform a shallower search to determine which move to properly seach first
 	if (!tt_move && !s.inCheck() && (isPv || staticEval + 100 >= beta) && depth >= 5) {
 		search(s, si, gi, depth - 2, ply, alpha, beta, isPv, true, false, false);
 		tt_entry = tt.probe(s.getKey());
-		if (tt_entry.getKey() == s.getKey()) {
-			tt_hit = true;
-			best_move = tt_entry.getMove();
-		}
+		tt_move = tt_entry.getMove();
 	}
 
-	MoveList mlist(s, best_move, &(gi.history), ply);
+	MoveList mlist(s, tt_move, &(gi.history), ply);
+
+	int score = NEG_INF;
+	int bestScore = NEG_INF;
+	Move best_move = tt_move;
+
 	int legalMoves = 0;
 	int a = alpha;
 	int b = beta;
@@ -245,16 +243,16 @@ int search(State& s, SearchInfo& si, GlobalInfo& gi, int depth, int ply, int alp
 
 		// Search PV move
 		if (first) {
-			best_move = m;
+			//best_move = m;
 			score = -search(c, si, gi, d, ply + 1, -b, -a, isPv, isNull, true, false);
 			first = false;
 		}     
 		else {
-			score = -search(c, si, gi, d, ply + 1, -(a + 1), -a, false, isNull, false, true);	
+			score = -search(c, si, gi, d, ply + 1, -(a + 1), -a, false, isNull, false, true);
 			if (score > a) {
-				score = -search(c, si, gi, std::max(d, depth - 1), ply + 1, -b, -a, isPv, isNull, false, true);
+				score = -search(c, si, gi, std::max(d, depth - 1), ply + 1, -(a + 1), -a, false, isNull, false, true);
 			}
-			if (a < score && b > score) {
+			if (a < score && score < b) {
 				score = -search(c, si, gi, d, ply + 1, -b, -a, true, isNull, false, true);
 			}
 		}
@@ -294,6 +292,7 @@ int search(State& s, SearchInfo& si, GlobalInfo& gi, int depth, int ply, int alp
 		: a > alpha ? FLAG_EXACT
 			: FLAG_UPPER;
 	
+	assert(best_move != NULL_MOVE);
 	tt.insert(best_move, flag, depth, value_to_tt(a, ply), s.getKey());
 
 	//assert(variation.getPvMove() != NULL_MOVE);
@@ -311,27 +310,18 @@ int search_root(State& s, SearchInfo& si, GlobalInfo& gi, int depth, int ply, in
 	}
 
 	// Probe tt
-	bool tt_hit = false;
-	int tt_score = NEG_INF;
-	int tt_flag = -1;
-	Move tt_move = 0;
+	Move tt_move = NULL_MOVE;
 	TTEntry tt_entry = tt.probe(s.getKey());
 	if (tt_entry.getKey() == s.getKey()) {
-		tt_hit = true;
 		tt_move = tt_entry.getMove();
-		tt_score = value_from_tt(tt_entry.getScore(), s.getFiftyMoveRule());
-		tt_flag = tt_entry.getFlag();
 	}
 
+	MoveList mlist(s, tt_move, &(gi.history), ply);
+	
 	int score = NEG_INF;
 	int bestScore = NEG_INF;
 	Move best_move = NULL_MOVE;
 
-	if (gi.variation.getPvKey(ply) == s.getKey()) {
-		best_move = gi.variation.getPvMove(ply);
-	}
-
-	MoveList mlist(s, best_move, &(gi.history), ply);
 	int legalMoves = 0;
 	int a = alpha;
 	int b = beta;
@@ -351,16 +341,16 @@ int search_root(State& s, SearchInfo& si, GlobalInfo& gi, int depth, int ply, in
 		}
 
 		if (first) {
-			best_move = m;
+			//best_move = m;
 			score = -search(c, si, gi, d, ply + 1, -b, -a, true, false, true, false);
 			first = false;
 		}     
 		else {
 			score = -search(c, si, gi, d, ply + 1, -(a + 1), -a, false, false, false, true);	
 			if (score > a) {
-				score = -search(c, si, gi, std::max(d, depth - 1), ply + 1, -b, -a, true, false, false, true);
+				score = -search(c, si, gi, std::max(d, depth - 1), ply + 1, -(a + 1), -a, false, false, false, true);
 			}
-			if (a < score && b > score) {
+			if (a < score && score < b) {
 				score = -search(c, si, gi, d, ply + 1, -b, -a, true, true, false, true);
 			}
 		}
@@ -399,6 +389,7 @@ int search_root(State& s, SearchInfo& si, GlobalInfo& gi, int depth, int ply, in
 		: a > alpha ? FLAG_EXACT
 			: FLAG_UPPER;
 
+	assert(best_move != NULL_MOVE);
 	tt.insert(best_move, flag, depth, value_to_tt(a, ply), s.getKey());
 
 	return a;
@@ -419,69 +410,49 @@ void parallel_search(State s, SearchInfo si, int depth, int alpha, int beta, int
 // CPW: https://www.chessprogramming.org/Iterative_Deepening
 Move iterative_deepening(State& s, SearchInfo& si) {
 	Move best_move = NULL_MOVE;
-	int alpha = NEG_INF;
-	int beta = POS_INF;
-	int adelta = 0;
-	int bdelta = 0;
-	int results_index;
-	bool failed = false;
+	//int alpha = NEG_INF;
+	//int beta = POS_INF;
+	int results_index = 0;
 	int score = 0;
 	for (int d = 1; !si.quit && d < MAX_PLY; ++d) {
-		adelta = 0;
-		bdelta = 0;
-		do {
-			failed = false;
-			results_index = 0;
-			THREAD_STOP = false;
-			if (d > 4) {
-				for (int i = 1; i < NUM_THREADS; ++i) {
-					threads[i] = std::thread{parallel_search, s, si, d + (i & 1), alpha, beta, i};
-				}
-			
-				//results[0].first = search(s, si, global_info[0], d, 0, alpha, beta, true, false, true, false);
-				results[0].first = search_root(s, si, global_info[0], d, 0, alpha, beta);
-				THREAD_STOP = true;
-			
-				for (int i = 1; i < NUM_THREADS; ++i) {
-					threads[i].join(); // join all threads at end of search
-					//if (results[i].second) {
-					//	results_index = i;
-					//}
-				}
+		results_index = 0;
+		THREAD_STOP = false;
+		if (d > 4) {
+			for (int i = 1; i < NUM_THREADS; ++i) {
+				threads[i] = std::thread{parallel_search, s, si, d + (i & 1), NEG_INF, POS_INF, i};
 			}
-			else {
-				//results[0].first = search(s, si, global_info[0], d, 0, alpha, beta, true, false, true, false);
-				results[0].first = search_root(s, si, global_info[0], d, 0, alpha, beta);
+		
+			//results[0].first = search(s, si, global_info[0], d, 0, NEG_INF, POS_INF, true, false, true, false);
+			results[0].first = search_root(s, si, global_info[0], d, 0, NEG_INF, POS_INF);
+			THREAD_STOP = true;
+		
+			for (int i = 1; i < NUM_THREADS; ++i) {
+				threads[i].join(); // join all threads at end of search
+				//if (results[i].second) {
+				//	results_index = i;
+				//}
 			}
+		}
+		else {
+			//results[0].first = search(s, si, global_info[0], d, 0, NEG_INF, POS_INF, true, false, true, false);
+			results[0].first = search_root(s, si, global_info[0], d, 0, NEG_INF, POS_INF);
+		}
 
-			score = results[results_index].first;
-			global_info[results_index].variation.checkPv(s);
-			if (si.quit || stop_search(si)) {
-				break;
-			}
+		score = results[results_index].first;
+		global_info[results_index].variation.checkPv(s);
+		if (si.quit || stop_search(si)) {
+			break;
+		}
 
-			if (si.nodes == si.prevNodes || si.nodes >= si.max_nodes || d >= si.depth) {
-				break;
-			}
-			if (si.clock.elapsed<std::chrono::milliseconds>() * 2 > si.moveTime) {
-				break; // Insufficient time for next search iteration
-			}
+		if (si.nodes == si.prevNodes) {
+			break;
+		}
+		if (si.clock.elapsed<std::chrono::milliseconds>() * 2 > si.moveTime) {
+			break; // Insufficient time for next search iteration
+		}
 
-			si.prevNodes = si.nodes;
-			si.nodes = 0;
-
-			// Aspiration window calculations
-			if (score <= alpha) {
-				alpha = std::max(score - ASP_DELTA[adelta], NEG_INF);
-				adelta++;
-				failed = true;
-			}
-			else if (score <= beta) {
-				beta = std::min(score + ASP_DELTA[bdelta], POS_INF);
-				bdelta++;
-				failed = true;
-			}
-		} while (failed);
+		si.prevNodes = si.nodes;
+		si.nodes = 0;
 
 		//score = results[results_index].first;
 		//global_info[results_index].variation.checkPv(s);
@@ -502,10 +473,6 @@ Move iterative_deepening(State& s, SearchInfo& si) {
 		std::cout << std::endl;
 
 		best_move = global_info[results_index].variation.getPvMove();
-		if (d > 4) {
-			alpha = score - 10;
-			beta = score + 10;
-		}
 
 		if (si.clock.elapsed<std::chrono::milliseconds>() * 2 > si.moveTime) {
 			break; // Insufficient time for next search iteration
@@ -513,8 +480,7 @@ Move iterative_deepening(State& s, SearchInfo& si) {
 		if (d > 1 && stop_search(si)) {
 			break;
 		}
-		
-		if ((si.depth && d == si.depth) || (si.max_nodes && si.totalNodes >= si.max_nodes)) {
+		if ((si.depth && d >= si.depth) || (si.max_nodes && si.totalNodes >= si.max_nodes)) {
 			break;
 		}
 	}
