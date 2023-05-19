@@ -76,8 +76,8 @@ static const int PAWN_PASSED_ADVANCE[4][2][7] = {
 
 static const int BAD_BISHOP = -20;
 static const int TRAPPED_ROOK = -25;
-static const int STRONG_PAWN_ATTACK = -80;
-static const int WEAK_PAWN_ATTACK = -40;
+static const int STRONG_PAWN_ATTACK = -90;
+static const int WEAK_PAWN_ATTACK = -45;
 static const int HANGING = -30;
 
 // Assorted bonuses
