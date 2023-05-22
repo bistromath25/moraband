@@ -57,6 +57,7 @@ const U64 KING_MOVES[BOARD_SIZE] = {
 U64 bishopMoves[BOARD_SIZE];
 U64 rookMoves[BOARD_SIZE];
 
+/* Initialize bitboards */
 void bb_init() {
 	for (Square sq_src = first_sq; sq_src <= last_sq; ++sq_src) {
 		U64 bit = 1ULL << sq_src;
@@ -136,6 +137,7 @@ void bb_init() {
 	outpost_area[BLACK] = RANK_3 | RANK_4 | RANK_5;
 }
 
+/* Print a bitboard */
 void print_bb(U64 bb) {
 	const U64 MSB = 0x8000000000000000ULL;
 	std::string res;

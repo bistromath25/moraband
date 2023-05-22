@@ -1,8 +1,14 @@
+/**
+ * Moraband, known in antiquity as Korriban, was an 
+ * Outer Rim planet that was home to the ancient Sith 
+ **/
+
 #include "eval.h"
 
 PawnHashTable ptable;
 
-Evaluate::Evaluate(const State& pState) : mState(pState), mMaterial{}, mPawnStructure{}, mMobility{}, mKingSafety{}, mAttacks{}, mPieceAttacksBB{}, mAllAttacksBB{} {
+/* Evaluation and related functions */
+Evaluate::Evaluate(const State& s) : mState(s), mMaterial{}, mPawnStructure{}, mMobility{}, mKingSafety{}, mAttacks{}, mPieceAttacksBB{}, mAllAttacksBB{} {
 	// Tapered-evaluation with 256 phases, 0 (Opening/Middlegame) and 255 (Endgame)
 	mGamePhase = mState.getGamePhase();
 	Color c = mState.getOurColor();
@@ -73,6 +79,7 @@ void Evaluate::evalOutposts(const Color c) {
 	}
 }
 
+/* Evaluate pawn structure */
 void Evaluate::evalPawns(const Color c) {
 	const int dir = c == WHITE ? 8 : -8;
 
@@ -260,7 +267,6 @@ void Evaluate::evalAttacks(const Color c) {
 		}
 	}
 
-	// Hanging pieces
 	hanging = mAllAttacksBB[!c] & mState.getOccupancyBB(c) & ~mAllAttacksBB[c];
 	
 	mAttacks[c] += pop_count(hanging) * HANGING;

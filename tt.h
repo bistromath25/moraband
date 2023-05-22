@@ -1,3 +1,8 @@
+/**
+ * Moraband, known in antiquity as Korriban, was an 
+ * Outer Rim planet that was home to the ancient Sith 
+ **/
+
 #ifndef TT_H
 #define TT_H
 
@@ -75,6 +80,7 @@ private:
 	TTEntry entries[CLUSTER_SIZE];
 };
 
+/* Transposition table to store search information */
 struct TranspositionTable {
 	TranspositionTable() {
 		size = (1 << 20) / sizeof(TTCluster) * DEFAULT_HASH_SIZE;
@@ -120,5 +126,3 @@ private:
 extern TranspositionTable tt;
 
 #endif
-
-///

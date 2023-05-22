@@ -4,6 +4,26 @@ From the [Star Wars wiki](https://starwars.fandom.com/wiki/Moraband):
 
 Moraband is a UCI chess engine written in C++, and may be used with any chess interfaces supporting the UCI protocol such as [Banksia](https://banksiagui.com) or [Arena](http://www.playwitharena.de).
 
+```
+ ___  ___                _                     _ 
+ |  \/  |               | |                   | | 
+ |      | ___  _ __ __ _| |__   __ _ _ __   __| | 
+ | |\/| |/ _ \| '__/ _` | '_ \ / _` | '_ \ / _` | 
+ | |  | | (_) | | | (_| | |_) | (_| | | | | (_| | 
+ \_|  |_/\___/|_|  \__,_|_.__/ \__,_|_| |_|\__,_|
+Moraband, known in antiquity as Korriban, was an
+ Outer Rim planet that was home to the ancient Sith
+
+uci
+id name Moraband 1.0
+id author Brighten Zhang
+option name Hash type spin default 256 min 1 max 65536
+option name Threads type spin default 1 max 16 min 1
+option name Move Overhead type spin default 500 min 0 max 10000
+option name Contempt type spin default 0 min -100 max 100
+uciok
+```
+
 ## Details 
 - Move Generation
     - [(Magic) Bitboards](https://www.chessprogramming.org/Bitboards)

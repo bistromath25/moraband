@@ -1,8 +1,14 @@
+/**
+ * Moraband, known in antiquity as Korriban, was an 
+ * Outer Rim planet that was home to the ancient Sith 
+ **/
+
 #include "state.h"
 #include "eval.h"
 #include "zobrist.h"
 #include <utility>
 
+/* Board and game state and related functions */
 State::State(const State & s)
 	: mUs(s.mUs)
 	, mThem(s.mThem)
@@ -207,9 +213,9 @@ U64 State::getDiscoveredChecks(Color c) const {
 	return discover;
 }
 
-bool State::isLegal(Move pMove) const {
-	Square src = getSrc(pMove);
-	Square dst = getDst(pMove);
+bool State::isLegal(Move move) const {
+	Square src = getSrc(move);
+	Square dst = getDst(move);
 
 	if (square_bb[src] & mPinned[mUs] && !(coplanar[src][dst] & getPieceBB<PIECETYPE_KING>(mUs))) {
 		return false;
@@ -222,7 +228,7 @@ bool State::isLegal(Move pMove) const {
 		}
 	}
 
-	if (onSquare(src) == PIECETYPE_KING && !isCastle(pMove)) {
+	if (onSquare(src) == PIECETYPE_KING && !isCastle(move)) {
 		U64 change = square_bb[src];
 		if (isAttacked(dst, mUs, change)) {
 			return false;
@@ -242,22 +248,22 @@ bool State::isLegal(Move pMove) const {
 	return true;
 }
 
-bool State::isValid(Move pMove, U64 pValidMoves) const {
-	assert(getSrc(pMove) < no_sq);
-	assert(getDst(pMove) < no_sq);
+bool State::isValid(Move move, U64 validMoves) const {
+	assert(getSrc(move) < no_sq);
+	assert(getDst(move) < no_sq);
 
 	Square src, dst;
 	U64 ray;
-	src = getSrc(pMove);
-	dst = getDst(pMove);
+	src = getSrc(move);
+	dst = getDst(move);
 
-	if (pMove == NULL_MOVE) {
+	if (move == NULL_MOVE) {
 		return false;
 	}
-	if (getPiecePromotion(pMove) && (onSquare(src) != PIECETYPE_PAWN)) {
+	if (getPiecePromotion(move) && (onSquare(src) != PIECETYPE_PAWN)) {
 		return false;
 	}
-	if (isCastle(pMove) && onSquare(src) != PIECETYPE_KING) {
+	if (isCastle(move) && onSquare(src) != PIECETYPE_KING) {
 		return false;
 	}
 	if (!(square_bb[src] & getOccupancyBB(mUs)) || (square_bb[dst]  & getOccupancyBB(mUs)) || dst == getKingSquare(mThem)) {
@@ -270,7 +276,7 @@ bool State::isValid(Move pMove, U64 pValidMoves) const {
 	switch (onSquare(src)) {
 		case PIECETYPE_PAWN:
 		{
-			if ((square_bb[dst] & RANK_PROMOTION) && !getPiecePromotion(pMove)) {
+			if ((square_bb[dst] & RANK_PROMOTION) && !getPiecePromotion(move)) {
 				return false;
 			}
 			if (src < dst == mUs) {
@@ -280,35 +286,35 @@ bool State::isValid(Move pMove, U64 pValidMoves) const {
 			std::pair<Square, Square> advance = std::minmax(src, dst);
 			switch (advance.second - advance.first) {
 				case 8:
-					return square_bb[dst] & getEmptyBB() & pValidMoves;
+					return square_bb[dst] & getEmptyBB() & validMoves;
 				case 16:
-					return square_bb[dst] & getEmptyBB() & pValidMoves && between_hor[src][dst] & getEmptyBB() && square_bb[src] & RANK_PAWN_START;
+					return square_bb[dst] & getEmptyBB() & validMoves && between_hor[src][dst] & getEmptyBB() && square_bb[src] & RANK_PAWN_START;
 				case 7:
 				case 9:
-					return square_bb[dst] & getOccupancyBB(mThem) & pValidMoves;
+					return square_bb[dst] & getOccupancyBB(mThem) & validMoves;
 				default:
 					return false;
 			}
 		}
 		
 		case PIECETYPE_KNIGHT:
-			return getAttackBB<PIECETYPE_KNIGHT>(src) & square_bb[dst] & pValidMoves;
+			return getAttackBB<PIECETYPE_KNIGHT>(src) & square_bb[dst] & validMoves;
 		case PIECETYPE_BISHOP:
-			return getAttackBB<PIECETYPE_BISHOP>(src) & square_bb[dst] & pValidMoves;
+			return getAttackBB<PIECETYPE_BISHOP>(src) & square_bb[dst] & validMoves;
 		case PIECETYPE_ROOK:
-			return getAttackBB<PIECETYPE_ROOK>(src) & square_bb[dst] & pValidMoves;
+			return getAttackBB<PIECETYPE_ROOK>(src) & square_bb[dst] & validMoves;
 		case PIECETYPE_QUEEN:
-			return getAttackBB<PIECETYPE_QUEEN>(src) & square_bb[dst] & pValidMoves;
+			return getAttackBB<PIECETYPE_QUEEN>(src) & square_bb[dst] & validMoves;
 
 		case PIECETYPE_KING:
 		{
 			Square k = getKingSquare(mUs);
-			if (isCastle(pMove)) {
+			if (isCastle(move)) {
 				if (src > dst) {
-					return (canCastleKingside() && !(between_hor[k][k-3] & getOccupancyBB()) && !attacked(k-1) && !attacked(k-2));
+					return (canCastleKingside() && !(between_hor[k][k - 3] & getOccupancyBB()) && !attacked(k - 1) && !attacked(k - 2));
 				}
 				else {
-					return (canCastleQueenside() && !(between_hor[k][k+4] & getOccupancyBB()) && !attacked(k+1) && !attacked(k+2));
+					return (canCastleQueenside() && !(between_hor[k][k + 4] & getOccupancyBB()) && !attacked(k + 1) && !attacked(k + 2));
 				}
 			}
 			return square_bb[dst];
@@ -319,9 +325,9 @@ bool State::isValid(Move pMove, U64 pValidMoves) const {
 	return false;
 }
 
-bool State::givesCheck(Move pMove) const {
-	Square src = getSrc(pMove);
-	Square dst = getDst(pMove);
+bool State::givesCheck(Move move) const {
+	Square src = getSrc(move);
+	Square dst = getDst(move);
 	PieceType piece = onSquare(src);
 
 	// Direct check
@@ -334,24 +340,24 @@ bool State::givesCheck(Move pMove) const {
 		return true;
 	}
 
-	if (isEnPassant(pMove)) {
+	if (isEnPassant(move)) {
 		U64 change = square_bb[src] | square_bb[dst];
 		change |= mUs == WHITE ? square_bb[dst - 8] : square_bb[dst + 8];
 		return check(change, mThem);
 	}
-	else if (isCastle(pMove)) {
+	else if (isCastle(move)) {
 		Square rookSquare = src > dst ? dst + 1 : dst - 1;
 		return getAttackBB(PIECETYPE_ROOK, rookSquare, getOccupancyBB() ^ square_bb[src]) & getPieceBB<PIECETYPE_KING>(mThem);
 	}
-	else if (isPromotion(pMove)) {
-		PieceType promo = getPiecePromotion(pMove);
+	else if (isPromotion(move)) {
+		PieceType promo = getPiecePromotion(move);
 		return getAttackBB(promo, dst, getOccupancyBB() ^ square_bb[src]) &	getPieceBB<PIECETYPE_KING>(mThem);
 	}
 	
 	return false;
 }
 
-int State::see(Move m) const {
+int State::see(Move move) const {
 	Prop prop;
 	Color color;
 	Square src, dst, mayAttack;
@@ -361,14 +367,14 @@ int State::see(Move m) const {
 	int d = 0;
 
 	color = mUs;
-	src = getSrc(m);
-	dst = getDst(m);
+	src = getSrc(move);
+	dst = getDst(move);
 	from = square_bb[src];
 	// Check if the move is en passant
 	if (onSquare(src) == PIECETYPE_PAWN && square_bb[dst] & mEnPassant) {
 		gain[d] = PieceValue[PIECETYPE_PAWN];
 	}
-	else if (getPiecePromotion(m) == PIECETYPE_QUEEN) {
+	else if (getPiecePromotion(move) == PIECETYPE_QUEEN) {
 		gain[d] = QUEEN_WEIGHT_MG - PAWN_WEIGHT_MG;
 	}
 	else {
@@ -449,17 +455,17 @@ int State::see(Move m) const {
 	return gain[0];
 }
 
-void State::makeMove(Move pMove) {
-	assert(pMove != NULL_MOVE);
-	assert(getSrc(pMove) < no_sq);
-	assert(getDst(pMove) < no_sq);
+void State::makeMove(Move move) {
+	assert(move != NULL_MOVE);
+	assert(getSrc(move) < no_sq);
+	assert(getDst(move) < no_sq);
 	Square src, dst;
 	PieceType moved, captured;
 	bool epFlag = false;
 	bool gamePhase = false;
 
-	src = getSrc(pMove);
-	dst = getDst(pMove);
+	src = getSrc(move);
+	dst = getDst(move);
 	moved = onSquare(src);
 	assert(moved != PIECETYPE_NONE);
 	captured = onSquare(dst);
@@ -474,7 +480,7 @@ void State::makeMove(Move pMove) {
 	}
 	mKey ^= Zobrist::key(mCastleRights);
 
-	if (captured != PIECETYPE_NONE && !isCastle(pMove)) {
+	if (captured != PIECETYPE_NONE && !isCastle(move)) {
 		mFiftyMoveRule = 0;
 		removePiece(mThem, captured, dst);
 		if (captured == PIECETYPE_PAWN) {
@@ -483,7 +489,7 @@ void State::makeMove(Move pMove) {
 		gamePhase = true;
 	}
 
-	if (isCastle(pMove)) {
+	if (isCastle(move)) {
 		// Short castle
 		if (dst < src) {
 			movePiece(mUs, PIECETYPE_ROOK, src-3, dst+1);
@@ -510,10 +516,10 @@ void State::makeMove(Move pMove) {
 			mKey ^= Zobrist::key(get_file(mEnPassant));
 			epFlag = true;
 		}
-		else if (getPiecePromotion(pMove)) {
+		else if (getPiecePromotion(move)) {
 			mPawnKey ^= Zobrist::key(mUs, PIECETYPE_PAWN, dst);
 			removePiece(mUs, PIECETYPE_PAWN, dst);
-			addPiece(mUs, getPiecePromotion(pMove), dst);
+			addPiece(mUs, getPiecePromotion(move), dst);
 			gamePhase = true;
 		}
 		else if (mEnPassant & square_bb[dst]) {
@@ -538,7 +544,7 @@ void State::makeMove(Move pMove) {
 
 	assert(!check());
 	assert((mEnPassant & getOccupancyBB()) == 0);
-	mPreviousMove = pMove;
+	mPreviousMove = move;
 	swapTurn();
 
 	setPins(WHITE);
@@ -670,7 +676,7 @@ std::string State::getFen() { // Current FEN
 	}
 	fen += ' ';
 	
-	// Check pMove could result in enpassant
+	// Check move could result in enpassant
 	bool enpass = false;
 	if (moved == PIECETYPE_PAWN && int(std::max(src, dst)) - int(std::min(src, dst)) == 16) {
 		for (Square p : getPieceList<PIECETYPE_PAWN>(mUs)) {
@@ -690,19 +696,19 @@ std::string State::getFen() { // Current FEN
 
 // Print board
 std::ostream & operator << (std::ostream & os, const State & s) {
-	const char * W_pawn   = "\u2659";
-	const char * W_knight = "\u2658";
-	const char * W_bishop = "\u2657";
-	const char * W_rook   = "\u2656";
-	const char * W_queen  = "\u2655";
-	const char * W_king   = "\u2654";
-	const char * B_pawn   = "\u265F";
-	const char * B_knight = "\u265E";
-	const char * B_bishop = "\u265D";
-	const char * B_rook   = "\u265C";
-	const char * B_queen  = "\u265B";
-	const char * B_king   = "\u265A";
-	const char * Empty    = " ";
+	static const char * W_pawn   = "\u2659";
+	static const char * W_knight = "\u2658";
+	static const char * W_bishop = "\u2657";
+	static const char * W_rook   = "\u2656";
+	static const char * W_queen  = "\u2655";
+	static const char * W_king   = "\u2654";
+	static const char * B_pawn   = "\u265F";
+	static const char * B_knight = "\u265E";
+	static const char * B_bishop = "\u265D";
+	static const char * B_rook   = "\u265C";
+	static const char * B_queen  = "\u265B";
+	static const char * B_king   = "\u265A";
+	static const char * Empty    = " ";
 	
 	std::string nums[8] = {"1", "2", "3", "4", "5", "6", "7", "8"};
 	const std::string bar = "  + - + - + - + - + - + - + - + - + ";
@@ -735,9 +741,9 @@ std::ostream & operator << (std::ostream & os, const State & s) {
 
 	os << "    a   b   c   d   e   f   g   h\n";
 	
-	os << "mKey:      " << s.mKey << '\n';
-	os << "mPawnKey:  " << s.mPawnKey << '\n';
-	os << "gamePhase: " << s.getGamePhase() << '\n';
+	os << "Key:     " << s.mKey << '\n';
+	os << "PawnKey: " << s.mPawnKey << '\n';
+	os << "Phase:   " << s.getGamePhase() << '\n';
 	os << "previous move: " << to_string(s.mPreviousMove) << '\n';
 	if (s.mUs == WHITE) {
 		os << "White to move\n";
@@ -748,5 +754,3 @@ std::ostream & operator << (std::ostream & os, const State & s) {
 	
 	return os;
 }
-
-///

@@ -1,3 +1,10 @@
+
+
+/**
+ * Moraband, known in antiquity as Korriban, was an 
+ * Outer Rim planet that was home to the ancient Sith 
+ **/
+
 #ifndef PST_H
 #define PST_H
 
@@ -7,8 +14,7 @@ namespace PieceSquareTable {
 
 #define FLIP(sq) ((sq) ^ 56)
 
-// Values from Rofchade
-// TalkChess: http://www.talkchess.com/forum3/viewtopic.php?f=2&t=68311&start=19
+/* PST values from Rofchade */
 const int PST[PIECE_TYPES_SIZE][GAMESTAGE_SIZE][BOARD_SIZE] = {
 	// Pawns
 	{
@@ -161,17 +167,15 @@ const int PST[PIECE_TYPES_SIZE][GAMESTAGE_SIZE][BOARD_SIZE] = {
 };
 
 inline int getScore(PieceType p, GameStage g, Color c, Square sq) {
-	return c == WHITE ? PST[p][g][FLIP(sq)] : PST[p][g][sq];
+	return c == WHITE ? PST[p][g][FLIP(int(sq))] : PST[p][g][sq];
 }
 
-// Tapered static score
+/* Tapered static score with 256 phases */
 inline int getTaperedScore(PieceType p, Color c, Square sq, int phase) {
-	return c == WHITE ? ((PST[p][MIDDLEGAME][FLIP(sq)] * (256 - phase)) + PST[p][ENDGAME][FLIP(sq)] * phase) / 256 
+	return c == WHITE ? ((PST[p][MIDDLEGAME][FLIP(int(sq))] * (256 - phase)) + PST[p][ENDGAME][FLIP(int(sq))] * phase) / 256 
 		: ((PST[p][MIDDLEGAME][sq] * (256 - phase)) + PST[p][ENDGAME][sq] * phase) / 256;
 }
 
 }
 
 #endif
-
-///

@@ -1,3 +1,8 @@
+/**
+ * Moraband, known in antiquity as Korriban, was an 
+ * Outer Rim planet that was home to the ancient Sith 
+ **/
+
 #ifndef EVAL_H
 #define EVAL_H
 
@@ -76,8 +81,8 @@ static const int PAWN_PASSED_ADVANCE[4][2][7] = {
 
 static const int BAD_BISHOP = -20;
 static const int TRAPPED_ROOK = -25;
-static const int STRONG_PAWN_ATTACK = -90;
-static const int WEAK_PAWN_ATTACK = -45;
+static const int STRONG_PAWN_ATTACK = -80;
+static const int WEAK_PAWN_ATTACK = -40;
 static const int HANGING = -30;
 
 // Assorted bonuses
@@ -128,6 +133,7 @@ static const int QUEEN_MOBILITY[2][28] = {
     { -40, -20, -10, 0, 5, 10, 15, 20, 25, 30, 35, 40, 45, 50, 55, 60, 65, 70, 75, 80, 85, 90, 90, 90, 90, 90, 90, 90 }
 };
 
+/* Pawn hash table entry */
 struct PawnEntry {
 	PawnEntry() : mKey(0), mStructure{} {}
 	U64 getKey() const {
@@ -144,6 +150,7 @@ struct PawnEntry {
 	std::array<int, PLAYER_SIZE> mMaterial;
 };
 
+/* Pawn hash table for pawn evaluation */
 struct PawnHashTable {
 	PawnHashTable() {}
 	void clear() {
@@ -162,9 +169,10 @@ struct PawnHashTable {
 
 extern PawnHashTable ptable;
 
+/* Evaluation and related functions */
 class Evaluate {
 public:
-	Evaluate(const State& pState);
+	Evaluate(const State& s);
 	void evalPawns(const Color c);
 	void evalPieces(const Color c);
 	void evalAttacks(const Color c);
@@ -187,5 +195,3 @@ private:
 };
 
 #endif
-
-///

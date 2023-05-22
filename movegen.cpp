@@ -1,24 +1,30 @@
+/**
+ * Moraband, known in antiquity as Korriban, was an 
+ * Outer Rim planet that was home to the ancient Sith 
+ **/
+
 #include "movegen.h"
 
+/* Initialize magic moves */
 void mg_init() {
 	initmagicmoves();
 }
 
-MoveList::MoveList(const State& pState, Move pBest, History* pHistory, int pPly, bool pQSearch) 
-: mState(pState), mValid(Full), mBest(pBest), mQSearch(pQSearch), mKiller1(NULL_MOVE), mKiller2(NULL_MOVE) , mSize(0), mHistory(pHistory), mPly(pPly) {
-	if (pHistory) {
-		mKiller1 = mHistory->getKiller(pPly).first;
-		mKiller2 = mHistory->getKiller(pPly).second;
+/* List of moves and related functions */
+MoveList::MoveList(const State& s, Move bestMove, History* history, int ply, bool qsearch) 
+: mState(s), mValid(FULL), mBest(bestMove), mQSearch(qsearch), mKiller1(NULL_MOVE), mKiller2(NULL_MOVE) , mSize(0), mHistory(history), mPly(ply) {
+	if (history) {
+		mKiller1 = history->getKiller(ply).first;
+		mKiller2 = history->getKiller(ply).second;
 	}
-	
 	if (mState.inCheck()) {
 		Square k = mState.getKingSquare(mState.getOurColor());
 		Square c = get_lsb(mState.getCheckersBB());
 		mValid = between[k][c] | mState.getCheckersBB();
-		mStage = nEvadeBestMove;
+		mStage = EvadeBestMove;
 	}
 	else {
-		mStage = mQSearch ? qBestMove : nBestMove;
+		mStage = qsearch ? QBestMove : BestMove;
 	}
 }
 
@@ -26,8 +32,8 @@ std::size_t MoveList::size() const {
 	return mSize;
 }
 
-void MoveList::push(Move pMove) {
-	mList[mSize++].move = pMove;
+void MoveList::push(Move move) {
+	mList[mSize++].move = move;
 }
 
 Move MoveList::pop() {
@@ -304,16 +310,23 @@ template<> void MoveList::generateMoves<MoveType::All>() {
 	pushMoves<MoveType::All, PIECETYPE_KING>();
 }
 
+/* Get the best move from the MoveList based on the generation stage */
 Move MoveList::getBestMove() {
 	Move move;
 	
 	switch (mStage) {
-		case nBestMove:
+		case BestMove:
+			// Best move
+			// If the move given by the pv or tt is valid, return it.
 			mStage++;
-			if (mState.isValid(mBest, Full) && mState.isLegal(mBest)) {
+			if (mState.isValid(mBest, FULL) && mState.isLegal(mBest)) {
 				return mBest;
 			}
-		case nAttacksGen:
+		case AttacksGen:
+			// Capture generation
+			// Generate and sort capture moves in the event that Best move failed.
+			// If a move has a positive SEE, score it by LVA-MVV, otherwise store 
+			// its score as its SEE value.
 			generateMoves<MoveType::Attacks>();
 			for (int i = 0; i < mSize; ++i) {
 				int see = mState.see(mList[i].move);
@@ -329,7 +342,11 @@ Move MoveList::getBestMove() {
 			}
 			mStage++;
 
-		case nAttacks:
+		case Attacks:
+			// Captures
+			// No need to sort the captures since there's not many of them in any 
+			// given position. Ensure that each capture move has not already been
+			// seen before!
 			while (mSize) {
 				std::iter_swap(std::max_element(mList.begin(), mList.begin() + mSize), mList.begin() + mSize - 1);
 				move = pop();
@@ -339,19 +356,31 @@ Move MoveList::getBestMove() {
 			}
 			mStage++;
 
-		case nKiller1:
+		case Killer1:
+			// First killer move
+			// Ensure that the killer stored at this ply is a valid move and is not 
+			// the same as the best move. Return it before generating any quiets.
 			mStage++;
-			if ((mState.isValid(mKiller1, Full) && mState.isLegal(mKiller1) && mState.isQuiet(mKiller1)) && mKiller1 != mBest) {
+			if ((mState.isValid(mKiller1, FULL) && mState.isLegal(mKiller1) && mState.isQuiet(mKiller1)) && mKiller1 != mBest) {
 				return mKiller1;
 			}
 
-		case nKiller2:
+		case Killer2:
+			// Second killer move
+			// Ensure that the killer stored at this ply is a valid move and is not 
+			// the same as the best move or the first killer move. Return it before 
+			// generating any quiets.
 			mStage++;
-			if ((mState.isValid(mKiller2, Full)) && mState.isLegal(mKiller2) && mState.isQuiet(mKiller2) && mKiller2 != mBest && mKiller2 != mKiller1) {
+			if ((mState.isValid(mKiller2, FULL)) && mState.isLegal(mKiller2) && mState.isQuiet(mKiller2) && mKiller2 != mBest && mKiller2 != mKiller1) {
 				return mKiller2;
 			}
 		
-		case nQuietsGen:
+		case QuietsGen:
+			// Quiet generation
+			// Generate and order quiet moves, sort them first by their history scores.
+			// Moves without a history score will be partitioned and sorted to the 
+			// right, so that they are checked first. All other quiets will be sorted
+			// based on their PST score.
 			{
 			generateMoves<MoveType::Quiets>();
 			for (int i = 0; i < mSize; ++i) {
@@ -364,14 +393,16 @@ Move MoveList::getBestMove() {
 				Square src = getSrc(it1->move);
 				Square dst = getDst(it1->move);
 				PieceType toMove = mState.onSquare(src);
-				it1->score = PieceSquareTable::getTaperedScore(toMove, mState.getOurColor(), dst, mState.getGamePhase()) -
-			PieceSquareTable::getTaperedScore(toMove, mState.getOurColor(), src, mState.getGamePhase());
+				it1->score = PieceSquareTable::getTaperedScore(toMove, mState.getOurColor(), dst, mState.getGamePhase()) 
+					- PieceSquareTable::getTaperedScore(toMove, mState.getOurColor(), src, mState.getGamePhase());
 			}
 			std::stable_sort(mList.begin(), it2);
 			mStage++;
 			}
 		
-		case nQuiets:
+		case Quiets:
+			// Quiet moves
+			// Ensure that each move is different from the best move and killers.
 			while (mSize) {
 				move = pop();
 				if (move != mBest && move != mKiller1 && move != mKiller2 && mState.isLegal(move)) {
@@ -387,20 +418,26 @@ Move MoveList::getBestMove() {
 			}
 			break;
 
-		case qBestMove:
+		case QBestMove:
+			// Qsearch best move
+			// If the move given by the pv or tt is valid, return it.
 			mStage++;
-			if (mState.isValid(mBest, Full) && mState.isLegal(mBest)) {
+			if (mState.isValid(mBest, FULL) && mState.isLegal(mBest)) {
 				return mBest;
 			}
 
-		case qAttacksGen:
+		case QAttacksGen:
+			// Qsearch capture generation
+			// Generate and sort captures based on LVA-MVV.
 			generateMoves<MoveType::Attacks>();
 			for (int i = 0; i < mSize; ++i) {
 				mList[i].score = mState.onSquare(getDst(mList[i].move)) - mState.onSquare(getSrc(mList[i].move));
 			}
 			mStage++;
 
-		case qAttacks:
+		case QAttacks:
+			// Qsearch captures
+			// Ensure that each capture move is different from the best move.
 			while (mSize) {
 				std::iter_swap(std::max_element(mList.begin(), mList.begin() + mSize), mList.begin() + mSize - 1);
 				move = pop();
@@ -413,13 +450,17 @@ Move MoveList::getBestMove() {
 			}
 			mStage++;
 
-		case qQuietChecksGen:
+		case QQuietChecksGen:
+			// Qsearch quiet generation
+			// Generate quiet moves.
 			for (int i = 0; i < mSize; ++i) {
 				mList[i].score = mHistory->getHistoryScore(mList[i].move);
 			}
 			mStage++;
 
-		case qQuietChecks:
+		case QQuietChecks:
+			// Qsearch quiet checks
+			// Ensure that each move is different from the best move.
 			while (mSize) {
 				std::iter_swap(std::max_element(mList.begin(), mList.begin() + mSize), mList.begin() + mSize - 1);
 				move = pop();
@@ -429,13 +470,17 @@ Move MoveList::getBestMove() {
 			}
 			break;
 
-		case nEvadeBestMove:
+		case EvadeBestMove:
+			// Evade best move
+			// If the move given by the pv or tt is valid, return it.
 			mStage++;
 			if (mState.isValid(mBest, mValid) && mState.isLegal(mBest) && !mState.inDoubleCheck()) {
 				return mBest;
 			}
 
-		case nEvadeMovesGen:
+		case EvadeMovesGen:
+			// Evade move generation
+			// Generate King captures.
 			{
 			const int CaptureFlag = 0x40000000;
 			const int HistoryFlag = 0x20000000;
@@ -469,16 +514,20 @@ Move MoveList::getBestMove() {
 			mStage++;
 			}
 	
-		case nEvade:
+		case Evade:
+			// Evade
+			// Return the capture move if it's not the same as the best move.
 			while (mSize) {
 				move = pop();
 				if (move != mBest && mState.isLegal(move)) {
 					return move;
 				}
 			}
-		break;
+			break;
 
-		case allLegal:
+		case AllLegal:
+			// All legal
+			// Generate and return each legal move.
 			while (mSize) {
 				move = pop();
 				return move;
@@ -486,34 +535,26 @@ Move MoveList::getBestMove() {
 			break;
 		
 		default:
+			// ERROR!
 			assert(false);
 	}
 	
-	return NULL_MOVE;
+	return NULL_MOVE; // No move found?!?
 }
 
-/*
-Move MoveList::getKiller1() const {
-	return mKiller1;
-}
-
-Move MoveList::getKiller2() const {
-	return mKiller2;
-}
-
-void MoveList::setKiller1(Move m) {
-	mKiller1 = m;
-}
-
-void MoveList::setKiller2(Move m) {
-	mKiller2 = m;
-}
-*/
-
-MoveList::MoveList(const State& pState) : mState(pState), mValid(Full), mQSearch(false), mBest(NULL_MOVE), mSize(0), mHistory(nullptr), mPly(0) {
+/* List of moves and related functions */
+MoveList::MoveList(const State& s) : mState(s), mValid(FULL), mQSearch(false), mBest(NULL_MOVE), mSize(0), mHistory(nullptr), mPly(0) {
 	generateMoves<MoveType::All>();
-	mStage = allLegal;
+	mStage = AllLegal;
 	checkLegal();
 }
 
-///
+std::ostream& operator<<(std::ostream& os, const MoveList& moveList) {
+	MoveList ml = moveList;
+	os << ml.size() << " moves:\n";
+	while (ml.size() >= 1) {
+		Move move = ml.pop();
+		os << to_string(move) << "\n";
+	}
+	return os;
+}

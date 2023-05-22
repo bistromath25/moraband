@@ -1,3 +1,8 @@
+/**
+ * Moraband, known in antiquity as Korriban, was an 
+ * Outer Rim planet that was home to the ancient Sith 
+ **/
+
 #ifndef MOVE_H
 #define MOVE_H
 
@@ -21,12 +26,12 @@ inline bool noScore(const MoveEntry & entry) {
 	return entry.score == 0;
 }
 
-inline bool operator==(const MoveEntry& pEntry, const Move pMove) {
-	return pEntry.move == pMove;
+inline bool operator==(const MoveEntry& entry, const Move move) {
+	return entry.move == move;
 }
 
-inline bool operator<(const MoveEntry& pEntry1, const MoveEntry& pEntry2) {
-	return pEntry1.score < pEntry2.score;
+inline bool operator<(const MoveEntry& entry1, const MoveEntry& entry2) {
+	return entry1.score < entry2.score;
 }
 
 static const Move NULL_MOVE = 0;
@@ -96,33 +101,4 @@ inline std::string to_string(Move m) {
 	return res;
 }
 
-/*
-static const int MAX_PV_SIZE = ((MAX_PLY*MAX_PLY) + MAX_PLY) / 2;
-
-inline int triangularIndex(int ply)
-{
-    return ply * (2 * MAX_PLY + 1 - ply) / 2;
-}
-
-class Variation
-{
-public:
-    Variation();
-    void pushToPv(Move pMove, U64 pKey, int pPly, int pScore);
-    U64 getPvKey(int pPly=0) const;
-    Move getPvMove(int pPly=0) const;
-    bool isMate() const;
-    int getMateInN() const;
-    void clearPv();
-    void checkPv(State& pState);
-    void printPv();
-private:
-    std::array<std::pair<Move, U64>, MAX_PV_SIZE> mPv;
-    bool mMatingLine;
-    std::size_t mSize;
-};
-*/
-
 #endif
-
-///
