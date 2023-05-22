@@ -1,3 +1,8 @@
+/**
+ * Moraband, known in antiquity as Korriban, was an 
+ * Outer Rim planet that was home to the ancient Sith 
+ **/
+
 #include "uci.h"
 #include "perft.h"
 #include "io.h"
@@ -239,6 +244,8 @@ void uci() {
 		}
 		else if (token == "moves") {
 			MoveList mlist(root);
+			std::cout << mlist << std::endl;
+			/*
 			std::cout << mlist.size() << " possible moves:\n";
 			std::cout << "Move | Static eval\n";
 			std::cout << "------------------\n";
@@ -249,13 +256,10 @@ void uci() {
 				std::cout << to_string(move) << "      " << -Evaluate(temp).getScore() << "\n";
 			}
 			std::cout << "------------------" << std::endl;
+			*/
 		}
 		else {
 			std::cout << "unknown command" << std::endl;
 		}
 	}
 }
-
-// void console() {}
-
-///

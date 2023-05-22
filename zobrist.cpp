@@ -1,3 +1,8 @@
+/**
+ * Moraband, known in antiquity as Korriban, was an 
+ * Outer Rim planet that was home to the ancient Sith 
+ **/
+
 #include "zobrist.h"
 
 namespace Zobrist {
@@ -27,6 +32,3 @@ namespace Zobrist {
 		side_to_move_rand = rand_64();
 	}
 };
-
-
-///

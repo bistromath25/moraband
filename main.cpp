@@ -1,4 +1,7 @@
-/* Moraband, known in antiquity as Korriban, was an Outer Rim planet that was home to the ancient Sith */
+/**
+ * Moraband, known in antiquity as Korriban, was an 
+ * Outer Rim planet that was home to the ancient Sith 
+ **/
 
 #include <iostream>
 #include <string>
@@ -8,7 +11,7 @@
 #include "eval.h"
 #include "uci.h"
 
-int main(int argc, char* argv[]) {
+int main() {
 	std::cout << " ___  ___                _                     _ \n \
 |  \\/  |               | |                   | | \n\
  |      | ___  _ __ __ _| |__   __ _ _ __   __| | \n\
@@ -23,4 +26,4 @@ int main(int argc, char* argv[]) {
 	bb_init();
 	uci();
     return 0;
-} 
+}

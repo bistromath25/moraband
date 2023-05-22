@@ -1,3 +1,8 @@
+/**
+ * Moraband, known in antiquity as Korriban, was an 
+ * Outer Rim planet that was home to the ancient Sith 
+ **/
+
 #ifndef HISTORY_H
 #define HISTORY_H
 
@@ -11,6 +16,7 @@
 
 static const int MAX_GAME_MOVES = 1024;
 
+/* History heuristic */
 class History {
 public:
 	History() : mKillers{}, mHistory{} {
@@ -19,12 +25,12 @@ public:
 			arr.fill(1);
 		}
 	}
-	History(const State& pState) : mKillers{}, mHistory{} {
+	History(const State& s) : mKillers{}, mHistory{} {
 		mGameHistory.reserve(1024);
 		for (std::array<int, BOARD_SIZE>& arr : mButterfly) {
 			arr.fill(1);
 		}
-		push(std::make_pair(NULL_MOVE, pState.getKey()));
+		push(std::make_pair(NULL_MOVE, s.getKey()));
 	}
 	std::size_t size() {
 		return mGameHistory.size();
@@ -44,15 +50,15 @@ public:
 			arr.fill(1);
 		}
 	}
-	void push(const std::pair<Move, U64>& mPair) {
-		mGameHistory.push_back(mPair);
+	void push(const std::pair<Move, U64>& p) {
+		mGameHistory.push_back(p);
 	}
 	void pop() {
 		if (!mGameHistory.empty()) {
 			mGameHistory.pop_back();
 		}
 	}
-	bool isThreefoldRepetition(State& pState) const {
+	bool isThreefoldRepetition(State& s) const {
 		if (mGameHistory.size() < 5) {
 			return false;
 		}
@@ -62,16 +68,16 @@ public:
 		}
 		return false;
 	}
-	void update(Move pBest, int pDepth, int ply, bool causedCutoff) {
+	void update(Move bestMove, int depth, int ply, bool causedCutoff) {
 		if (causedCutoff) {
-			if (mKillers[ply].first != pBest) {
+			if (mKillers[ply].first != bestMove) {
 				mKillers[ply].second = mKillers[ply].first;
-				mKillers[ply].first = pBest;
+				mKillers[ply].first = bestMove;
 			}
-			mHistory[getSrc(pBest)][getDst(pBest)] += pDepth * pDepth;
+			mHistory[getSrc(bestMove)][getDst(bestMove)] += depth * depth;
 		}
 		else {
-			mButterfly[getSrc(pBest)][getDst(pBest)] += pDepth;
+			mButterfly[getSrc(bestMove)][getDst(bestMove)] += depth;
 		}
 	}
 	const std::pair<Move, Move>& getKiller(int ply) const {
@@ -89,5 +95,3 @@ private:
 };
 
 #endif
-
-///

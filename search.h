@@ -1,3 +1,8 @@
+/**
+ * Moraband, known in antiquity as Korriban, was an 
+ * Outer Rim planet that was home to the ancient Sith 
+ **/
+
 #ifndef SEARCH_H
 #define SEARCH_H
 
@@ -84,7 +89,7 @@ static std::thread threads[MAX_THREADS];
 static GlobalInfo global_info[MAX_THREADS];
 static std::pair<int, bool> results[MAX_THREADS];
 
-int search(State& s, SearchInfo& si, GlobalInfo& gi, int depth, int ply, int alpha, int beta, bool isPv, bool isNull, bool isRoot, bool isPruning);
+int search(State& s, SearchInfo& si, GlobalInfo& gi, int depth, int ply, int alpha, int beta, bool isPv, bool isNull, bool isRoot);
 int search_root(State& s, SearchInfo& si, GlobalInfo& gi, int depth, int ply, int alpha, int beta);
 Move iterative_deepening(State& s, SearchInfo& si);
 Move search(State& s, SearchInfo& si);

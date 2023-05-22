@@ -1,12 +1,15 @@
+/**
+ * Moraband, known in antiquity as Korriban, was an 
+ * Outer Rim planet that was home to the ancient Sith 
+ **/
+
 #include <thread>
 #include <vector>
-#include <condition_variable>
 #include <numeric>
 #include "perft.h"
 
-// https://www.chessprogramming.org/Perft_Results#Position_2
-
 static History history;
+std::vector<U64> nodeCount;
 
 U64 perft(State & s, int depth) { // Total
 	int nodes = 0;
@@ -22,41 +25,14 @@ U64 perft(State & s, int depth) { // Total
 	return nodes;
 }
 
-bool ready = false;
-std::condition_variable cv;
-std::mutex qMutex;
-std::mutex lock1;
-std::mutex lock2;
-std::vector<U64> nodeCount;
-
-void test(State s, MoveList* mList, int depth, int id) {
-	/*
-	{
-		std::unique_lock<std::mutex> lk(qMutex);
-		cv.wait(lk, [] { return ready; });
-	}
-	*/
-	Move m = mList->getBestMove();
-	/*
-	{
-		std::lock_guard<std::mutex> lk(qMutex);
-		m = mList->getBestMove();
-	}
-	*/
-
+void test(State s, MoveList* moveList, int depth, int id) {
+	Move m = moveList->getBestMove();
 	while (m != NULL_MOVE) {
 		State c(s);
 		c.makeMove(m);
 		int nodes = perft(c, depth - 1);
-		m = mList->getBestMove();
+		m = moveList->getBestMove();
 		nodeCount.push_back(nodes);
-		/*
-		{
-			std::lock_guard<std::mutex> lk(qMutex);
-			nodeCount.push_back(nodes);
-			m = mList->getBestMove();
-		} 
-		*/
 	}
 }
 
@@ -68,13 +44,6 @@ U64 MTperft(State& s, int depth) {
 	for (unsigned int i = 0; i < nThreads; ++i) {
 		threads.push_back(std::thread(test, s, &mlist, depth, i));
 	}
-	/*
-	{
-		std::lock_guard<std::mutex> lk(qMutex);
-		ready = true;
-		cv.notify_all();
-	}
-	*/
 	for (std::thread& thread : threads)	thread.join();
 	return std::accumulate(nodeCount.begin(), nodeCount.end(), 0);
 }

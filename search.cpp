@@ -1,10 +1,15 @@
+/**
+ * Moraband, known in antiquity as Korriban, was an 
+ * Outer Rim planet that was home to the ancient Sith 
+ **/
+
 #include "search.h"
 #include "io.h"
 #include <string>
 #include <fstream>
 #include <thread>
 
-// Check if search should be stopped
+/* Check if search should be stopped */
 bool stop_search(SearchInfo& si) {
 	// Not enough time left for search
 	if (si.clock.elapsed<std::chrono::milliseconds>() >= si.moveTime) {
@@ -22,6 +27,7 @@ bool stop_search(SearchInfo& si) {
 	return false;
 }
 
+/* Qsearch routine */
 int qsearch(State& s, SearchInfo& si, GlobalInfo& gi, int ply, int alpha, int beta) {
 	si.nodes++;
 	assert(ply <= MAX_PLY);
@@ -89,7 +95,8 @@ int qsearch(State& s, SearchInfo& si, GlobalInfo& gi, int ply, int alpha, int be
 	return alpha;
 }
 
-int search(State& s, SearchInfo& si, GlobalInfo& gi, int depth, int ply, int alpha, int beta, bool isPv, bool isNull, bool isRoot, bool isPruning) {
+/* Regular search function */
+int search(State& s, SearchInfo& si, GlobalInfo& gi, int depth, int ply, int alpha, int beta, bool isPv, bool isNull, bool isRoot) {
 	assert(depth >= 0);
 	
 	if (depth == 0 || ply > MAX_PLY) { // Perform qsearch when regular search is completed
@@ -138,11 +145,6 @@ int search(State& s, SearchInfo& si, GlobalInfo& gi, int depth, int ply, int alp
 			}
 		}
 	}
-
-	// Try getting the pv move
-	//if (gi.variation.getPvKey(ply) == s.getKey()) {
-	//	best_move = gi.variation.getPvMove(ply);
-	//}
 	
 	if (!isPv) { // Evaluate current position statically if current node is NOT a PV node
 		if (tt_flag == FLAG_EXACT) { // Make use of previous TT score
@@ -160,7 +162,7 @@ int search(State& s, SearchInfo& si, GlobalInfo& gi, int depth, int ply, int alp
 	}
 
 	// Pruning
-	if (isPruning && !isPv && !s.inCheck() && s.getNonPawnPieceCount(s.getOurColor()) && beta > -CHECKMATE_BOUND) {
+	if (!isPv && !isNull && !s.inCheck() && s.getNonPawnPieceCount(s.getOurColor()) && beta > -CHECKMATE_BOUND) {
 		// Reverse futility pruning
 		if (depth < REVERSE_FUTILITY_DEPTH && staticEval - REVERSE_FUTILITY_MARGIN * depth >= beta) {
 			return staticEval;
@@ -181,7 +183,7 @@ int search(State& s, SearchInfo& si, GlobalInfo& gi, int depth, int ply, int alp
 			std::memmove(&n, &s, sizeof s);
 			n.makeNull();
 			gi.history.push(std::make_pair(NULL_MOVE, n.getKey()));
-			int nullScore = -search(n, si, gi, depth - 3, ply + 1, -beta, -(beta - 1), false, true, false, false);
+			int nullScore = -search(n, si, gi, depth - 3, ply + 1, -beta, -(beta - 1), false, true, false);
 			gi.history.pop();
 			if (nullScore >= beta) {
 				if (nullScore >= CHECKMATE_BOUND) {
@@ -194,8 +196,8 @@ int search(State& s, SearchInfo& si, GlobalInfo& gi, int depth, int ply, int alp
 
 	// Internal iterative deepening
 	// In case no best move was found, perform a shallower search to determine which move to properly seach first
-	if (!tt_move && !s.inCheck() && (isPv || staticEval + 100 >= beta) && depth >= 5) {
-		search(s, si, gi, depth - 2, ply, alpha, beta, isPv, true, false, false);
+	if (!tt_move && !isNull && !s.inCheck() && (isPv || staticEval + 100 >= beta) && depth >= 5) {
+		search(s, si, gi, depth - 2, ply, alpha, beta, isPv, true, false);
 		tt_entry = tt.probe(s.getKey());
 		tt_move = tt_entry.getMove();
 	}
@@ -216,20 +218,20 @@ int search(State& s, SearchInfo& si, GlobalInfo& gi, int depth, int ply, int alp
 		d = depth - 1; // Early pruning
 		legalMoves++;
 
-		if (!isPv && bestScore > -CHECKMATE_BOUND && !s.inCheck() && !s.givesCheck(m) && s.getNonPawnPieceCount(s.getOurColor())) {
+		if (!isPv && bestScore > -CHECKMATE_BOUND && !s.inCheck() && !s.givesCheck(m) && !isPromotion(m) && s.getNonPawnPieceCount(s.getOurColor())) {
 			// Futility pruning
-			if (depth == 1 && s.isQuiet(m) && !isPromotion(m) && staticEval + 300 < a) {
+			if (depth < 8 && !isPv && staticEval + 100 * d < a) {
+				continue;
+			}
+			// SEE-based pruning (prune if SEE too low)
+			// Prune if see(move) < -(pawn * 2 ^ (depth - 1))
+			if (depth < 3 && s.see(m) < -PAWN_WEIGHT_MG * (1 << (depth - 1))) { // m != tt_move
 				continue;
 			}
 			// Late move reduction
 			if (depth > 2 && legalMoves > (isPv ? 5 : 3) && !s.inCheck()) {
 				d -= 1 + !isPv + (mlist.size() > 10);
 				d = std::max(1, d);
-			}
-			// SEE-based pruning (prune if SEE too low)
-			// Prune if see(move) < -(pawn * 2 ^ (depth - 1))
-			if (depth <= 8 && s.see(m) < -PAWN_WEIGHT_MG * (1 << (depth - 1))) { // m != tt_move
-				continue;
 			}
 		}
 
@@ -243,17 +245,17 @@ int search(State& s, SearchInfo& si, GlobalInfo& gi, int depth, int ply, int alp
 
 		// Search PV move
 		if (first) {
-			//best_move = m;
-			score = -search(c, si, gi, d, ply + 1, -b, -a, isPv, isNull, true, false);
+			best_move = m;
+			score = -search(c, si, gi, d, ply + 1, -b, -a, isPv, isNull, true);
 			first = false;
 		}     
 		else {
-			score = -search(c, si, gi, d, ply + 1, -(a + 1), -a, false, isNull, false, true);
+			score = -search(c, si, gi, d, ply + 1, -(a + 1), -a, false, isNull, false);
 			if (score > a) {
-				score = -search(c, si, gi, std::max(d, depth - 1), ply + 1, -(a + 1), -a, false, isNull, false, true);
+				score = -search(c, si, gi, std::max(d, depth - 1), ply + 1, -(a + 1), -a, false, isNull, false);
 			}
 			if (a < score && score < b) {
-				score = -search(c, si, gi, d, ply + 1, -b, -a, true, isNull, false, true);
+				score = -search(c, si, gi, d, ply + 1, -b, -a, true, isNull, false);
 			}
 		}
 		
@@ -299,6 +301,7 @@ int search(State& s, SearchInfo& si, GlobalInfo& gi, int depth, int ply, int alp
 	return a;
 }
 
+/* Root search */
 int search_root(State& s, SearchInfo& si, GlobalInfo& gi, int depth, int ply, int alpha, int beta) {
 	assert(depth >= 0);
 
@@ -341,17 +344,17 @@ int search_root(State& s, SearchInfo& si, GlobalInfo& gi, int depth, int ply, in
 		}
 
 		if (first) {
-			//best_move = m;
-			score = -search(c, si, gi, d, ply + 1, -b, -a, true, false, true, false);
+			best_move = m;
+			score = -search(c, si, gi, d, ply + 1, -b, -a, true, false, true);
 			first = false;
 		}     
 		else {
-			score = -search(c, si, gi, d, ply + 1, -(a + 1), -a, false, false, false, true);	
+			score = -search(c, si, gi, d, ply + 1, -(a + 1), -a, false, false, false);	
 			if (score > a) {
-				score = -search(c, si, gi, std::max(d, depth - 1), ply + 1, -(a + 1), -a, false, false, false, true);
+				score = -search(c, si, gi, std::max(d, depth - 1), ply + 1, -(a + 1), -a, false, false, false);
 			}
 			if (a < score && score < b) {
-				score = -search(c, si, gi, d, ply + 1, -b, -a, true, true, false, true);
+				score = -search(c, si, gi, d, ply + 1, -b, -a, true, true, false);
 			}
 		}
 		
@@ -389,17 +392,17 @@ int search_root(State& s, SearchInfo& si, GlobalInfo& gi, int depth, int ply, in
 		: a > alpha ? FLAG_EXACT
 			: FLAG_UPPER;
 
-	assert(best_move != NULL_MOVE);
+	//assert(best_move != NULL_MOVE);
 	tt.insert(best_move, flag, depth, value_to_tt(a, ply), s.getKey());
 
 	return a;
 }
 
+/* Multi-threaded search driver */
 void parallel_search(State s, SearchInfo si, int depth, int alpha, int beta, int t) {
 	auto& [value, valid] = results[t];
 	auto& gi = global_info[t];
 	valid = false;
-	//value = search(s, si, gi, depth, 0, alpha, beta, false, false, false, true);
 	value = search_root(s, si, gi, depth, 0, alpha, beta);
 	if (!THREAD_STOP) {
 		THREAD_STOP = true;
@@ -407,7 +410,7 @@ void parallel_search(State s, SearchInfo si, int depth, int alpha, int beta, int
 	}
 }
 
-// CPW: https://www.chessprogramming.org/Iterative_Deepening
+/* Iterative deepening routine */
 Move iterative_deepening(State& s, SearchInfo& si) {
 	Move best_move = NULL_MOVE;
 	//int alpha = NEG_INF;
@@ -421,8 +424,7 @@ Move iterative_deepening(State& s, SearchInfo& si) {
 			for (int i = 1; i < NUM_THREADS; ++i) {
 				threads[i] = std::thread{parallel_search, s, si, d + (i & 1), NEG_INF, POS_INF, i};
 			}
-		
-			//results[0].first = search(s, si, global_info[0], d, 0, NEG_INF, POS_INF, true, false, true, false);
+
 			results[0].first = search_root(s, si, global_info[0], d, 0, NEG_INF, POS_INF);
 			THREAD_STOP = true;
 		
@@ -434,7 +436,6 @@ Move iterative_deepening(State& s, SearchInfo& si) {
 			}
 		}
 		else {
-			//results[0].first = search(s, si, global_info[0], d, 0, NEG_INF, POS_INF, true, false, true, false);
 			results[0].first = search_root(s, si, global_info[0], d, 0, NEG_INF, POS_INF);
 		}
 
@@ -488,16 +489,15 @@ Move iterative_deepening(State& s, SearchInfo& si) {
 	return best_move;
 }
 
+/* Search driver */
 Move search(State& s, SearchInfo& si) {
 	//tt.clear();
 	for (int i = 0; i < NUM_THREADS; ++i) {
 		global_info[i].variation.clearPv();
-		//global_info[i].history.clear();
+		global_info[i].history.clear();
 		global_info[i].nodes = 0;
 		results[i].first = 0;
 		results[i].second = false;
 	}
 	return iterative_deepening(s, si);
 }
-
-///

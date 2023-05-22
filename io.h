@@ -1,3 +1,8 @@
+/**
+ * Moraband, known in antiquity as Korriban, was an 
+ * Outer Rim planet that was home to the ancient Sith 
+ **/
+
 #ifndef IO_H
 #define IO_H
 
@@ -53,5 +58,3 @@ inline std::string get_input() {
 }
 
 #endif
-
-///

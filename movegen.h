@@ -1,3 +1,8 @@
+/**
+ * Moraband, known in antiquity as Korriban, was an 
+ * Outer Rim planet that was home to the ancient Sith 
+ **/
+
 #ifndef MOVE_GENERATOR_H
 #define MOVE_GENERATOR_H
 
@@ -12,28 +17,30 @@
 #include "move.h"
 #include "history.h"
 
-const U64 Full = 0xFFFFFFFFFFFFFFFF;
-const int maxSize = 256;
+const U64 FULL = 0xFFFFFFFFFFFFFFFF;
+const int MOVELIST_MAX_SIZE = 256;
 
+/* Staged move generation */
 enum MoveStage {
-	nBestMove,
-	nAttacksGen,
-	nAttacks,
-	nKiller1,
-	nKiller2,
-	nQuietsGen,
-	nQuiets,
-	qBestMove,
-	qAttacksGen,
-	qAttacks,
-	qQuietChecksGen,
-	qQuietChecks,
-	nEvadeBestMove,
-	nEvadeMovesGen,
-	nEvade,
-	allLegal
+	BestMove,
+	AttacksGen,
+	Attacks,
+	Killer1,
+	Killer2,
+	QuietsGen,
+	Quiets,
+	QBestMove,
+	QAttacksGen,
+	QAttacks,
+	QQuietChecksGen,
+	QQuietChecks,
+	EvadeBestMove,
+	EvadeMovesGen,
+	Evade,
+	AllLegal
 };
 
+/* Types of moves */
 enum class MoveType {
 	Attacks,
 	Quiets,
@@ -42,18 +49,15 @@ enum class MoveType {
 	All
 };
 
+/* List of moves and related functions */
 class MoveList {
 public:
-	MoveList(const State& pState, Move pBest, History* pHistory, int pPly, bool pQSearch=false);
-	MoveList(const State& pState);
+	MoveList(const State& s, Move bestMove, History* history, int ply, bool qsearch=false);
+	MoveList(const State& s);
 	std::size_t size() const;
 	void push(Move m);
 	bool contains(Move move) const;
 	Move getBestMove();
-	//Move getKiller1() const;
-	//Move getKiller2() const;
-	//void setKiller1(Move m);
-	//void setKiller2(Move m);
 	Move pop();
 	void checkLegal();
 	void setStage(int stage) { mStage = stage; }
@@ -73,7 +77,7 @@ private:
 	const History* mHistory;
 	int mPly;
 	int mStage;
-	std::array<MoveEntry, maxSize> mList;
+	std::array<MoveEntry, MOVELIST_MAX_SIZE> mList;
 	std::vector<MoveEntry> badCaptures;
 	std::size_t mSize;
 	Move mBest;
@@ -84,5 +88,3 @@ private:
 void mg_init();
 
 #endif
-
-///
