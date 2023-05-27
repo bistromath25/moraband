@@ -1,8 +1,8 @@
 # Moraband
+Moraband is a UCI chess engine written in C++, and may be used with any chess interfaces supporting the UCI protocol such as [Banksia](https://banksiagui.com) or [Arena](http://www.playwitharena.de).
+
 From the [Star Wars wiki](https://starwars.fandom.com/wiki/Moraband):  
 *Moraband, known in antiquity as Korriban, was an Outer Rim planet that was home to the ancient Sith.*  
-
-Moraband is a UCI chess engine written in C++, and may be used with any chess interfaces supporting the UCI protocol such as [Banksia](https://banksiagui.com) or [Arena](http://www.playwitharena.de).
 
 ```
  ___  ___                _                     _ 

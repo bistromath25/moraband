@@ -225,24 +225,24 @@ template<MoveType T, Color C> void MoveList::pushPawnMoves() {
 
 template<MoveType T> void MoveList::pushCastle() {
 	Square k = mState.getKingSquare(mState.getOurColor());
-	if (mState.canCastleKingside() && !(between_hor[k][k-3] & mState.getOccupancyBB()) && !mState.attacked(k - 1) && !mState.attacked(k-2)) {
+	if (mState.canCastleKingside() && !(between_hor[k][k - 3] & mState.getOccupancyBB()) && !mState.attacked(k - 1) && !mState.attacked(k - 2)) {
 		if (T == MoveType::QuietChecks) {
 			if (square_bb[k - 1] & mState.getCheckSquaresBB(PIECETYPE_ROOK)) {
-				push(makeCastle(k, k-2));
+				push(makeCastle(k, k - 2));
 			}
 		}
 		else {
-			push(makeCastle(k, k-2));
+			push(makeCastle(k, k - 2));
 		}
 	}
-	if (mState.canCastleQueenside() && !(between_hor[k][k+4] & mState.getOccupancyBB()) && !mState.attacked(k + 1) && !mState.attacked(k+2)) {
+	if (mState.canCastleQueenside() && !(between_hor[k][k + 4] & mState.getOccupancyBB()) && !mState.attacked(k + 1) && !mState.attacked(k + 2)) {
 		if (T == MoveType::QuietChecks) {
 			if (square_bb[k + 1] & mState.getCheckSquaresBB(PIECETYPE_ROOK)) {
-				push(makeCastle(k, k+2));
+				push(makeCastle(k, k + 2));
 			}
 		}
 		else {
-			push(makeCastle(k, k+2));
+			push(makeCastle(k, k + 2));
 		}
 	}
 }
