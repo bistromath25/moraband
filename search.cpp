@@ -40,13 +40,25 @@ int qsearch(State& s, SearchInfo& si, GlobalInfo& gi, int ply, int alpha, int be
 		return 0;
 	}
 
+	// Mate distance pruning
+    alpha = std::max((-CHECKMATE + ply), alpha);
+    beta  = std::min((CHECKMATE - ply), beta);
+	if (alpha >= beta) {
+		return alpha;
+	}
+
 	Evaluate evaluate(s);
 	int staticEval = evaluate.getScore();
-	if (staticEval >= beta) {
-		return beta;
+	if (staticEval < alpha - QUEEN_WEIGHT_MG) { // Delta pruning
+		return alpha;
 	}
-	if (staticEval > alpha) {
-		alpha = staticEval;
+	if (!s.inCheck()) {
+		if (staticEval >= beta) {
+			return beta;
+		}
+		if (staticEval > alpha) {
+			alpha = staticEval;
+		}
 	}
 	
 	int bestScore = NEG_INF;
@@ -55,8 +67,7 @@ int qsearch(State& s, SearchInfo& si, GlobalInfo& gi, int ply, int alpha, int be
 
 	// Generate moves and create the movelist.
 	MoveList mlist(s, NULL_MOVE, &gi.history, ply, true);
-
-	// Futility pruning: do not search subtrees which are unlikely to improve the alpha value score
+	
 	while ((m = mlist.getBestMove())) {
 		// Avoid pruning tactical positions
 		if (!s.inCheck() && !s.givesCheck(m) && !s.isEnPassant(m) && !isPromotion(m)) {
