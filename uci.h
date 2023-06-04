@@ -22,6 +22,10 @@
 #define ENGINE_AUTHOR "Brighten Zhang"
 
 const std::string START_FEN = "rnbqkbnr/pppppppp/8/8/8/8/PPPPPPPP/RNBQKBNR w KQkq";
+extern int HASH_SIZE;
+extern int NUM_THREADS;
+extern int MOVE_OVERHEAD;
+extern int CONTEMPT;
 
 void uci();
 

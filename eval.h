@@ -13,29 +13,29 @@
 #include "state.h"
 #include "pst.h"
 
-static const int TEMPO_BONUS = 8; // Side-to-move bonus
-static int CONTEMPT = 0; // Contempt
+const int TEMPO_BONUS = 8; // Side-to-move bonus
+extern int CONTEMPT;
 
-static const int KNIGHT_THREAT = 3; // Threats on enemy King
-static const int BISHOP_THREAT = 3;
-static const int ROOK_THREAT = 4;
-static const int QUEEN_THREAT = 5;
+const int KNIGHT_THREAT = 3; // Threats on enemy King
+const int BISHOP_THREAT = 3;
+const int ROOK_THREAT = 4;
+const int QUEEN_THREAT = 5;
 
-static const int PAWN_WEIGHT_MG = 90;
-static const int KNIGHT_WEIGHT_MG = 310;
-static const int BISHOP_WEIGHT_MG = 351;
-static const int ROOK_WEIGHT_MG = 480;
-static const int QUEEN_WEIGHT_MG = 1139;
+const int PAWN_WEIGHT_MG = 90;
+const int KNIGHT_WEIGHT_MG = 310;
+const int BISHOP_WEIGHT_MG = 351;
+const int ROOK_WEIGHT_MG = 480;
+const int QUEEN_WEIGHT_MG = 1139;
 
-static const int PAWN_WEIGHT_EG = 94;
-static const int KNIGHT_WEIGHT_EG = 281;
-static const int BISHOP_WEIGHT_EG = 317;
-static const int ROOK_WEIGHT_EG = 645;
-static const int QUEEN_WEIGHT_EG = 1110;
+const int PAWN_WEIGHT_EG = 94;
+const int KNIGHT_WEIGHT_EG = 281;
+const int BISHOP_WEIGHT_EG = 317;
+const int ROOK_WEIGHT_EG = 645;
+const int QUEEN_WEIGHT_EG = 1110;
 
-static const int KING_WEIGHT = 32767;
+const int KING_WEIGHT = 32767;
 
-static const int PieceValue[7] =  {
+const int PieceValue[7] =  {
     PAWN_WEIGHT_MG,
     KNIGHT_WEIGHT_MG,
     BISHOP_WEIGHT_MG,
@@ -52,15 +52,15 @@ enum PAWN_PASSED_TYPES {
 	PROTECTED_ADVANCE,
 	SAFE_ADVANCE
 };
-static const int PAWN_PASSED = 20;
-static const int PAWN_PASSED_CANDIDATE = 10;
-static const int PAWN_CONNECTED = 10;
-static const int PAWN_ISOLATED = -10;
-static const int PAWN_DOUBLED = -5;
-static const int PAWN_FULL_BACKWARDS = -15;
-static const int PAWN_BACKWARDS = -5;
+const int PAWN_PASSED = 20;
+const int PAWN_PASSED_CANDIDATE = 10;
+const int PAWN_CONNECTED = 10;
+const int PAWN_ISOLATED = -10;
+const int PAWN_DOUBLED = -5;
+const int PAWN_FULL_BACKWARDS = -15;
+const int PAWN_BACKWARDS = -5;
 
-static const int PAWN_PASSED_ADVANCE[4][2][7] = {
+const int PAWN_PASSED_ADVANCE[4][2][7] = {
 	{ // Cannot advance
 		{ 0, 4, 8, 12, 20, 60, 80 }, // Middlegame
 		{ 0, 4, 8, 18, 25, 70, 100 } // Endgame
@@ -79,28 +79,28 @@ static const int PAWN_PASSED_ADVANCE[4][2][7] = {
 	}
 };
 
-static const int BAD_BISHOP = -20;
-static const int TRAPPED_ROOK = -25;
-static const int STRONG_PAWN_ATTACK = -80;
-static const int WEAK_PAWN_ATTACK = -40;
-static const int HANGING = -30;
+const int BAD_BISHOP = -20;
+const int TRAPPED_ROOK = -25;
+const int STRONG_PAWN_ATTACK = -80;
+const int WEAK_PAWN_ATTACK = -40;
+const int HANGING = -30;
 
 // Assorted bonuses
-static const int BISHOP_PAIR_MG = 55;
-static const int BISHOP_PAIR_EG = 77;
-static const int ROOK_OPEN_FILE = 33;
-static const int ROOK_ON_SEVENTH_RANK = 44;
-static const int KNIGHT_OUTPOST = 26;
-static const int BISHOP_OUTPOST = 14;
+const int BISHOP_PAIR_MG = 55;
+const int BISHOP_PAIR_EG = 77;
+const int ROOK_OPEN_FILE = 33;
+const int ROOK_ON_SEVENTH_RANK = 44;
+const int KNIGHT_OUTPOST = 26;
+const int BISHOP_OUTPOST = 14;
 
-static const int CHECKMATE = 32767;
-static const int CHECKMATE_BOUND = CHECKMATE - MAX_PLY;
-static const int STALEMATE = 0;
-static const int DRAW = 0;
+const int CHECKMATE = 32767;
+const int CHECKMATE_BOUND = CHECKMATE - MAX_PLY;
+const int STALEMATE = 0;
+const int DRAW = 0;
 
-static const size_t PAWN_HASH_SIZE = 8192;
+const size_t PAWN_HASH_SIZE = 8192;
 
-static const int SAFETY_TABLE[100] =  {
+const int SAFETY_TABLE[100] =  {
 	  0,   0,   0,   1,   1,   2,   3,   4,   5,   6,
       8,  10,  13,  16,  20,  25,  30,  36,  42,  48,
 	 55,  62,  70,  80,  90, 100, 110, 120, 130, 140,
@@ -113,22 +113,22 @@ static const int SAFETY_TABLE[100] =  {
     650, 650, 650, 650, 650, 650, 650, 650, 650, 650
 };
 
-static const int KNIGHT_MOBILITY[2][9] = {
+const int KNIGHT_MOBILITY[2][9] = {
     { -50, -30, -10, 0, 10, 20, 25, 30, 35 },
     { -60, -30, -10, 0, 10, 20, 25, 30, 35 }
 };
 
-static const int BISHOP_MOBILITY[2][14] = {
+const int BISHOP_MOBILITY[2][14] = {
 	{ -30, -15, -5, 0, 5, 10, 15, 20, 25, 30, 35, 40, 45, 50 },
 	{ -40, -15, -5, 0, 5, 10, 15, 20, 25, 30, 35, 40, 45, 50 }
 };
 
-static const int ROOK_MOBILITY[2][15] = {
+const int ROOK_MOBILITY[2][15] = {
 	{ -30, -15, -5, 0, 5, 10, 15, 20, 25, 30, 35, 40, 45, 50, 50 },
 	{ -40, -15, -5, 0, 10, 20, 30, 40, 50, 55, 60, 65, 70, 75, 80 }
 };
 
-static const int QUEEN_MOBILITY[2][28] = {
+const int QUEEN_MOBILITY[2][28] = {
 	{ -30, -20, -10, 0, 5, 10, 15, 20, 25, 30, 35, 40, 45, 50, 50, 50, 50, 50, 50, 50, 50, 50, 50, 50, 50, 50, 50, 50 },
     { -40, -20, -10, 0, 5, 10, 15, 20, 25, 30, 35, 40, 45, 50, 55, 60, 65, 70, 75, 80, 85, 90, 90, 90, 90, 90, 90, 90 }
 };

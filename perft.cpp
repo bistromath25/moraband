@@ -11,7 +11,8 @@
 static History history;
 std::vector<U64> nodeCount;
 
-U64 perft(State & s, int depth) { // Total
+/* Perft test */
+U64 perft(State & s, int depth) {
 	int nodes = 0;
 	if (s.getFiftyMoveRule() > 99) return nodes;
 	MoveList mlist(s);
@@ -36,6 +37,7 @@ void test(State s, MoveList* moveList, int depth, int id) {
 	}
 }
 
+/* Multi-threaded Perft test */
 U64 MTperft(State& s, int depth) {
 	unsigned int nThreads = std::thread::hardware_concurrency();
 	std::vector<std::thread> threads;

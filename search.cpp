@@ -9,6 +9,11 @@
 #include <fstream>
 #include <thread>
 
+bool THREAD_STOP = false;
+std::thread threads[MAX_THREADS];
+GlobalInfo global_info[MAX_THREADS];
+std::pair<int, bool> results[MAX_THREADS];
+
 /* Check if search should be stopped */
 bool stop_search(SearchInfo& si) {
 	// Not enough time left for search
@@ -21,6 +26,7 @@ bool stop_search(SearchInfo& si) {
 		std::string command(get_input());
 		if (command == "quit" || command == "stop") {
 			si.quit = true;
+			THREAD_STOP = true;
 			return true;
 		}
 	}
@@ -109,7 +115,7 @@ int qsearch(State& s, SearchInfo& si, GlobalInfo& gi, int ply, int alpha, int be
 /* Regular search function */
 int search(State& s, SearchInfo& si, GlobalInfo& gi, int depth, int ply, int alpha, int beta, bool isPv, bool isNull, bool isRoot) {
 	assert(depth >= 0);
-	
+
 	if (depth == 0 || ply > MAX_PLY) { // Perform qsearch when regular search is completed
 		return qsearch(s, si, gi, ply, alpha, beta);
 	}
@@ -441,9 +447,6 @@ Move iterative_deepening(State& s, SearchInfo& si) {
 		
 			for (int i = 1; i < NUM_THREADS; ++i) {
 				threads[i].join(); // join all threads at end of search
-				//if (results[i].second) {
-				//	results_index = i;
-				//}
 			}
 		}
 		else {
@@ -466,9 +469,6 @@ Move iterative_deepening(State& s, SearchInfo& si) {
 		si.prevNodes = si.nodes;
 		si.nodes = 0;
 
-		//score = results[results_index].first;
-		//global_info[results_index].variation.checkPv(s);
-		D(std::cout << "alpha beta score: " << alpha << ' ' << beta << ' ' << score << std::endl;);
 		std::cout << "info depth " << d;
 		if (global_info[results_index].variation.isMate()) {
 			int n = global_info[results_index].variation.getMateInN();
@@ -510,5 +510,6 @@ Move search(State& s, SearchInfo& si) {
 		results[i].first = 0;
 		results[i].second = false;
 	}
+
 	return iterative_deepening(s, si);
 }

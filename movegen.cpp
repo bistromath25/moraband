@@ -551,7 +551,7 @@ MoveList::MoveList(const State& s) : mState(s), mValid(FULL), mQSearch(false), m
 
 std::ostream& operator<<(std::ostream& os, const MoveList& moveList) {
 	MoveList ml = moveList;
-	os << ml.size() << " moves:\n";
+	os << ml.size() << " legal moves:\n";
 	while (ml.size() >= 1) {
 		Move move = ml.pop();
 		os << to_string(move) << "\n";

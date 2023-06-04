@@ -165,6 +165,7 @@ enum Prop : uint32_t {
 const int NEG_INF = -50000;
 const int POS_INF = 50000;
 const int MAX_PLY = 50;
+const int MAX_GAME_MOVES = 1024;
 
 enum NodeType {
 	pv, cut, all

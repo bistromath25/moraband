@@ -12,9 +12,6 @@
 #include <ios>
 #include "defs.h"
 
-//static std::ofstream engine_log("log.txt", std::ios_base::app);
-//static std::string engine_output = "";
-
 inline int input_waiting() {
 #if defined(WIN32) || defined(_WIN32) || defined(__WIN32) && !defined(__CYGWIN__)
 	static int init = 0, pipe;

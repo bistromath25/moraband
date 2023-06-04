@@ -14,8 +14,6 @@
 #include "defs.h"
 #include "state.h"
 
-static const int MAX_GAME_MOVES = 1024;
-
 /* History heuristic */
 class History {
 public:
@@ -59,12 +57,11 @@ public:
 		}
 	}
 	bool isThreefoldRepetition(State& s) const {
-		if (mGameHistory.size() < 5) {
-			return false;
-		}
-		int candidate = mGameHistory.size() - 5;
-		if (mGameHistory[candidate].second == mGameHistory.back().second) {
-			return true;
+		int cnt = 0;
+		for (int i = mGameHistory.size() - 5; i >= 0; i -= 4) {
+			if (mGameHistory[i].second == s.getKey() && ++cnt == 2) {
+				return true;
+			}
 		}
 		return false;
 	}
@@ -86,6 +83,15 @@ public:
 	int getHistoryScore(Move move) const {
 		assert(mButterfly[getSrc(move)][getDst(move)] > 0);
 		return mHistory[getSrc(move)][getDst(move)] / mButterfly[getSrc(move)][getDst(move)];
+	}
+	int count(State& s) {
+		int cnt = 0;
+		for (int i = mGameHistory.size() - 1; i >= 0; i -= 4) {
+			if (mGameHistory[i].second == s.getKey()) {
+				cnt++;
+			}
+		}
+		return cnt;
 	}
 private:
 	std::vector<std::pair<Move, U64>> mGameHistory;

@@ -14,7 +14,7 @@
 #include "defs.h"
 #include "move.h"
 
-static const int MAX_PV_SIZE = ((MAX_PLY * MAX_PLY) + MAX_PLY) / 2;
+const int MAX_PV_SIZE = ((MAX_PLY * MAX_PLY) + MAX_PLY) / 2;
 
 inline int triangularIndex(int ply) {
 	return ply * (2 * MAX_PLY + 1 - ply) / 2;

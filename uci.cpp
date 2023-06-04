@@ -6,17 +6,11 @@
 #include "uci.h"
 #include "perft.h"
 #include "io.h"
-//#include "book.h". // include book.h
 
-//Book bookWhite, bookBlack; // define white and black books
-
-/* 
-position fen 7K/8/k1P5/7p/8/8/8/8 w - - 0 1
-go
-...
-info depth 21 score cp 0 time 467 nodes 2103985 nps 4495000 pv h8g7 a6b6 g7f6 h5h4 f6e5 b6c6 e5f4 h4h3 f4g3 h3h2 g3g2 h2h1q g2h1 
-bestmove h8g7
-*/
+int HASH_SIZE = DEFAULT_HASH_SIZE;
+int NUM_THREADS = 1;
+int MOVE_OVERHEAD = 500;
+int CONTEMPT = 0;
 
 // Validate incoming UCI move
 Move get_uci_move(std::string & token, State & s) {
@@ -121,7 +115,6 @@ void position(std::istringstream & is, State & s) {
 		}
 		else {
 			s.makeMove(m);
-			//s.updateGameMoves(token);
 			for (int i = 0; i < NUM_THREADS; ++i) {
 				global_info[i].history.push(std::make_pair(m, s.getKey()));
 			}
@@ -132,7 +125,8 @@ void position(std::istringstream & is, State & s) {
 // UCI setoption command
 void set_option(std::string & name, std::string & value) {
 	if (name == "Hash") {
-		tt.resize(std::stoi(value));
+		HASH_SIZE = std::stoi(value);
+		tt.resize(HASH_SIZE);
 	}
 	else if (name == "ClearHash") {
 		tt.clear();
@@ -157,16 +151,6 @@ void set_option(std::string & name, std::string & value) {
 		}
 		D(std::cout << "Move Overhead set to value " << MOVE_OVERHEAD << std::endl;);
 	}
-	else if (name == "Contempt") {
-		CONTEMPT = std::stoi(value);
-		if (CONTEMPT < -100) {
-			CONTEMPT = -100;
-		}
-		else if (CONTEMPT > 100) {
-			CONTEMPT = 100;
-		}
-		D(std::cout << "Contempt set to value " << CONTEMPT << std::endl;);
-	}
 	return;
 }
 
@@ -182,12 +166,15 @@ void uci() {
 		is >> std::skipws >> token;
 
 		if (token == "quit") {
-			//engine_log.close();
 			break;
 		}
 		else if (token == "ucinewgame") {
 			tt.clear();
 			ptable.clear();
+			for (int i = 0; i < NUM_THREADS; ++i) {
+				global_info[i].history.init();
+				global_info[i].variation.clearPv();
+			}
 			//tt.setAncient();
 		}
 		else if (token == "isready") {
@@ -223,9 +210,7 @@ void uci() {
 		}
 		else if (token == "display") {
 			std::cout << root;
-		}
-		else if (token == "phase") {
-			std::cout << root.getGamePhase() << std::endl;
+			std::cout << "Position repeated " << global_info[0].history.count(root) << " times" << std::endl;
 		}
 		else if (token == "fen") {
 			std::cout << root.getFen() << std::endl;
@@ -245,18 +230,6 @@ void uci() {
 		else if (token == "moves") {
 			MoveList mlist(root);
 			std::cout << mlist << std::endl;
-			/*
-			std::cout << mlist.size() << " possible moves:\n";
-			std::cout << "Move | Static eval\n";
-			std::cout << "------------------\n";
-			while (mlist.size() >= 1) {
-				Move move = mlist.pop();
-				State temp = root;
-				temp.makeMove(move);
-				std::cout << to_string(move) << "      " << -Evaluate(temp).getScore() << "\n";
-			}
-			std::cout << "------------------" << std::endl;
-			*/
 		}
 		else {
 			std::cout << "unknown command" << std::endl;
