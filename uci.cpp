@@ -151,6 +151,16 @@ void set_option(std::string & name, std::string & value) {
 		}
 		D(std::cout << "Move Overhead set to value " << MOVE_OVERHEAD << std::endl;);
 	}
+	else if (name == "Contempt") {
+ 		CONTEMPT = std::stoi(value);
+ 		if (CONTEMPT < -100) {
+ 			CONTEMPT = -100;
+ 		}
+ 		else if (CONTEMPT > 100) {
+ 			CONTEMPT = 100;
+ 		}
+ 		D(std::cout << "Contempt set to value " << CONTEMPT << std::endl;);
+ 	}
 	return;
 }
 
