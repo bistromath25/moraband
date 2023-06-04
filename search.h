@@ -82,12 +82,12 @@ struct GlobalInfo {
 	Variation variation;
 };
 
-static const int MAX_THREADS = 16;
-static int NUM_THREADS = 1;
-static bool THREAD_STOP = false;
-static std::thread threads[MAX_THREADS];
-static GlobalInfo global_info[MAX_THREADS];
-static std::pair<int, bool> results[MAX_THREADS];
+const int MAX_THREADS = 16;
+extern int NUM_THREADS;
+extern bool THREAD_STOP;
+extern std::thread threads[MAX_THREADS];
+extern GlobalInfo global_info[MAX_THREADS];
+extern std::pair<int, bool> results[MAX_THREADS];
 
 int search(State& s, SearchInfo& si, GlobalInfo& gi, int depth, int ply, int alpha, int beta, bool isPv, bool isNull, bool isRoot);
 int search_root(State& s, SearchInfo& si, GlobalInfo& gi, int depth, int ply, int alpha, int beta);

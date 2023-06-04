@@ -50,8 +50,6 @@ public:
 	int getPstScore(GameStage g) const;
 	int getGamePhase() const;
 	void setGamePhase();
-	//void updateGameMoves(std::string pMove);
-	//std::string getGameMoves() const;
 	std::string getFen();
 	Move getPreviousMove() const; // Previous move made
 
@@ -135,7 +133,6 @@ private:
 	std::array<std::array<int, PIECE_TYPES_SIZE>, PLAYER_SIZE> mPieceCount;
 	std::array<std::array<int, GAMESTAGE_SIZE>, PLAYER_SIZE> mPstScore;
 	std::array<std::array<std::array<Square, PIECE_MAX>, PIECE_TYPES_SIZE>, PLAYER_SIZE> mPieceList;
-	//std::string mGameMoves;
 };
 
 inline Color State::getOurColor() const {
@@ -430,16 +427,6 @@ inline bool State::check(U64 change, Color c) const {
 inline U64 State::getXRayAttacks(Square square) const {
 	return bishopMoves[square] & (getPieceBB<PIECETYPE_BISHOP>() | getPieceBB<PIECETYPE_QUEEN>()) | rookMoves[square] & (getPieceBB<PIECETYPE_ROOK>() | getPieceBB<PIECETYPE_QUEEN>());
 }
-
-/*
-inline void State::updateGameMoves(std::string pMove) {
-	mGameMoves += pMove + ' ';
-}
-
-inline std::string State::getGameMoves() const {
-	return mGameMoves;
-}
-*/
 
 inline Move State::getPreviousMove() const {
 	return mPreviousMove;

@@ -15,6 +15,7 @@
 const int DEFAULT_HASH_SIZE = 256;
 const int MIN_HASH_SIZE = 1;
 const int MAX_HASH_SIZE = 65536;
+extern int HASH_SIZE;
 
 const int FLAG_EXACT = 1;
 const int FLAG_UPPER = 2;
@@ -96,6 +97,9 @@ struct TranspositionTable {
 	void resize(int mb) {
 		if (mb < 1) {
 			mb = 1;
+		}
+		if (mb > MAX_HASH_SIZE) {
+			mb = MAX_HASH_SIZE;
 		}
 		size = ((1 << 20) / sizeof(TTCluster)) * mb;
 		delete[] table;
