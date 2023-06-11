@@ -31,7 +31,7 @@ uciok
     - [Zobrist Hashing](https://www.chessprogramming.org/Zobrist_Hashing)
 - Search
     - [Alpha-beta search in Nega-max framework](https://www.chessprogramming.org/Negamax)
-    - [Iterative deepening and aspiration windows](https://www.chessprogramming.org/Internal_Iterative_Deepening)
+    - [Iterative deepening](https://www.chessprogramming.org/Internal_Iterative_Deepening)
     - [Transposition table](https://www.chessprogramming.org/Transposition_Table)
     - [Quiescence](https://www.chessprogramming.org/Quiescence_Search)
     - [Capture order based on MVV-LVA](https://www.chessprogramming.org/MVV-LVA)

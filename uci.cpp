@@ -73,7 +73,7 @@ void go(std::istringstream & is, State & s) {
 		search_info.moveTime = ONE_HOUR; // Search for one hour in infinite mode
 	}
 	else if (!search_info.moveTime) {
-		search_info.moveTime = get_search_time(search_info.time[s.getOurColor()], search_info.inc[s.getOurColor()], global_info[0].history.size() / 2, search_info.moves_to_go);
+		search_info.moveTime = get_search_time(search_info.time[s.getOurColor()], search_info.inc[s.getOurColor()], global_info[0].history.size() / 2, search_info.moves_to_go, search_info.time[s.getOurColor()] - search_info.time[s.getTheirColor()]);
 	}
 	
 	m = search(s, search_info);
@@ -220,7 +220,6 @@ void uci() {
 		}
 		else if (token == "display") {
 			std::cout << root;
-			std::cout << "Position repeated " << global_info[0].history.count(root) << " times" << std::endl;
 		}
 		else if (token == "fen") {
 			std::cout << root.getFen() << std::endl;
