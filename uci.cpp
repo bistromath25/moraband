@@ -73,7 +73,7 @@ void go(std::istringstream & is, State & s) {
 		search_info.moveTime = ONE_HOUR; // Search for one hour in infinite mode
 	}
 	else if (!search_info.moveTime) {
-		search_info.moveTime = get_search_time(search_info.time[s.getOurColor()], search_info.inc[s.getOurColor()], global_info[0].history.size() / 2, search_info.moves_to_go);
+		search_info.moveTime = get_search_time(search_info.time[s.getOurColor()], search_info.inc[s.getOurColor()], global_info[0].history.size() / 2, search_info.moves_to_go, search_info.time[s.getOurColor()] - search_info.time[s.getTheirColor()]);
 	}
 	
 	m = search(s, search_info);
@@ -194,7 +194,7 @@ void uci() {
 			std::cout << "id name " << ENGINE_NAME << " " << ENGINE_VERSION << "\n"
 				<< "id author " << ENGINE_AUTHOR << "\n"
 					<< "option name Hash type spin default " << DEFAULT_HASH_SIZE << " min " << MIN_HASH_SIZE << " max " << MAX_HASH_SIZE << "\n" 
-						<< "option name Threads type spin default 1 max 16 min 1\n"
+						<< "option name Threads type spin default 1 min 1 max 16\n"
 							<< "option name Move Overhead type spin default 500 min 0 max 10000\n"
 								<< "option name Contempt type spin default 0 min -100 max 100\n";
 			std::cout << "uciok" << std::endl;
@@ -220,7 +220,6 @@ void uci() {
 		}
 		else if (token == "display") {
 			std::cout << root;
-			std::cout << "Position repeated " << global_info[0].history.count(root) << " times" << std::endl;
 		}
 		else if (token == "fen") {
 			std::cout << root.getFen() << std::endl;

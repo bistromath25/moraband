@@ -21,13 +21,13 @@ const int BISHOP_THREAT = 3;
 const int ROOK_THREAT = 4;
 const int QUEEN_THREAT = 5;
 
-const int PAWN_WEIGHT_MG = 90;
+const int PAWN_WEIGHT_MG = 100;
 const int KNIGHT_WEIGHT_MG = 310;
 const int BISHOP_WEIGHT_MG = 351;
 const int ROOK_WEIGHT_MG = 480;
 const int QUEEN_WEIGHT_MG = 1139;
 
-const int PAWN_WEIGHT_EG = 94;
+const int PAWN_WEIGHT_EG = 104;
 const int KNIGHT_WEIGHT_EG = 281;
 const int BISHOP_WEIGHT_EG = 317;
 const int ROOK_WEIGHT_EG = 645;
