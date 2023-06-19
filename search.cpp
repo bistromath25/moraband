@@ -68,13 +68,19 @@ int qsearch(State& s, SearchInfo& si, GlobalInfo& gi, int ply, int alpha, int be
 	}
 	
 	int bestScore = NEG_INF;
-	int score;
+	int score = NEG_INF;
 	Move m = NULL_MOVE;
 
 	// Generate moves and create the movelist.
 	MoveList mlist(s, NULL_MOVE, &gi.history, ply, true);
-	
+	int legalMoves = 0;
 	while ((m = mlist.getBestMove())) {
+		if (s.givesCheck(m)) {
+			continue;
+		}
+
+		legalMoves++;
+		
 		// Avoid pruning tactical positions
 		if (!s.inCheck() && !s.givesCheck(m) && !s.isEnPassant(m) && !isPromotion(m)) {
 			int fScore = staticEval + 100 + PieceValue[s.onSquare(getDst(m))];
@@ -99,16 +105,15 @@ int qsearch(State& s, SearchInfo& si, GlobalInfo& gi, int ply, int alpha, int be
 		}
 		if (bestScore > alpha) {
 			alpha = bestScore;
-		}
-		if (alpha >= beta) {
-			return beta;
+			if (bestScore >= beta) {
+				return beta;
+			}
 		}
 	}
 
-	if (bestScore == NEG_INF && s.check()) {
+	if (!legalMoves && s.check()) {
 		return -CHECKMATE + ply;
 	}
-	
 	return alpha;
 }
 
@@ -285,7 +290,6 @@ int search(State& s, SearchInfo& si, GlobalInfo& gi, int depth, int ply, int alp
 		if (score > bestScore) {
 			bestScore = score;
 			best_move = m;
-			gi.variation.pushToPv(best_move, s.getKey(), ply, bestScore);
 			a = std::max(a, bestScore);
 		}
 		// Alpha-Beta pruning
@@ -303,8 +307,12 @@ int search(State& s, SearchInfo& si, GlobalInfo& gi, int depth, int ply, int alp
 		}
 	}
 
-	if (bestScore == NEG_INF) { // Either completely lost or (hopefully) a draw
+	if (!legalMoves) { // Either completely lost or (hopefully) a draw
 		return s.check() ? -CHECKMATE + ply : STALEMATE;
+	}
+
+	if (alpha < a && a < b && !si.quit) {
+		gi.variation.pushToPv(best_move, s.getKey(), ply, bestScore);
 	}
 
 	U64 flag = a >= b ? FLAG_LOWER
@@ -384,7 +392,6 @@ int search_root(State& s, SearchInfo& si, GlobalInfo& gi, int depth, int ply, in
 		if (score > bestScore) {
 			bestScore = score;
 			best_move = m;
-			gi.variation.pushToPv(best_move, s.getKey(), ply, bestScore);
 			a = std::max(a, bestScore);
 		}
 		if (a >= b) {
@@ -401,8 +408,12 @@ int search_root(State& s, SearchInfo& si, GlobalInfo& gi, int depth, int ply, in
 		}
 	}
 
-	if (bestScore == NEG_INF) {
+	if (!legalMoves) {
 		return s.check() ? -CHECKMATE + ply : STALEMATE;
+	}
+
+	if (alpha < a && a < b && !si.quit) {
+		gi.variation.pushToPv(best_move, s.getKey(), ply, bestScore);
 	}
 
 	U64 flag = a >= b ? FLAG_LOWER
@@ -502,7 +513,6 @@ Move iterative_deepening(State& s, SearchInfo& si) {
 
 /* Search driver */
 Move search(State& s, SearchInfo& si) {
-	//tt.clear();
 	for (int i = 0; i < NUM_THREADS; ++i) {
 		global_info[i].variation.clearPv();
 		global_info[i].history.clear();
