@@ -45,8 +45,8 @@ bool MoveList::contains(Move move) const {
 }
 
 template<MoveType T> void MoveList::pushPromotion(Square src, Square dst) {
-	const Color C = mState.getOurColor();
-	if (square_bb[dst] & NOT_A_FILE && square_bb[dst + 1] & mState.getOccupancyBB(!C)) {
+	const Color c = mState.getOurColor();
+	if (square_bb[dst] & NOT_A_FILE && square_bb[dst + 1] & mState.getOccupancyBB(!c)) {
 		if (T == MoveType::Attacks || T == MoveType::All) {
 			push(makeMove(src, dst + 1, PIECETYPE_QUEEN));
 		}
@@ -70,7 +70,7 @@ template<MoveType T> void MoveList::pushPromotion(Square src, Square dst) {
 		}
 	}
 
-	if (square_bb[dst] & NOT_H_FILE && square_bb[dst - 1] & mState.getOccupancyBB(!C)) {
+	if (square_bb[dst] & NOT_H_FILE && square_bb[dst - 1] & mState.getOccupancyBB(!c)) {
 		if (T == MoveType::Attacks || T == MoveType::All) {
 			push(makeMove(src, dst - 1, PIECETYPE_QUEEN));
 		}

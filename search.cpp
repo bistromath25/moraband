@@ -226,7 +226,7 @@ int search(State& s, SearchInfo& si, GlobalInfo& gi, int depth, int ply, int alp
 
 	MoveList mlist(s, tt_move, &(gi.history), ply);
 
-	int score = NEG_INF;
+	int score = 0;
 	int bestScore = NEG_INF;
 	Move best_move = tt_move;
 
@@ -290,6 +290,7 @@ int search(State& s, SearchInfo& si, GlobalInfo& gi, int depth, int ply, int alp
 		if (score > bestScore) {
 			bestScore = score;
 			best_move = m;
+			//gi.variation.pushToPv(best_move, s.getKey(), ply, bestScore);
 			a = std::max(a, bestScore);
 		}
 		// Alpha-Beta pruning
@@ -346,7 +347,7 @@ int search_root(State& s, SearchInfo& si, GlobalInfo& gi, int depth, int ply, in
 
 	MoveList mlist(s, tt_move, &(gi.history), ply);
 	
-	int score = NEG_INF;
+	int score = 0;
 	int bestScore = NEG_INF;
 	Move best_move = NULL_MOVE;
 
@@ -392,6 +393,7 @@ int search_root(State& s, SearchInfo& si, GlobalInfo& gi, int depth, int ply, in
 		if (score > bestScore) {
 			bestScore = score;
 			best_move = m;
+			//gi.variation.pushToPv(best_move, s.getKey(), ply, bestScore);
 			a = std::max(a, bestScore);
 		}
 		if (a >= b) {
