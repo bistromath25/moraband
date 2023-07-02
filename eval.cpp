@@ -94,7 +94,7 @@ void Evaluate::evalPawns(const Color c) {
 		if (!((file_bb[p] | adj_files[p]) & in_front[c][p] & mState.getPieceBB<PIECETYPE_PAWN>(!c))) {
 			mMaterial[c] += PAWN_PASSED;
 		
-			if ((rank_bb[p] | adj_ranks[p]) & in_front[c][p] & mState.getOccupancyBB()) {
+			if ((p + dir) & mState.getOccupancyBB()) {
 				mPawnStructure[c] += getTaperedScore(PAWN_PASSED_ADVANCE[CANNOT_ADVANCE][MIDDLEGAME][r], PAWN_PASSED_ADVANCE[CANNOT_ADVANCE][ENDGAME][r]);
 			}
 			else {

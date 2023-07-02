@@ -47,8 +47,8 @@ int qsearch(State& s, SearchInfo& si, GlobalInfo& gi, int ply, int alpha, int be
 	}
 
 	// Mate distance pruning
-    alpha = std::max((-CHECKMATE + ply), alpha);
-    beta  = std::min((CHECKMATE - ply), beta);
+	alpha = std::max((-CHECKMATE + ply), alpha);
+	beta  = std::min((CHECKMATE - ply), beta);
 	if (alpha >= beta) {
 		return alpha;
 	}
