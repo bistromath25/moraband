@@ -47,8 +47,8 @@ void Variation::clearPv() {
 	std::fill(mPv.begin(), mPv.begin() + MAX_PLY, std::make_pair(0, 0));
 }
 
-void Variation::checkPv(State& s) {
-	State c;
+void Variation::checkPv(Position& s) {
+	Position c;
 	Move nextMove;
 	std::memmove(&c, &s, sizeof(s));
 	for (int i = 0; i < MAX_PLY; ++i) {

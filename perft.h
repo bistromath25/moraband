@@ -6,14 +6,14 @@
 #include <string>
 #include <iomanip>
 #include "movegen.h"
-#include "state.h"
+#include "Position.h"
 #include "defs.h"
 #include "timeman.h"
 #include "move.h"
 
-U64 perft(State & s, int depth);
-void test(State s, MoveList* moveList, int depth, int id);
-U64 MTperft(State& s, int depth);
-void perftTest(State& s, int depth, bool mt);
+U64 perft(Position & s, int depth);
+void test(Position s, MoveList* moveList, int depth, int id);
+U64 MTperft(Position& s, int depth);
+void perftTest(Position& s, int depth, bool mt);
 
 #endif

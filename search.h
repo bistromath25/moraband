@@ -15,7 +15,7 @@
 #include <vector>
 #include "eval.h"
 #include "movegen.h"
-#include "state.h"
+#include "Position.h"
 #include "defs.h"
 #include "tt.h"
 #include "timeman.h"
@@ -89,9 +89,10 @@ extern std::thread threads[MAX_THREADS];
 extern GlobalInfo global_info[MAX_THREADS];
 extern std::pair<int, bool> results[MAX_THREADS];
 
-int search(State& s, SearchInfo& si, GlobalInfo& gi, int depth, int ply, int alpha, int beta, bool isPv, bool isNull, bool isRoot);
-int search_root(State& s, SearchInfo& si, GlobalInfo& gi, int depth, int ply, int alpha, int beta);
-Move iterative_deepening(State& s, SearchInfo& si);
-Move search(State& s, SearchInfo& si);
+int qsearch(Position& s, SearchInfo& si, GlobalInfo& gi, int ply, int alpha, int beta);
+int search(Position& s, SearchInfo& si, GlobalInfo& gi, int depth, int ply, int alpha, int beta, bool isPv, bool isNull, bool isRoot);
+int search_root(Position& s, SearchInfo& si, GlobalInfo& gi, int depth, int ply, int alpha, int beta);
+Move iterative_deepening(Position& s, SearchInfo& si);
+Move search(Position& s, SearchInfo& si);
 
 #endif

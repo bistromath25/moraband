@@ -3,13 +3,13 @@
  * Outer Rim planet that was home to the ancient Sith 
  **/
 
-#include "state.h"
+#include "position.h"
 #include "eval.h"
 #include "zobrist.h"
 #include <utility>
 
-/* Board and game state and related functions */
-State::State(const State & s)
+/* Board position and related functions */
+Position::Position(const Position & s)
 	: mUs(s.mUs)
 	, mThem(s.mThem)
 	, mFiftyMoveRule(s.mFiftyMoveRule)
@@ -31,7 +31,7 @@ State::State(const State & s)
 	, mPieceList(s.mPieceList)
 {}
 
-void State::operator=(const State & s) {
+void Position::operator=(const Position & s) {
 	mUs = s.mUs;
 	mThem = s.mThem;
 	mFiftyMoveRule = s.mFiftyMoveRule;
@@ -53,7 +53,7 @@ void State::operator=(const State & s) {
 	mPieceList = s.mPieceList;
 }
 
-State::State(const std::string & fen) {
+Position::Position(const std::string & fen) {
 	int i, enpass, position;
 	std::string::const_iterator it;
 	Square s;
@@ -139,7 +139,7 @@ State::State(const std::string & fen) {
 	setGamePhase();
 }
 
-void State::init() {
+void Position::init() {
 	mUs = WHITE;
 	mThem = BLACK;
 	mFiftyMoveRule = 0;
@@ -164,7 +164,7 @@ void State::init() {
 	}
 }
 
-void State::setPins(Color c) {
+void Position::setPins(Color c) {
 	U64 pinners, ray;
 	Square kingSq = getKingSquare(c);
 	mPinned[c] = 0;
@@ -188,7 +188,7 @@ void State::setPins(Color c) {
 	}
 }
 
-U64 State::getDiscoveredChecks(Color c) const {
+U64 Position::getDiscoveredChecks(Color c) const {
 	U64 pinners, ray, discover = 0;
 	Square kingSq = getKingSquare(!c);
 
@@ -213,7 +213,7 @@ U64 State::getDiscoveredChecks(Color c) const {
 	return discover;
 }
 
-bool State::isLegal(Move move) const {
+bool Position::isLegal(Move move) const {
 	Square src = getSrc(move);
 	Square dst = getDst(move);
 
@@ -248,7 +248,7 @@ bool State::isLegal(Move move) const {
 	return true;
 }
 
-bool State::isValid(Move move, U64 validMoves) const {
+bool Position::isValid(Move move, U64 validMoves) const {
 	assert(getSrc(move) < no_sq);
 	assert(getDst(move) < no_sq);
 
@@ -325,7 +325,7 @@ bool State::isValid(Move move, U64 validMoves) const {
 	return false;
 }
 
-bool State::givesCheck(Move move) const {
+bool Position::givesCheck(Move move) const {
 	Square src = getSrc(move);
 	Square dst = getDst(move);
 	PieceType piece = onSquare(src);
@@ -357,7 +357,7 @@ bool State::givesCheck(Move move) const {
 	return false;
 }
 
-int State::see(Move move) const {
+int Position::see(Move move) const {
 	Prop prop;
 	Color color;
 	Square src, dst, mayAttack;
@@ -455,7 +455,7 @@ int State::see(Move move) const {
 	return gain[0];
 }
 
-void State::makeMove(Move move) {
+void Position::makeMove(Move move) {
 	assert(move != NULL_MOVE);
 	assert(getSrc(move) < no_sq);
 	assert(getDst(move) < no_sq);
@@ -552,7 +552,7 @@ void State::makeMove(Move move) {
 	setCheckers();
 }
 
-void State::makeNull() {
+void Position::makeNull() {
 	assert(mCheckers == 0);
 	// Remove the ep file and castle rights from the zobrist key
 	if (mEnPassant) {
@@ -572,7 +572,7 @@ void State::makeNull() {
 	mCheckSquares[PIECETYPE_QUEEN] = mCheckSquares[PIECETYPE_BISHOP] | mCheckSquares[PIECETYPE_ROOK];
 }
 
-bool State::insufficientMaterial() const {
+bool Position::insufficientMaterial() const {
 	bool res = false;
 	
 	if (getPieceCount<PIECETYPE_PAWN>() + getPieceCount<PIECETYPE_ROOK>() + getPieceCount<PIECETYPE_QUEEN>() == 0) {
@@ -601,7 +601,7 @@ bool State::insufficientMaterial() const {
 	return res;
 }
 
-std::string State::getFen() { // Current FEN
+std::string Position::getFen() { // Current FEN
 	Square src = getSrc(getPreviousMove());
 	Square dst = getDst(getPreviousMove());
 	PieceType moved = onSquare(dst);
@@ -695,7 +695,7 @@ std::string State::getFen() { // Current FEN
 }
 
 // Print board
-std::ostream & operator << (std::ostream & os, const State & s) {
+std::ostream & operator << (std::ostream & os, const Position & s) {
 	static const char * W_pawn   = "\u2659";
 	static const char * W_knight = "\u2658";
 	static const char * W_bishop = "\u2657";

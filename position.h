@@ -3,8 +3,8 @@
  * Outer Rim planet that was home to the ancient Sith 
  **/
 
-#ifndef STATE_H
-#define STATE_H
+#ifndef POSITION_H
+#define POSITION_H
 
 #include <iostream>
 #include <string>
@@ -28,13 +28,13 @@ enum Phase {
 	totalPhase  = 24
 };
 
-/* Board and game state and related functions */
-class State {
+/* Board position and related functions */
+class Position {
 public:
-	State() {};
-	State(const std::string & fen);
-	State(const State & s);
-	void operator=(const State & s);
+	Position() {};
+	Position(const std::string & fen);
+	Position(const Position & s);
+	void operator=(const Position & s);
 	void init();
 
 	Color getOurColor() const;
@@ -111,7 +111,7 @@ public:
 	U64 getXRayAttacks(Square sq) const;
 	
 	// Print
-	friend std::ostream & operator << (std::ostream & os, const State & state);
+	friend std::ostream & operator << (std::ostream & os, const Position & Position);
 	
 private:
 	Color mUs;
@@ -135,43 +135,43 @@ private:
 	std::array<std::array<std::array<Square, PIECE_MAX>, PIECE_TYPES_SIZE>, PLAYER_SIZE> mPieceList;
 };
 
-inline Color State::getOurColor() const {
+inline Color Position::getOurColor() const {
 	return mUs;
 }
 
-inline Color State::getTheirColor() const {
+inline Color Position::getTheirColor() const {
 	return mThem;
 }
 
-inline int State::getFiftyMoveRule() const {
+inline int Position::getFiftyMoveRule() const {
 	return mFiftyMoveRule;
 }
 
-inline U64 State::getKey() const {
+inline U64 Position::getKey() const {
 	return mKey;
 }
 
-inline U64 State::getPawnKey() const {
+inline U64 Position::getPawnKey() const {
 	return mPawnKey;
 }
 
-inline U64 State::getEnPassantBB() const {
+inline U64 Position::getEnPassantBB() const {
 	return mEnPassant;
 }
 
-inline int State::getCastleRights() const {
+inline int Position::getCastleRights() const {
 	return mCastleRights;
 }
 
-inline U64 State::getPinsBB(Color c) const {
+inline U64 Position::getPinsBB(Color c) const {
 	return mPinned[c];
 }
 
-inline int State::getGamePhase() const {
+inline int Position::getGamePhase() const {
 	return mPhase;
 }
 
-inline void State::setGamePhase() {
+inline void Position::setGamePhase() {
 	int phase = totalPhase
 		- getPieceCount<PIECETYPE_PAWN>() * pawnPhase
 			- getPieceCount<PIECETYPE_KNIGHT>() * knightPhase
@@ -181,23 +181,23 @@ inline void State::setGamePhase() {
 	mPhase = (phase * 256 + (totalPhase / 2)) / totalPhase;
 }
 
-inline bool State::isCapture(Move move) const {
+inline bool Position::isCapture(Move move) const {
 	return square_bb[getDst(move)] & (getOccupancyBB(mThem) | mEnPassant);
 }
 
-inline bool State::isQuiet(Move move) const {
+inline bool Position::isQuiet(Move move) const {
 	return !isCapture(move) && !isPromotion(move);
 }
 
-inline bool State::isEnPassant(Move move) const {
+inline bool Position::isEnPassant(Move move) const {
 	return onSquare(getSrc(move)) == PIECETYPE_PAWN && (square_bb[getDst(move)] & mEnPassant);
 }
 
-template<PieceType P> inline const std::array<Square, PIECE_MAX>& State::getPieceList(Color c) const {
+template<PieceType P> inline const std::array<Square, PIECE_MAX>& Position::getPieceList(Color c) const {
 	return mPieceList[c][P];
 }
 
-inline void State::addPiece(Color c, PieceType p, Square sq) {
+inline void Position::addPiece(Color c, PieceType p, Square sq) {
 	mPieces[c][p] |= square_bb[sq];
 	mOccupancy[c] |= square_bb[sq];
 	mBoard[sq] = p;
@@ -210,7 +210,7 @@ inline void State::addPiece(Color c, PieceType p, Square sq) {
 	mKey ^= Zobrist::key(c, p, sq);
 }
 
-inline void State::movePiece(Color c, PieceType p, Square src, Square dst) {
+inline void Position::movePiece(Color c, PieceType p, Square src, Square dst) {
 	mPieces[c][p] ^= square_bb[src] | square_bb[dst];
 	mOccupancy[c] ^= square_bb[src] | square_bb[dst];
 	mBoard[dst] = p;
@@ -226,7 +226,7 @@ inline void State::movePiece(Color c, PieceType p, Square src, Square dst) {
 	mKey ^= Zobrist::key(c, p, src, dst);
 }
 
-inline void State::removePiece(Color c, PieceType p, Square sq) {
+inline void Position::removePiece(Color c, PieceType p, Square sq) {
 	Square swap;
 	int pieceCount;
 
@@ -247,101 +247,101 @@ inline void State::removePiece(Color c, PieceType p, Square sq) {
 	mKey ^= Zobrist::key(c, p, sq);
 }
 
-inline void State::swapTurn() {
+inline void Position::swapTurn() {
 	mKey ^= Zobrist::key();
 	mThem =  mUs;
 	mUs   = !mUs;
 }
 
-template<PieceType P> inline U64 State::getPieceBB(Color c) const {
+template<PieceType P> inline U64 Position::getPieceBB(Color c) const {
 	return mPieces[c][P];
 }
 
-template<PieceType P> inline U64 State::getPieceBB() const {
+template<PieceType P> inline U64 Position::getPieceBB() const {
 	return mPieces[WHITE][P] | mPieces[BLACK][P];
 }
 
-template<PieceType P> inline int State::getPieceCount() const {
+template<PieceType P> inline int Position::getPieceCount() const {
 	return mPieceCount[WHITE][P] + mPieceCount[BLACK][P];
 }
 
-template<PieceType P> inline int State::getPieceCount(Color c) const {
+template<PieceType P> inline int Position::getPieceCount(Color c) const {
 	return mPieceCount[c][P];
 }
 
-inline int State::getNonPawnPieceCount(Color c) const {
+inline int Position::getNonPawnPieceCount(Color c) const {
 	return mPieceCount[c][PIECETYPE_KNIGHT] + mPieceCount[c][PIECETYPE_BISHOP] + mPieceCount[c][PIECETYPE_ROOK]   + mPieceCount[c][PIECETYPE_QUEEN];
 }
 
-inline Square State::getKingSquare(Color c) const {
+inline Square Position::getKingSquare(Color c) const {
 	return mPieceList[c][PIECETYPE_KING][0];
 }
 
-inline int State::getPstScore(GameStage g) const {
+inline int Position::getPstScore(GameStage g) const {
 	return mPstScore[mUs][g] - mPstScore[mThem][g];
 }
 
-inline PieceType State::onSquare(const Square sq) const {
+inline PieceType Position::onSquare(const Square sq) const {
 	return mBoard[sq];
 }
 
-inline U64 State::getOccupancyBB() const {
+inline U64 Position::getOccupancyBB() const {
 	return mOccupancy[WHITE] | mOccupancy[BLACK];
 }
 
-inline U64 State::getOccupancyBB(Color c) const {
+inline U64 Position::getOccupancyBB(Color c) const {
 	return mOccupancy[c];
 }
 
-inline U64 State::getEmptyBB() const {
+inline U64 Position::getEmptyBB() const {
 	return ~(mOccupancy[WHITE] | mOccupancy[BLACK]);
 }
 
-inline U64 State::getCheckersBB() const {
+inline U64 Position::getCheckersBB() const {
 	return mCheckers;
 }
 
-inline bool State::canCastleKingside() const {
+inline bool Position::canCastleKingside() const {
 	return mUs ? mCastleRights & BLACK_KINGSIDE_CASTLE : mCastleRights & WHITE_KINGSIDE_CASTLE;
 }
 
-inline bool State::canCastleKingside(Color c) const {
+inline bool Position::canCastleKingside(Color c) const {
 	return c == WHITE ? mCastleRights & WHITE_KINGSIDE_CASTLE : mCastleRights & BLACK_KINGSIDE_CASTLE;
 }
 
-inline bool State::canCastleQueenside() const {
+inline bool Position::canCastleQueenside() const {
 	return mUs ? mCastleRights & BLACK_QUEENSIDE_CASTLE : mCastleRights & WHITE_QUEENSIDE_CASTLE;
 }
 
-inline bool State::canCastleQueenside(Color c) const {
+inline bool Position::canCastleQueenside(Color c) const {
 	return c == WHITE ? mCastleRights & WHITE_QUEENSIDE_CASTLE : mCastleRights & BLACK_QUEENSIDE_CASTLE;
 }
 
-template<PieceType PIECETYPE_PAWN> inline U64 State::getAttackBB(Square sq, Color c) const {
+template<PieceType PIECETYPE_PAWN> inline U64 Position::getAttackBB(Square sq, Color c) const {
 	return pawn_attacks[c][sq];
 }
 
-template<> inline U64 State::getAttackBB<PIECETYPE_KNIGHT>(Square sq, Color c) const {
+template<> inline U64 Position::getAttackBB<PIECETYPE_KNIGHT>(Square sq, Color c) const {
 	return KNIGHT_MOVES[sq];
 }
 
-template<> inline U64 State::getAttackBB<PIECETYPE_BISHOP>(Square sq, Color c) const {
+template<> inline U64 Position::getAttackBB<PIECETYPE_BISHOP>(Square sq, Color c) const {
 	return Bmagic(sq, getOccupancyBB());
 }
 
-template<> inline U64 State::getAttackBB<PIECETYPE_ROOK>(Square sq, Color c) const {
+template<> inline U64 Position::getAttackBB<PIECETYPE_ROOK>(Square sq, Color c) const {
 	return Rmagic(sq, getOccupancyBB());
 }
 
-template<> inline U64 State::getAttackBB<PIECETYPE_QUEEN>(Square sq, Color c) const {
+template<> inline U64 Position::getAttackBB<PIECETYPE_QUEEN>(Square sq, Color c) const {
 	return Qmagic(sq, getOccupancyBB());
 }
 
-template<> inline U64 State::getAttackBB<PIECETYPE_KING>(Square sq, Color c) const {
+template<> inline U64 Position::getAttackBB<PIECETYPE_KING>(Square sq, Color c) const {
 	return KING_MOVES[sq];
 }
 
-inline U64 State::getAttackBB(PieceType p, Square sq, U64 occ) const {
+inline U64 Position::getAttackBB(PieceType p, Square sq, U64 occ) const {
 	assert(p != PIECETYPE_PAWN);
 	assert(p != PIECETYPE_KING);
 	return p == PIECETYPE_KNIGHT ? getAttackBB<PIECETYPE_KNIGHT>(sq) 
@@ -350,11 +350,11 @@ inline U64 State::getAttackBB(PieceType p, Square sq, U64 occ) const {
 				: Qmagic(sq, occ);
 }
 
-inline U64 State::getCheckSquaresBB(PieceType pPiece) const {
+inline U64 Position::getCheckSquaresBB(PieceType pPiece) const {
 	return mCheckSquares[pPiece];
 }
 
-inline void State::setCheckers() {
+inline void Position::setCheckers() {
 	mCheckers = getAttackersBB(getKingSquare(mUs), mThem);
 	mCheckSquares[PIECETYPE_PAWN] = getAttackBB<PIECETYPE_PAWN>(getKingSquare(mThem), mThem);
 	mCheckSquares[PIECETYPE_KNIGHT] = getAttackBB<PIECETYPE_KNIGHT>(getKingSquare(mThem));
@@ -363,14 +363,14 @@ inline void State::setCheckers() {
 	mCheckSquares[PIECETYPE_QUEEN] = mCheckSquares[PIECETYPE_BISHOP] | mCheckSquares[PIECETYPE_ROOK];
 }
 
-inline bool State::defended(Square s, Color c) const {
+inline bool Position::defended(Square s, Color c) const {
 	return getAttackBB<PIECETYPE_PAWN>(s, !c) & getPieceBB<PIECETYPE_PAWN>(c)
 		|| getAttackBB<PIECETYPE_KNIGHT>(s) & getPieceBB<PIECETYPE_KNIGHT>(c)
 			|| getAttackBB<PIECETYPE_BISHOP>(s) & (getPieceBB<PIECETYPE_BISHOP>(c) | getPieceBB<PIECETYPE_QUEEN>(c))
 				|| getAttackBB<PIECETYPE_ROOK>(s) & (getPieceBB<PIECETYPE_ROOK>(c) | getPieceBB<PIECETYPE_QUEEN>(c));
 }
 
-inline bool State::isAttacked(Square sq, Color c, U64 change) const {
+inline bool Position::isAttacked(Square sq, Color c, U64 change) const {
 	U64 occupancy = getOccupancyBB() ^ change;
 	return getAttackBB<PIECETYPE_PAWN>(sq, c) & getPieceBB<PIECETYPE_PAWN>(!c)
 		|| getAttackBB<PIECETYPE_KNIGHT>(sq) & getPieceBB<PIECETYPE_KNIGHT>(!c)
@@ -379,33 +379,33 @@ inline bool State::isAttacked(Square sq, Color c, U64 change) const {
 					|| getAttackBB<PIECETYPE_KING>(sq) & getPieceBB<PIECETYPE_KING>(!c);
 }
 
-inline bool State::attacked(Square sq) const {
+inline bool Position::attacked(Square sq) const {
 	return getAttackBB< PIECETYPE_PAWN >(sq, mUs) &  getPieceBB< PIECETYPE_PAWN >(mThem)
 		|| getAttackBB<PIECETYPE_KNIGHT>(sq) &  getPieceBB<PIECETYPE_KNIGHT>(mThem)
 			|| getAttackBB<PIECETYPE_BISHOP>(sq) & (getPieceBB<PIECETYPE_BISHOP>(mThem) | getPieceBB<PIECETYPE_QUEEN>(mThem))
 				|| getAttackBB<PIECETYPE_ROOK>(sq) & (getPieceBB<PIECETYPE_ROOK>(mThem) | getPieceBB<PIECETYPE_QUEEN>(mThem));
 }
 
-inline bool State::inCheck() const {
+inline bool Position::inCheck() const {
 	return getCheckersBB();
 }
 
-inline bool State::inDoubleCheck() const {
+inline bool Position::inDoubleCheck() const {
 	return pop_count(getCheckersBB()) == 2;
 }
 
-inline bool State::check() const {
+inline bool Position::check() const {
 	return attacked(getKingSquare(mUs));
 }
 
-inline U64 State::getAttackersBB(Square sq, Color c) const {
+inline U64 Position::getAttackersBB(Square sq, Color c) const {
 	return (getAttackBB<PIECETYPE_PAWN>(sq, !c) & getPieceBB< PIECETYPE_PAWN >(c))
 		| (getAttackBB<PIECETYPE_KNIGHT>(sq) & getPieceBB<PIECETYPE_KNIGHT>(c))
 			| (getAttackBB<PIECETYPE_BISHOP>(sq) & (getPieceBB<PIECETYPE_BISHOP>(c) | getPieceBB<PIECETYPE_QUEEN>(c)))
 				| (getAttackBB<PIECETYPE_ROOK>(sq) & (getPieceBB<PIECETYPE_ROOK>(c) | getPieceBB<PIECETYPE_QUEEN>(c)));
 }
 
-inline U64 State::allAttackers(Square sq) const {
+inline U64 Position::allAttackers(Square sq) const {
 	return (getAttackBB<PIECETYPE_PAWN>(sq, mUs) & getPieceBB<PIECETYPE_PAWN>(mThem))
 		| (getAttackBB<PIECETYPE_PAWN>(sq, mThem) & getPieceBB<PIECETYPE_PAWN>(mUs))
 			| (getAttackBB<PIECETYPE_KNIGHT>(sq) & getPieceBB<PIECETYPE_KNIGHT>())
@@ -414,21 +414,21 @@ inline U64 State::allAttackers(Square sq) const {
 						| (getAttackBB<PIECETYPE_KING>(sq) & getPieceBB<PIECETYPE_KING>());
 }
 
-inline bool State::check(U64 change) const {
+inline bool Position::check(U64 change) const {
 	return (Bmagic(getKingSquare(mUs), getOccupancyBB() ^ change) & (getPieceBB<PIECETYPE_BISHOP>(mThem) | getPieceBB<PIECETYPE_QUEEN>(mThem))) 
 		|| (Rmagic(getKingSquare(mUs), getOccupancyBB() ^ change) & (getPieceBB< PIECETYPE_ROOK >(mThem) | getPieceBB<PIECETYPE_QUEEN>(mThem)));
 }
 
-inline bool State::check(U64 change, Color c) const {
+inline bool Position::check(U64 change, Color c) const {
 	return (Bmagic(getKingSquare(c), getOccupancyBB() ^ change) & (getPieceBB<PIECETYPE_BISHOP>(!c) | getPieceBB<PIECETYPE_QUEEN>(!c))) 
 		|| (Rmagic(getKingSquare(c), getOccupancyBB() ^ change) & (getPieceBB< PIECETYPE_ROOK >(!c) | getPieceBB<PIECETYPE_QUEEN>(!c)));
 }
 
-inline U64 State::getXRayAttacks(Square square) const {
+inline U64 Position::getXRayAttacks(Square square) const {
 	return bishopMoves[square] & (getPieceBB<PIECETYPE_BISHOP>() | getPieceBB<PIECETYPE_QUEEN>()) | rookMoves[square] & (getPieceBB<PIECETYPE_ROOK>() | getPieceBB<PIECETYPE_QUEEN>());
 }
 
-inline Move State::getPreviousMove() const {
+inline Move Position::getPreviousMove() const {
 	return mPreviousMove;
 }
 

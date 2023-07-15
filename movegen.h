@@ -10,7 +10,7 @@
 #include <algorithm>
 #include <vector>
 #include <array>
-#include "state.h"
+#include "Position.h"
 #include "board.h"
 #include "MagicMoves.hpp"
 #include "defs.h"
@@ -52,8 +52,8 @@ enum class MoveType {
 /* List of moves and related functions */
 class MoveList {
 public:
-	MoveList(const State& s, Move bestMove, History* history, int ply, bool qsearch=false);
-	MoveList(const State& s);
+	MoveList(const Position& s, Move bestMove, History* history, int ply, bool qsearch=false);
+	MoveList(const Position& s);
 	std::size_t size() const;
 	void push(Move m);
 	bool contains(Move move) const;
@@ -73,7 +73,7 @@ private:
 	bool mQSearch;
 	U64 mValid;
 	U64 mDiscover;
-	const State& mState;
+	const Position& mPosition;
 	const History* mHistory;
 	int mPly;
 	int mStage;

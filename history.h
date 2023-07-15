@@ -9,10 +9,10 @@
 #include <iostream>
 #include <vector>
 #include <algorithm>
-#include "state.h"
+#include "Position.h"
 #include "move.h"
 #include "defs.h"
-#include "state.h"
+#include "Position.h"
 
 /* History heuristic */
 class History {
@@ -23,7 +23,7 @@ public:
 			arr.fill(1);
 		}
 	}
-	History(const State& s) : mKillers{}, mHistory{} {
+	History(const Position& s) : mKillers{}, mHistory{} {
 		mGameHistory.reserve(1024);
 		for (std::array<int, BOARD_SIZE>& arr : mButterfly) {
 			arr.fill(1);
@@ -56,7 +56,7 @@ public:
 			mGameHistory.pop_back();
 		}
 	}
-	bool isThreefoldRepetition(State& s) const {
+	bool isThreefoldRepetition(Position& s) const {
 		int cnt = 0;
 		for (int i = mGameHistory.size() - 5; i >= 0; i -= 4) {
 			if (mGameHistory[i].second == s.getKey() && ++cnt == 2) {
@@ -84,7 +84,7 @@ public:
 		assert(mButterfly[getSrc(move)][getDst(move)] > 0);
 		return mHistory[getSrc(move)][getDst(move)] / mButterfly[getSrc(move)][getDst(move)];
 	}
-	int count(State& s) {
+	int count(Position& s) {
 		int cnt = 0;
 		for (int i = mGameHistory.size() - 1; i >= 0; i -= 4) {
 			if (mGameHistory[i].second == s.getKey()) {

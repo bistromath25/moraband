@@ -9,7 +9,7 @@
 #include <array>
 #include <algorithm>
 #include <iterator>
-#include "state.h"
+#include "Position.h"
 #include "movegen.h"
 #include "defs.h"
 #include "move.h"
@@ -29,7 +29,7 @@ public:
 	bool isMate() const;
 	int getMateInN() const;
 	void clearPv();
-	void checkPv(State& s);
+	void checkPv(Position& s);
 	void printPv();
 private:
 	std::array<std::pair<Move, U64>, MAX_PV_SIZE> mPv; // (move, key)
