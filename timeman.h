@@ -40,7 +40,7 @@ inline U64 get_search_time(int time_left, int inc, int moves, int moves_to_go, i
 	else { // Sudden death time control
 		if (inc) {
 			search_time = (time_left - MOVE_OVERHEAD) / std::max(10, 40 - moves);
-			if (time_diff > 0) {
+			if (time_diff > 4000) {
 				search_time += time_diff / 4;
 			}
 		}

@@ -34,7 +34,7 @@ bool stop_search(SearchInfo& si) {
 }
 
 /* Qsearch routine */
-int qsearch(State& s, SearchInfo& si, GlobalInfo& gi, int ply, int alpha, int beta) {
+int qsearch(Position& s, SearchInfo& si, GlobalInfo& gi, int ply, int alpha, int beta) {
 	si.nodes++;
 	assert(ply <= MAX_PLY);
 
@@ -90,7 +90,7 @@ int qsearch(State& s, SearchInfo& si, GlobalInfo& gi, int ply, int alpha, int be
 			}
 		}
 
-		State c(s);
+		Position c(s);
 		c.makeMove(m);
 
 		gi.history.push(std::make_pair(m, c.getKey()));
@@ -118,7 +118,7 @@ int qsearch(State& s, SearchInfo& si, GlobalInfo& gi, int ply, int alpha, int be
 }
 
 /* Regular search function */
-int search(State& s, SearchInfo& si, GlobalInfo& gi, int depth, int ply, int alpha, int beta, bool isPv, bool isNull, bool isRoot) {
+int search(Position& s, SearchInfo& si, GlobalInfo& gi, int depth, int ply, int alpha, int beta, bool isPv, bool isNull, bool isRoot) {
 	assert(depth >= 0);
 
 	if (depth == 0 || ply > MAX_PLY) { // Perform qsearch when regular search is completed
@@ -201,7 +201,7 @@ int search(State& s, SearchInfo& si, GlobalInfo& gi, int depth, int ply, int alp
 		// Null move pruning
 		// Make a null move and search to a reduced depth
 		if (depth > NULL_MOVE_DEPTH && staticEval + NULL_MOVE_MARGIN >= beta) {
-			State n;
+			Position n;
 			std::memmove(&n, &s, sizeof s);
 			n.makeNull();
 			gi.history.push(std::make_pair(NULL_MOVE, n.getKey()));
@@ -257,7 +257,7 @@ int search(State& s, SearchInfo& si, GlobalInfo& gi, int depth, int ply, int alp
 			}
 		}
 
-		State c(s);
+		Position c(s);
 		c.makeMove(m); // Make move on new position
 		gi.history.push(std::make_pair(m, c.getKey())); // Add move to history
 
@@ -328,7 +328,7 @@ int search(State& s, SearchInfo& si, GlobalInfo& gi, int depth, int ply, int alp
 }
 
 /* Root search */
-int search_root(State& s, SearchInfo& si, GlobalInfo& gi, int depth, int ply, int alpha, int beta) {
+int search_root(Position& s, SearchInfo& si, GlobalInfo& gi, int depth, int ply, int alpha, int beta) {
 	assert(depth >= 0);
 
 	si.nodes++;
@@ -361,7 +361,7 @@ int search_root(State& s, SearchInfo& si, GlobalInfo& gi, int depth, int ply, in
 		d = depth - 1;
 		legalMoves++;
 
-		State c(s);
+		Position c(s);
 		c.makeMove(m);
 		gi.history.push(std::make_pair(m, c.getKey()));
 
@@ -429,7 +429,7 @@ int search_root(State& s, SearchInfo& si, GlobalInfo& gi, int depth, int ply, in
 }
 
 /* Multi-threaded search driver */
-void parallel_search(State s, SearchInfo si, int depth, int alpha, int beta, int t) {
+void parallel_search(Position s, SearchInfo si, int depth, int alpha, int beta, int t) {
 	auto& [value, valid] = results[t];
 	auto& gi = global_info[t];
 	valid = false;
@@ -441,7 +441,7 @@ void parallel_search(State s, SearchInfo si, int depth, int alpha, int beta, int
 }
 
 /* Iterative deepening routine */
-Move iterative_deepening(State& s, SearchInfo& si) {
+Move iterative_deepening(Position& s, SearchInfo& si) {
 	Move best_move = NULL_MOVE;
 	//int alpha = NEG_INF;
 	//int beta = POS_INF;
@@ -514,7 +514,7 @@ Move iterative_deepening(State& s, SearchInfo& si) {
 }
 
 /* Search driver */
-Move search(State& s, SearchInfo& si) {
+Move search(Position& s, SearchInfo& si) {
 	for (int i = 0; i < NUM_THREADS; ++i) {
 		global_info[i].variation.clearPv();
 		global_info[i].history.clear();

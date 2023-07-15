@@ -13,7 +13,7 @@ int MOVE_OVERHEAD = 500;
 int CONTEMPT = 0;
 
 // Validate incoming UCI move
-Move get_uci_move(std::string & token, State & s) {
+Move get_uci_move(std::string & token, Position & s) {
 	Move m;
 	token.erase(std::remove(token.begin(), token.end(), ','),
 	token.end());
@@ -31,7 +31,7 @@ Move get_uci_move(std::string & token, State & s) {
 }
 
 // UCI go command
-void go(std::istringstream & is, State & s) {
+void go(std::istringstream & is, Position & s) {
 	std::string token;
 	SearchInfo search_info;
 	Move m;
@@ -81,11 +81,11 @@ void go(std::istringstream & is, State & s) {
 }
 
 // Set position
-void position(std::istringstream & is, State & s) {
+void position(std::istringstream & is, Position & s) {
 	std::string token, fen;
 	Move m;
 
-	s = State(START_FEN);
+	s = Position(START_FEN);
 	for (int i = 0; i < NUM_THREADS; ++i) {
 		global_info[i].history.init();
 		global_info[i].history.push(std::make_pair(NULL_MOVE, s.getKey()));
@@ -97,7 +97,7 @@ void position(std::istringstream & is, State & s) {
 		while (is >> token && token != "moves") {
 			fen += token + " ";
 		}
-		s = State(fen);
+		s = Position(fen);
 	}
 	else if (token == "startpos") {
 		is >> token;
@@ -166,7 +166,7 @@ void set_option(std::string & name, std::string & value) {
 
 // Main UCI loop
 void uci() {
-	State root(START_FEN);
+	Position root(START_FEN);
 	std::string command, token;
 	std::setvbuf(stdin, NULL, _IONBF, 0);
 

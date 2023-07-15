@@ -10,7 +10,7 @@
 #include <string>
 #include <sstream>
 #include <utility>
-#include "state.h"
+#include "Position.h"
 #include "tt.h"
 #include "defs.h"
 #include "movegen.h"
@@ -21,7 +21,6 @@
 #define ENGINE_VERSION "1.0"
 #define ENGINE_AUTHOR "Brighten Zhang"
 
-const std::string START_FEN = "rnbqkbnr/pppppppp/8/8/8/8/PPPPPPPP/RNBQKBNR w KQkq";
 extern int HASH_SIZE;
 extern int NUM_THREADS;
 extern int MOVE_OVERHEAD;

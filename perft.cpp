@@ -12,24 +12,24 @@ static History history;
 std::vector<U64> nodeCount;
 
 /* Perft test */
-U64 perft(State & s, int depth) {
+U64 perft(Position & s, int depth) {
 	int nodes = 0;
 	if (s.getFiftyMoveRule() > 99) return nodes;
 	MoveList mlist(s);
 	if (depth == 1) return mlist.size();
 	Move m;
 	while (m = mlist.getBestMove()) {
-		State c(s);
+		Position c(s);
 		c.makeMove(m);
 		nodes += perft(c, depth - 1);
 	}
 	return nodes;
 }
 
-void test(State s, MoveList* moveList, int depth, int id) {
+void test(Position s, MoveList* moveList, int depth, int id) {
 	Move m = moveList->getBestMove();
 	while (m != NULL_MOVE) {
-		State c(s);
+		Position c(s);
 		c.makeMove(m);
 		int nodes = perft(c, depth - 1);
 		m = moveList->getBestMove();
@@ -38,7 +38,7 @@ void test(State s, MoveList* moveList, int depth, int id) {
 }
 
 /* Multi-threaded Perft test */
-U64 MTperft(State& s, int depth) {
+U64 MTperft(Position& s, int depth) {
 	unsigned int nThreads = std::thread::hardware_concurrency();
 	std::vector<std::thread> threads;
 	nodeCount.clear();
@@ -50,7 +50,7 @@ U64 MTperft(State& s, int depth) {
 	return std::accumulate(nodeCount.begin(), nodeCount.end(), 0);
 }
 
-void perftTest(State& s, int depth, bool mt) {
+void perftTest(Position& s, int depth, bool mt) {
 	U64 nodes = 0;
 	double nps, time;
 	Clock clock;

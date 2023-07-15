@@ -34,6 +34,7 @@ static const int BOARD_SIZE = 64;
 static const int PIECE_TYPES_SIZE = 6;
 static const int PLAYER_SIZE = 2;
 static const int PIECE_MAX = 10;
+const std::string START_FEN = "rnbqkbnr/pppppppp/8/8/8/8/PPPPPPPP/RNBQKBNR w KQkq";
 
 static const int CASTLE_RIGHTS[BOARD_SIZE] = {
 	14, 15, 15, 12, 15, 15, 15, 13,
