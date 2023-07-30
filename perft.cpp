@@ -15,10 +15,10 @@ std::vector<U64> nodeCount;
 U64 perft(Position & s, int depth) {
 	int nodes = 0;
 	if (s.getFiftyMoveRule() > 99) return nodes;
-	MoveList mlist(s);
-	if (depth == 1) return mlist.size();
+	MoveList moveList(s);
+	if (depth == 1) return moveList.size();
 	Move m;
-	while (m = mlist.getBestMove()) {
+	while (m = moveList.getBestMove()) {
 		Position c(s);
 		c.makeMove(m);
 		nodes += perft(c, depth - 1);
@@ -42,9 +42,9 @@ U64 MTperft(Position& s, int depth) {
 	unsigned int nThreads = std::thread::hardware_concurrency();
 	std::vector<std::thread> threads;
 	nodeCount.clear();
-	MoveList mlist(s);
+	MoveList moveList(s);
 	for (unsigned int i = 0; i < nThreads; ++i) {
-		threads.push_back(std::thread(test, s, &mlist, depth, i));
+		threads.push_back(std::thread(test, s, &moveList, depth, i));
 	}
 	for (std::thread& thread : threads)	thread.join();
 	return std::accumulate(nodeCount.begin(), nodeCount.end(), 0);

@@ -114,61 +114,61 @@ public:
 	friend std::ostream & operator << (std::ostream & os, const Position & Position);
 	
 private:
-	Color mUs;
-	Color mThem;
-	int mFiftyMoveRule;
-	int mCastleRights;
-	int mPhase;
-	U64 mKey;
-	U64 mPawnKey;
-	U64 mCheckers;
-	U64 mEnPassant;
-	Move mPreviousMove;
-	std::array<U64, PIECE_TYPES_SIZE> mCheckSquares;
-	std::array<U64, PLAYER_SIZE> mPinned;
-	std::array<U64, PLAYER_SIZE> mOccupancy;
-	std::array<int, BOARD_SIZE> mPieceIndex;
-	std::array<PieceType, BOARD_SIZE> mBoard;
-	std::array<std::array<U64, PIECE_TYPES_SIZE>, PLAYER_SIZE> mPieces;
-	std::array<std::array<int, PIECE_TYPES_SIZE>, PLAYER_SIZE> mPieceCount;
-	std::array<std::array<int, GAMESTAGE_SIZE>, PLAYER_SIZE> mPstScore;
-	std::array<std::array<std::array<Square, PIECE_MAX>, PIECE_TYPES_SIZE>, PLAYER_SIZE> mPieceList;
+	Color us;
+	Color them;
+	int fiftyMoveRule;
+	int castleRights;
+	int phase;
+	U64 key;
+	U64 pawnKey;
+	U64 checkers;
+	U64 enPassant;
+	Move previousMove;
+	std::array<U64, PIECE_TYPES_SIZE> checkSquares;
+	std::array<U64, PLAYER_SIZE> pinned;
+	std::array<U64, PLAYER_SIZE> occupancy;
+	std::array<int, BOARD_SIZE> pieceIndex;
+	std::array<PieceType, BOARD_SIZE> board;
+	std::array<std::array<U64, PIECE_TYPES_SIZE>, PLAYER_SIZE> pieces;
+	std::array<std::array<int, PIECE_TYPES_SIZE>, PLAYER_SIZE> pieceCounts;
+	std::array<std::array<int, GAMESTAGE_SIZE>, PLAYER_SIZE> pstScore;
+	std::array<std::array<std::array<Square, PIECE_MAX>, PIECE_TYPES_SIZE>, PLAYER_SIZE> pieceList;
 };
 
 inline Color Position::getOurColor() const {
-	return mUs;
+	return us;
 }
 
 inline Color Position::getTheirColor() const {
-	return mThem;
+	return them;
 }
 
 inline int Position::getFiftyMoveRule() const {
-	return mFiftyMoveRule;
+	return fiftyMoveRule;
 }
 
 inline U64 Position::getKey() const {
-	return mKey;
+	return key;
 }
 
 inline U64 Position::getPawnKey() const {
-	return mPawnKey;
+	return pawnKey;
 }
 
 inline U64 Position::getEnPassantBB() const {
-	return mEnPassant;
+	return enPassant;
 }
 
 inline int Position::getCastleRights() const {
-	return mCastleRights;
+	return castleRights;
 }
 
 inline U64 Position::getPinsBB(Color c) const {
-	return mPinned[c];
+	return pinned[c];
 }
 
 inline int Position::getGamePhase() const {
-	return mPhase;
+	return phase;
 }
 
 inline void Position::setGamePhase() {
@@ -178,11 +178,11 @@ inline void Position::setGamePhase() {
 				- getPieceCount<PIECETYPE_BISHOP>() * bishopPhase
 					- getPieceCount<PIECETYPE_ROOK>() * rookPhase
 						- getPieceCount<PIECETYPE_QUEEN>() * queenPhase;
-	mPhase = (phase * 256 + (totalPhase / 2)) / totalPhase;
+	phase = (phase * 256 + (totalPhase / 2)) / totalPhase;
 }
 
 inline bool Position::isCapture(Move move) const {
-	return square_bb[getDst(move)] & (getOccupancyBB(mThem) | mEnPassant);
+	return square_bb[getDst(move)] & (getOccupancyBB(them) | enPassant);
 }
 
 inline bool Position::isQuiet(Move move) const {
@@ -190,131 +190,131 @@ inline bool Position::isQuiet(Move move) const {
 }
 
 inline bool Position::isEnPassant(Move move) const {
-	return onSquare(getSrc(move)) == PIECETYPE_PAWN && (square_bb[getDst(move)] & mEnPassant);
+	return onSquare(getSrc(move)) == PIECETYPE_PAWN && (square_bb[getDst(move)] & enPassant);
 }
 
 template<PieceType P> inline const std::array<Square, PIECE_MAX>& Position::getPieceList(Color c) const {
-	return mPieceList[c][P];
+	return pieceList[c][P];
 }
 
 inline void Position::addPiece(Color c, PieceType p, Square sq) {
-	mPieces[c][p] |= square_bb[sq];
-	mOccupancy[c] |= square_bb[sq];
-	mBoard[sq] = p;
-	mPieceIndex[sq] = mPieceCount[c][p]++;
-	mPieceList[c][p][mPieceIndex[sq]] = sq;
+	pieces[c][p] |= square_bb[sq];
+	occupancy[c] |= square_bb[sq];
+	board[sq] = p;
+	pieceIndex[sq] = pieceCounts[c][p]++;
+	pieceList[c][p][pieceIndex[sq]] = sq;
 
-	mPstScore[c][MIDDLEGAME] += PieceSquareTable::getScore(p, MIDDLEGAME, c, sq);
-	mPstScore[c][ENDGAME] += PieceSquareTable::getScore(p, ENDGAME, c, sq);
+	pstScore[c][MIDDLEGAME] += PieceSquareTable::getScore(p, MIDDLEGAME, c, sq);
+	pstScore[c][ENDGAME] += PieceSquareTable::getScore(p, ENDGAME, c, sq);
 
-	mKey ^= Zobrist::key(c, p, sq);
+	key ^= Zobrist::key(c, p, sq);
 }
 
 inline void Position::movePiece(Color c, PieceType p, Square src, Square dst) {
-	mPieces[c][p] ^= square_bb[src] | square_bb[dst];
-	mOccupancy[c] ^= square_bb[src] | square_bb[dst];
-	mBoard[dst] = p;
-	mBoard[src] = PIECETYPE_NONE;
-	mPieceIndex[dst] = mPieceIndex[src];
-	mPieceList[c][p][mPieceIndex[dst]] = dst;
+	pieces[c][p] ^= square_bb[src] | square_bb[dst];
+	occupancy[c] ^= square_bb[src] | square_bb[dst];
+	board[dst] = p;
+	board[src] = PIECETYPE_NONE;
+	pieceIndex[dst] = pieceIndex[src];
+	pieceList[c][p][pieceIndex[dst]] = dst;
 
-	mPstScore[c][MIDDLEGAME] -= PieceSquareTable::getScore(p, MIDDLEGAME, c, src);
-	mPstScore[c][ENDGAME] -= PieceSquareTable::getScore(p, ENDGAME, c, src);
-	mPstScore[c][MIDDLEGAME] += PieceSquareTable::getScore(p, MIDDLEGAME, c, dst);
-	mPstScore[c][ENDGAME] += PieceSquareTable::getScore(p, ENDGAME, c, dst);
+	pstScore[c][MIDDLEGAME] -= PieceSquareTable::getScore(p, MIDDLEGAME, c, src);
+	pstScore[c][ENDGAME] -= PieceSquareTable::getScore(p, ENDGAME, c, src);
+	pstScore[c][MIDDLEGAME] += PieceSquareTable::getScore(p, MIDDLEGAME, c, dst);
+	pstScore[c][ENDGAME] += PieceSquareTable::getScore(p, ENDGAME, c, dst);
 
-	mKey ^= Zobrist::key(c, p, src, dst);
+	key ^= Zobrist::key(c, p, src, dst);
 }
 
 inline void Position::removePiece(Color c, PieceType p, Square sq) {
 	Square swap;
 	int pieceCount;
 
-	mPieces[c][p] &= ~(square_bb[sq]);
-	mOccupancy[c] &= ~(square_bb[sq]);
-	mBoard[sq] = PIECETYPE_NONE;
+	pieces[c][p] &= ~(square_bb[sq]);
+	occupancy[c] &= ~(square_bb[sq]);
+	board[sq] = PIECETYPE_NONE;
 
-	pieceCount = --mPieceCount[c][p];
+	pieceCount = --pieceCounts[c][p];
 
-	swap = mPieceList[c][p][pieceCount];
-	mPieceIndex[swap] = mPieceIndex[sq];
-	mPieceList[c][p][mPieceIndex[swap]] = swap;
-	mPieceList[c][p][pieceCount] = no_sq;
+	swap = pieceList[c][p][pieceCount];
+	pieceIndex[swap] = pieceIndex[sq];
+	pieceList[c][p][pieceIndex[swap]] = swap;
+	pieceList[c][p][pieceCount] = no_sq;
 
-	mPstScore[c][MIDDLEGAME] -= PieceSquareTable::getScore(p, MIDDLEGAME, c, sq);
-	mPstScore[c][ENDGAME] -= PieceSquareTable::getScore(p, ENDGAME, c, sq);
+	pstScore[c][MIDDLEGAME] -= PieceSquareTable::getScore(p, MIDDLEGAME, c, sq);
+	pstScore[c][ENDGAME] -= PieceSquareTable::getScore(p, ENDGAME, c, sq);
 
-	mKey ^= Zobrist::key(c, p, sq);
+	key ^= Zobrist::key(c, p, sq);
 }
 
 inline void Position::swapTurn() {
-	mKey ^= Zobrist::key();
-	mThem =  mUs;
-	mUs   = !mUs;
+	key ^= Zobrist::key();
+	them =  us;
+	us   = !us;
 }
 
 template<PieceType P> inline U64 Position::getPieceBB(Color c) const {
-	return mPieces[c][P];
+	return pieces[c][P];
 }
 
 template<PieceType P> inline U64 Position::getPieceBB() const {
-	return mPieces[WHITE][P] | mPieces[BLACK][P];
+	return pieces[WHITE][P] | pieces[BLACK][P];
 }
 
 template<PieceType P> inline int Position::getPieceCount() const {
-	return mPieceCount[WHITE][P] + mPieceCount[BLACK][P];
+	return pieceCounts[WHITE][P] + pieceCounts[BLACK][P];
 }
 
 template<PieceType P> inline int Position::getPieceCount(Color c) const {
-	return mPieceCount[c][P];
+	return pieceCounts[c][P];
 }
 
 inline int Position::getNonPawnPieceCount(Color c) const {
-	return mPieceCount[c][PIECETYPE_KNIGHT] + mPieceCount[c][PIECETYPE_BISHOP] + mPieceCount[c][PIECETYPE_ROOK]   + mPieceCount[c][PIECETYPE_QUEEN];
+	return pieceCounts[c][PIECETYPE_KNIGHT] + pieceCounts[c][PIECETYPE_BISHOP] + pieceCounts[c][PIECETYPE_ROOK]   + pieceCounts[c][PIECETYPE_QUEEN];
 }
 
 inline Square Position::getKingSquare(Color c) const {
-	return mPieceList[c][PIECETYPE_KING][0];
+	return pieceList[c][PIECETYPE_KING][0];
 }
 
 inline int Position::getPstScore(GameStage g) const {
-	return mPstScore[mUs][g] - mPstScore[mThem][g];
+	return pstScore[us][g] - pstScore[them][g];
 }
 
 inline PieceType Position::onSquare(const Square sq) const {
-	return mBoard[sq];
+	return board[sq];
 }
 
 inline U64 Position::getOccupancyBB() const {
-	return mOccupancy[WHITE] | mOccupancy[BLACK];
+	return occupancy[WHITE] | occupancy[BLACK];
 }
 
 inline U64 Position::getOccupancyBB(Color c) const {
-	return mOccupancy[c];
+	return occupancy[c];
 }
 
 inline U64 Position::getEmptyBB() const {
-	return ~(mOccupancy[WHITE] | mOccupancy[BLACK]);
+	return ~(occupancy[WHITE] | occupancy[BLACK]);
 }
 
 inline U64 Position::getCheckersBB() const {
-	return mCheckers;
+	return checkers;
 }
 
 inline bool Position::canCastleKingside() const {
-	return mUs ? mCastleRights & BLACK_KINGSIDE_CASTLE : mCastleRights & WHITE_KINGSIDE_CASTLE;
+	return us ? castleRights & BLACK_KINGSIDE_CASTLE : castleRights & WHITE_KINGSIDE_CASTLE;
 }
 
 inline bool Position::canCastleKingside(Color c) const {
-	return c == WHITE ? mCastleRights & WHITE_KINGSIDE_CASTLE : mCastleRights & BLACK_KINGSIDE_CASTLE;
+	return c == WHITE ? castleRights & WHITE_KINGSIDE_CASTLE : castleRights & BLACK_KINGSIDE_CASTLE;
 }
 
 inline bool Position::canCastleQueenside() const {
-	return mUs ? mCastleRights & BLACK_QUEENSIDE_CASTLE : mCastleRights & WHITE_QUEENSIDE_CASTLE;
+	return us ? castleRights & BLACK_QUEENSIDE_CASTLE : castleRights & WHITE_QUEENSIDE_CASTLE;
 }
 
 inline bool Position::canCastleQueenside(Color c) const {
-	return c == WHITE ? mCastleRights & WHITE_QUEENSIDE_CASTLE : mCastleRights & BLACK_QUEENSIDE_CASTLE;
+	return c == WHITE ? castleRights & WHITE_QUEENSIDE_CASTLE : castleRights & BLACK_QUEENSIDE_CASTLE;
 }
 
 template<PieceType PIECETYPE_PAWN> inline U64 Position::getAttackBB(Square sq, Color c) const {
@@ -351,16 +351,16 @@ inline U64 Position::getAttackBB(PieceType p, Square sq, U64 occ) const {
 }
 
 inline U64 Position::getCheckSquaresBB(PieceType pPiece) const {
-	return mCheckSquares[pPiece];
+	return checkSquares[pPiece];
 }
 
 inline void Position::setCheckers() {
-	mCheckers = getAttackersBB(getKingSquare(mUs), mThem);
-	mCheckSquares[PIECETYPE_PAWN] = getAttackBB<PIECETYPE_PAWN>(getKingSquare(mThem), mThem);
-	mCheckSquares[PIECETYPE_KNIGHT] = getAttackBB<PIECETYPE_KNIGHT>(getKingSquare(mThem));
-	mCheckSquares[PIECETYPE_BISHOP] = getAttackBB<PIECETYPE_BISHOP>(getKingSquare(mThem));
-	mCheckSquares[PIECETYPE_ROOK] = getAttackBB<PIECETYPE_ROOK>(getKingSquare(mThem));
-	mCheckSquares[PIECETYPE_QUEEN] = mCheckSquares[PIECETYPE_BISHOP] | mCheckSquares[PIECETYPE_ROOK];
+	checkers = getAttackersBB(getKingSquare(us), them);
+	checkSquares[PIECETYPE_PAWN] = getAttackBB<PIECETYPE_PAWN>(getKingSquare(them), them);
+	checkSquares[PIECETYPE_KNIGHT] = getAttackBB<PIECETYPE_KNIGHT>(getKingSquare(them));
+	checkSquares[PIECETYPE_BISHOP] = getAttackBB<PIECETYPE_BISHOP>(getKingSquare(them));
+	checkSquares[PIECETYPE_ROOK] = getAttackBB<PIECETYPE_ROOK>(getKingSquare(them));
+	checkSquares[PIECETYPE_QUEEN] = checkSquares[PIECETYPE_BISHOP] | checkSquares[PIECETYPE_ROOK];
 }
 
 inline bool Position::defended(Square s, Color c) const {
@@ -380,10 +380,10 @@ inline bool Position::isAttacked(Square sq, Color c, U64 change) const {
 }
 
 inline bool Position::attacked(Square sq) const {
-	return getAttackBB< PIECETYPE_PAWN >(sq, mUs) &  getPieceBB< PIECETYPE_PAWN >(mThem)
-		|| getAttackBB<PIECETYPE_KNIGHT>(sq) &  getPieceBB<PIECETYPE_KNIGHT>(mThem)
-			|| getAttackBB<PIECETYPE_BISHOP>(sq) & (getPieceBB<PIECETYPE_BISHOP>(mThem) | getPieceBB<PIECETYPE_QUEEN>(mThem))
-				|| getAttackBB<PIECETYPE_ROOK>(sq) & (getPieceBB<PIECETYPE_ROOK>(mThem) | getPieceBB<PIECETYPE_QUEEN>(mThem));
+	return getAttackBB< PIECETYPE_PAWN >(sq, us) &  getPieceBB< PIECETYPE_PAWN >(them)
+		|| getAttackBB<PIECETYPE_KNIGHT>(sq) &  getPieceBB<PIECETYPE_KNIGHT>(them)
+			|| getAttackBB<PIECETYPE_BISHOP>(sq) & (getPieceBB<PIECETYPE_BISHOP>(them) | getPieceBB<PIECETYPE_QUEEN>(them))
+				|| getAttackBB<PIECETYPE_ROOK>(sq) & (getPieceBB<PIECETYPE_ROOK>(them) | getPieceBB<PIECETYPE_QUEEN>(them));
 }
 
 inline bool Position::inCheck() const {
@@ -395,7 +395,7 @@ inline bool Position::inDoubleCheck() const {
 }
 
 inline bool Position::check() const {
-	return attacked(getKingSquare(mUs));
+	return attacked(getKingSquare(us));
 }
 
 inline U64 Position::getAttackersBB(Square sq, Color c) const {
@@ -406,8 +406,8 @@ inline U64 Position::getAttackersBB(Square sq, Color c) const {
 }
 
 inline U64 Position::allAttackers(Square sq) const {
-	return (getAttackBB<PIECETYPE_PAWN>(sq, mUs) & getPieceBB<PIECETYPE_PAWN>(mThem))
-		| (getAttackBB<PIECETYPE_PAWN>(sq, mThem) & getPieceBB<PIECETYPE_PAWN>(mUs))
+	return (getAttackBB<PIECETYPE_PAWN>(sq, us) & getPieceBB<PIECETYPE_PAWN>(them))
+		| (getAttackBB<PIECETYPE_PAWN>(sq, them) & getPieceBB<PIECETYPE_PAWN>(us))
 			| (getAttackBB<PIECETYPE_KNIGHT>(sq) & getPieceBB<PIECETYPE_KNIGHT>())
 				| (getAttackBB<PIECETYPE_BISHOP>(sq) & (getPieceBB<PIECETYPE_BISHOP>() | getPieceBB<PIECETYPE_QUEEN>()))
 					| (getAttackBB<PIECETYPE_ROOK>(sq) & (getPieceBB<PIECETYPE_ROOK>() | getPieceBB<PIECETYPE_QUEEN>()))
@@ -415,8 +415,8 @@ inline U64 Position::allAttackers(Square sq) const {
 }
 
 inline bool Position::check(U64 change) const {
-	return (Bmagic(getKingSquare(mUs), getOccupancyBB() ^ change) & (getPieceBB<PIECETYPE_BISHOP>(mThem) | getPieceBB<PIECETYPE_QUEEN>(mThem))) 
-		|| (Rmagic(getKingSquare(mUs), getOccupancyBB() ^ change) & (getPieceBB< PIECETYPE_ROOK >(mThem) | getPieceBB<PIECETYPE_QUEEN>(mThem)));
+	return (Bmagic(getKingSquare(us), getOccupancyBB() ^ change) & (getPieceBB<PIECETYPE_BISHOP>(them) | getPieceBB<PIECETYPE_QUEEN>(them))) 
+		|| (Rmagic(getKingSquare(us), getOccupancyBB() ^ change) & (getPieceBB< PIECETYPE_ROOK >(them) | getPieceBB<PIECETYPE_QUEEN>(them)));
 }
 
 inline bool Position::check(U64 change, Color c) const {
@@ -429,7 +429,7 @@ inline U64 Position::getXRayAttacks(Square square) const {
 }
 
 inline Move Position::getPreviousMove() const {
-	return mPreviousMove;
+	return previousMove;
 }
 
 #endif

@@ -7,11 +7,11 @@
 #include "eval.h"
 //#include "io.h"
 
-Variation::Variation() : mMatingLine(false), mSize(0) {}
+Variation::Variation() : isMatingLine(false), sz(0) {}
 
 void Variation::pushToPv(Move move, U64 key, int ply, int score) {
 	// Check if this is a mating line.
-	mMatingLine = std::abs(score) >= CHECKMATE_BOUND ? true : false;
+	isMatingLine = std::abs(score) >= CHECKMATE_BOUND ? true : false;
 
 	// Find the indicies using the triangular forumla.
 	int copyTo = triangularIndex(ply);
@@ -35,15 +35,15 @@ Move Variation::getPvMove(int ply) const {
 }
 
 bool Variation::isMate() const {
-	return mMatingLine;
+	return isMatingLine;
 }
 
 int Variation::getMateInN() const {
-	return mSize / 2.0 + 0.5;
+	return sz / 2.0 + 0.5;
 }
 
 void Variation::clearPv() {
-	mSize = 0;
+	sz = 0;
 	std::fill(mPv.begin(), mPv.begin() + MAX_PLY, std::make_pair(0, 0));
 }
 
@@ -54,7 +54,7 @@ void Variation::checkPv(Position& s) {
 	for (int i = 0; i < MAX_PLY; ++i) {
 		nextMove = mPv[i].first;
 		if (nextMove == NULL_MOVE) {
-			mSize = i;
+			sz = i;
 			break;
 		}
 		// Push moves to the move list.
@@ -66,7 +66,7 @@ void Variation::checkPv(Position& s) {
 		}
 		// If the next pv move is not found, break the loop.
 		else {
-			mSize = i;
+			sz = i;
 			break;
 		}
 	}
@@ -74,7 +74,7 @@ void Variation::checkPv(Position& s) {
 
 void Variation::printPv() {
 	std::cout << " pv ";
-	for (auto it = mPv.begin(); it != mPv.begin() + mSize; ++it) {
+	for (auto it = mPv.begin(); it != mPv.begin() + sz; ++it) {
 		std::cout << to_string(it->first) << " ";
 	}
 }

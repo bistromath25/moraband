@@ -17,13 +17,13 @@ Move get_uci_move(std::string & token, Position & s) {
 	Move m;
 	token.erase(std::remove(token.begin(), token.end(), ','),
 	token.end());
-	MoveList mlist(s);
-	while (mlist.size() > 0) {
-		m = mlist.pop();
+	MoveList moveList(s);
+	while (moveList.size() > 0) {
+		m = moveList.pop();
 		if (to_string(m) == token) {
 			return m;
 		}
-		if (mlist.size() == 0) {
+		if (moveList.size() == 0) {
 			return NULL_MOVE;
 		}
 	}
@@ -237,8 +237,8 @@ void uci() {
 			perftTest(root, std::stoi(token), true);
 		}
 		else if (token == "moves") {
-			MoveList mlist(root);
-			std::cout << mlist << std::endl;
+			MoveList moveList(root);
+			std::cout << moveList << std::endl;
 		}
 		else {
 			std::cout << "unknown command" << std::endl;

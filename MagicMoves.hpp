@@ -5,7 +5,7 @@
  *need this functionality.
  *
  *Usage:
- *You must first initialize the generator with a call to initmagicmoves().
+ *You ust first initialize the generator with a call to initmagicmoves().
  *Then you can use the following macros for generating move bitboards by
  *giving them a square and an occupancy.  The macro will then "return"
  *the correct move bitboard for that particular square and occupancy. It
