@@ -77,8 +77,6 @@ const int CHECKMATE_BOUND = CHECKMATE - MAX_PLY;
 const int STALEMATE = 0;
 const int DRAW = 0;
 
-const size_t PAWN_HASH_SIZE = 8192;
-
 const int SAFETY_TABLE[100] =  {
 	  0,   0,   0,   1,   1,   2,   3,   4,   5,   6,
 	  8,  10,  13,  16,  20,  25,  30,  36,  42,  48,
@@ -92,38 +90,55 @@ const int SAFETY_TABLE[100] =  {
 	650, 650, 650, 650, 650, 650, 650, 650, 650, 650
 };
 
+const int PAWN_HASH_SIZE = 2;
+
 /* Pawn hash table entry */
 struct PawnEntry {
-	PawnEntry() : mKey(0), mStructure{} {}
+	PawnEntry() : key(0), structure{} {}
 	U64 getKey() const {
-		return mKey;
+		return key;
 	}
 	const std::array<int, PLAYER_SIZE>& getStructure() const {
-		return mStructure;
+		return structure;
 	}
 	const std::array<int, PLAYER_SIZE>& getMaterial() const	{
-		return mMaterial;
+		return material;
 	}
-	U64 mKey;
-	std::array<int, PLAYER_SIZE> mStructure;
-	std::array<int, PLAYER_SIZE> mMaterial;
+	void clear() {
+		key = 0;
+		std::fill(structure.begin(), structure.end(), 0);
+		std::fill(material.begin(), material.end(), 0);
+	}
+	U64 key;
+	std::array<int, PLAYER_SIZE> structure;
+	std::array<int, PLAYER_SIZE> material;
 };
 
 /* Pawn hash table for pawn evaluation */
 struct PawnHashTable {
-	PawnHashTable() {}
+	PawnHashTable() {
+		size = (1 << 20) / sizeof(PawnEntry) * PAWN_HASH_SIZE;
+		table = new PawnEntry[size];
+		clear();
+	}
+	~PawnHashTable() {
+		delete[] table;
+	}
 	void clear() {
-		std::fill(table.begin(), table.end(), PawnEntry());
+		for (int i = 0; i < PAWN_HASH_SIZE; ++i) {
+			table[i].clear();
+		}
 	}
-	PawnEntry* probe(U64 pKey) {
-		return &table[pKey % table.size()];
+	PawnEntry* probe(U64 key) {
+		return &table[key % size];
 	}
-	void store(U64 pKey, const std::array<int, PLAYER_SIZE>& pStructure, const std::array<int, PLAYER_SIZE>& pMaterial) {
-		table[pKey % table.size()].mKey = pKey;
-		table[pKey % table.size()].mStructure = pStructure;
-		table[pKey % table.size()].mMaterial = pMaterial;
+	void store(U64 key, const std::array<int, PLAYER_SIZE>& structure, const std::array<int, PLAYER_SIZE>& material) {
+		table[key % size].key = key;
+		table[key % size].structure = structure;
+		table[key % size].material = material;
 	}
-	std::array<PawnEntry, PAWN_HASH_SIZE> table;
+	PawnEntry* table;
+	int size;
 };
 
 extern PawnHashTable ptable;
