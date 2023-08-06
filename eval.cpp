@@ -7,10 +7,10 @@
 
 int TEMPO_BONUS = 16; // Side-to-move bonus
 
-int KNIGHT_THREAT = 6; // Threats on enemy King
-int BISHOP_THREAT = 4;
-int ROOK_THREAT = 7;
-int QUEEN_THREAT = 10;
+int KNIGHT_THREAT = 3; // Threats on enemy King
+int BISHOP_THREAT = 3;
+int ROOK_THREAT = 4;
+int QUEEN_THREAT = 5;
 
 int PAWN_WEIGHT_MG = 100;
 int KNIGHT_WEIGHT_MG = 337;
@@ -93,7 +93,7 @@ int BISHOP_PAIR_MG = 50;
 int BISHOP_PAIR_EG = 80;
 int ROOK_OPEN_FILE = 75;
 int ROOK_ON_SEVENTH_RANK = 60;
-int KNIGHT_OUTPOST = 55;
+int KNIGHT_OUTPOST = 45;
 int BISHOP_OUTPOST = 25;
 
 PawnHashTable ptable;
