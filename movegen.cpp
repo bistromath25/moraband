@@ -12,41 +12,41 @@ void mg_init() {
 
 /* List of moves and related functions */
 MoveList::MoveList(const Position& s, Move bestMove, History* history, int ply, bool qsearch) 
-: mPosition(s), mValid(FULL), mBest(bestMove), mQSearch(qsearch), mKiller1(NULL_MOVE), mKiller2(NULL_MOVE) , mSize(0), mHistory(history), mPly(ply) {
+: position(s), valid(FULL), best(bestMove), isQSearch(qsearch), killer1(NULL_MOVE), killer2(NULL_MOVE) , sz(0), history(history), ply(ply) {
 	if (history) {
-		mKiller1 = history->getKiller(ply).first;
-		mKiller2 = history->getKiller(ply).second;
+		killer1 = history->getKiller(ply).first;
+		killer2 = history->getKiller(ply).second;
 	}
-	if (mPosition.inCheck()) {
-		Square k = mPosition.getKingSquare(mPosition.getOurColor());
-		Square c = get_lsb(mPosition.getCheckersBB());
-		mValid = between[k][c] | mPosition.getCheckersBB();
-		mStage = EvadeBestMove;
+	if (position.inCheck()) {
+		Square k = position.getKingSquare(position.getOurColor());
+		Square c = get_lsb(position.getCheckersBB());
+		valid = between[k][c] | position.getCheckersBB();
+		stage = EvadeBestMove;
 	}
 	else {
-		mStage = qsearch ? QBestMove : BestMove;
+		stage = qsearch ? QBestMove : BestMove;
 	}
 }
 
 std::size_t MoveList::size() const {
-	return mSize;
+	return sz;
 }
 
 void MoveList::push(Move move) {
-	mList[mSize++].move = move;
+	moveList[sz++].move = move;
 }
 
 Move MoveList::pop() {
-	return mList[--mSize].move;
+	return moveList[--sz].move;
 }
 
 bool MoveList::contains(Move move) const {
-	return std::find(mList.begin(), mList.begin() + mSize, move) != mList.begin() + mSize;
+	return std::find(moveList.begin(), moveList.begin() + sz, move) != moveList.begin() + sz;
 }
 
 template<MoveType T> void MoveList::pushPromotion(Square src, Square dst) {
-	const Color c = mPosition.getOurColor();
-	if (square_bb[dst] & NOT_A_FILE && square_bb[dst + 1] & mPosition.getOccupancyBB(!c)) {
+	const Color c = position.getOurColor();
+	if (square_bb[dst] & NOT_A_FILE && square_bb[dst + 1] & position.getOccupancyBB(!c)) {
 		if (T == MoveType::Attacks || T == MoveType::All) {
 			push(makeMove(src, dst + 1, PIECETYPE_QUEEN));
 		}
@@ -56,7 +56,7 @@ template<MoveType T> void MoveList::pushPromotion(Square src, Square dst) {
 			push(makeMove(src, dst + 1, PIECETYPE_BISHOP));
 		}
 		if (T == MoveType::Evasions) {
-			if (square_bb[dst + 1] & mValid) {
+			if (square_bb[dst + 1] & valid) {
 				push(makeMove(src, dst + 1, PIECETYPE_QUEEN));
 				push(makeMove(src, dst + 1, PIECETYPE_KNIGHT));
 				push(makeMove(src, dst + 1, PIECETYPE_ROOK));
@@ -64,13 +64,13 @@ template<MoveType T> void MoveList::pushPromotion(Square src, Square dst) {
 			}
 		}
 		if (T == MoveType::QuietChecks)	{
-			if (mPosition.getCheckSquaresBB(PIECETYPE_KNIGHT) & square_bb[dst + 1]) {
+			if (position.getCheckSquaresBB(PIECETYPE_KNIGHT) & square_bb[dst + 1]) {
 				push(makeMove(src, dst + 1, PIECETYPE_KNIGHT));
 			}
 		}
 	}
 
-	if (square_bb[dst] & NOT_H_FILE && square_bb[dst - 1] & mPosition.getOccupancyBB(!c)) {
+	if (square_bb[dst] & NOT_H_FILE && square_bb[dst - 1] & position.getOccupancyBB(!c)) {
 		if (T == MoveType::Attacks || T == MoveType::All) {
 			push(makeMove(src, dst - 1, PIECETYPE_QUEEN));
 		}
@@ -80,7 +80,7 @@ template<MoveType T> void MoveList::pushPromotion(Square src, Square dst) {
 			push(makeMove(src, dst - 1, PIECETYPE_BISHOP));
 		}
 		if (T == MoveType::Evasions) {
-			if (square_bb[dst - 1] & mValid) {
+			if (square_bb[dst - 1] & valid) {
 				push(makeMove(src, dst - 1, PIECETYPE_QUEEN));
 				push(makeMove(src, dst - 1, PIECETYPE_KNIGHT));
 				push(makeMove(src, dst - 1, PIECETYPE_ROOK));
@@ -88,13 +88,13 @@ template<MoveType T> void MoveList::pushPromotion(Square src, Square dst) {
 			}
 		}
 		if (T == MoveType::QuietChecks) {
-			if (mPosition.getCheckSquaresBB(PIECETYPE_KNIGHT) & square_bb[dst - 1]) {
+			if (position.getCheckSquaresBB(PIECETYPE_KNIGHT) & square_bb[dst - 1]) {
 				push(makeMove(src, dst - 1, PIECETYPE_KNIGHT));
 			}
 		}
 	}
 
-	if (square_bb[dst] & mPosition.getEmptyBB()) {
+	if (square_bb[dst] & position.getEmptyBB()) {
 		if (T == MoveType::Attacks || T == MoveType::All) {
 			push(makeMove(src, dst, PIECETYPE_QUEEN));
 		}
@@ -104,7 +104,7 @@ template<MoveType T> void MoveList::pushPromotion(Square src, Square dst) {
 			push(makeMove(src, dst, PIECETYPE_BISHOP));
 		}
 		if (T == MoveType::Evasions) {
-			if (square_bb[dst] & mValid) {
+			if (square_bb[dst] & valid) {
 				push(makeMove(src, dst, PIECETYPE_QUEEN));
 				push(makeMove(src, dst, PIECETYPE_KNIGHT));
 				push(makeMove(src, dst, PIECETYPE_ROOK));
@@ -112,7 +112,7 @@ template<MoveType T> void MoveList::pushPromotion(Square src, Square dst) {
 			}
 		}
 		if (T == MoveType::QuietChecks) {
-			if (mPosition.getCheckSquaresBB(PIECETYPE_KNIGHT) & square_bb[dst]) {
+			if (position.getCheckSquaresBB(PIECETYPE_KNIGHT) & square_bb[dst]) {
 				push(makeMove(src, dst, PIECETYPE_KNIGHT));
 			}
 		}
@@ -122,22 +122,22 @@ template<MoveType T> void MoveList::pushPromotion(Square src, Square dst) {
 template<MoveType T, PieceType P> void MoveList::pushMoves() {
 	U64 m;
 	Square dst;
-	Color c = mPosition.getOurColor();
+	Color c = position.getOurColor();
 
-	for (Square src : mPosition.getPieceList<P>(c)) {
+	for (Square src : position.getPieceList<P>(c)) {
 		if (src == no_sq) {
 			break;
 		}
-		m = mPosition.getAttackBB<P>(src) & mValid;
+		m = position.getAttackBB<P>(src) & valid;
 
 		if (T == MoveType::QuietChecks) {
 			if (square_bb[src] & mDiscover) {
 				if (P == PIECETYPE_KING) {
-					m &= ~coplanar[src][mPosition.getKingSquare(!c)];
+					m &= ~coplanar[src][position.getKingSquare(!c)];
 				}
 			}
 			else {
-				m &= mPosition.getCheckSquaresBB(P);
+				m &= position.getCheckSquaresBB(P);
 			}
 		}
 
@@ -158,7 +158,7 @@ template<MoveType T, Color C> void MoveList::pushPawnMoves() {
 
 	U64 promo, pawns;
 	Square dst;
-	pawns = mPosition.getPieceBB<PIECETYPE_PAWN>(C);
+	pawns = position.getPieceBB<PIECETYPE_PAWN>(C);
 	promo = (C == WHITE ? pawns << 8 : pawns >> 8) & RANK_PROMOTION;
 
 	while (promo) {
@@ -167,9 +167,9 @@ template<MoveType T, Color C> void MoveList::pushPawnMoves() {
 	}
 
 	if (T == MoveType::Attacks || T == MoveType::Evasions || T == MoveType::All) {
-		U64 occ = ((T == MoveType::Evasions ? mPosition.getOccupancyBB(!C) & mValid
-			: mPosition.getOccupancyBB(!C))
-				| mPosition.getEnPassantBB()) & ~RANK_PROMOTION;
+		U64 occ = ((T == MoveType::Evasions ? position.getOccupancyBB(!C) & valid
+			: position.getOccupancyBB(!C))
+				| position.getEnPassantBB()) & ~RANK_PROMOTION;
 
 		U64 left  = C == WHITE ? (pawns & NOT_A_FILE) << 9 & occ
 			: (pawns & NOT_A_FILE) >> 7 & occ;
@@ -188,24 +188,24 @@ template<MoveType T, Color C> void MoveList::pushPawnMoves() {
 	}
 
 	if (T != MoveType::Attacks) {
-		U64 empty = mPosition.getEmptyBB() & ~RANK_PROMOTION;
+		U64 empty = position.getEmptyBB() & ~RANK_PROMOTION;
 
 		U64 up  = (C == WHITE ? pawns << 8 : pawns >> 8) & empty;
 		U64 dbl = (C == WHITE ? (up & RANK_3) << 8
 			: (up & RANK_6) >> 8) & empty;
 
 		if (T == MoveType::Evasions) {
-			up  &= mValid;
-			dbl &= mValid;
+			up  &= valid;
+			dbl &= valid;
 		}
 
 		if (T == MoveType::QuietChecks) {
 			U64 dis;
 
-			up  &= mPosition.getCheckSquaresBB(PIECETYPE_PAWN);
-			dbl &= mPosition.getCheckSquaresBB(PIECETYPE_PAWN);
+			up  &= position.getCheckSquaresBB(PIECETYPE_PAWN);
+			dbl &= position.getCheckSquaresBB(PIECETYPE_PAWN);
 
-			dis = mDiscover & pawns & ~file_bb[mPosition.getKingSquare(!C)];
+			dis = mDiscover & pawns & ~file_bb[position.getKingSquare(!C)];
 			dis = (C == WHITE ? dis << 8 : dis >> 8) & empty;
 			up  |= dis;
 			dbl |= (C == WHITE ? (dis & RANK_3) << 8 
@@ -224,10 +224,10 @@ template<MoveType T, Color C> void MoveList::pushPawnMoves() {
 }
 
 template<MoveType T> void MoveList::pushCastle() {
-	Square k = mPosition.getKingSquare(mPosition.getOurColor());
-	if (mPosition.canCastleKingside() && !(between_hor[k][k - 3] & mPosition.getOccupancyBB()) && !mPosition.attacked(k - 1) && !mPosition.attacked(k - 2)) {
+	Square k = position.getKingSquare(position.getOurColor());
+	if (position.canCastleKingside() && !(between_hor[k][k - 3] & position.getOccupancyBB()) && !position.attacked(k - 1) && !position.attacked(k - 2)) {
 		if (T == MoveType::QuietChecks) {
-			if (square_bb[k - 1] & mPosition.getCheckSquaresBB(PIECETYPE_ROOK)) {
+			if (square_bb[k - 1] & position.getCheckSquaresBB(PIECETYPE_ROOK)) {
 				push(makeCastle(k, k - 2));
 			}
 		}
@@ -235,9 +235,9 @@ template<MoveType T> void MoveList::pushCastle() {
 			push(makeCastle(k, k - 2));
 		}
 	}
-	if (mPosition.canCastleQueenside() && !(between_hor[k][k + 4] & mPosition.getOccupancyBB()) && !mPosition.attacked(k + 1) && !mPosition.attacked(k + 2)) {
+	if (position.canCastleQueenside() && !(between_hor[k][k + 4] & position.getOccupancyBB()) && !position.attacked(k + 1) && !position.attacked(k + 2)) {
 		if (T == MoveType::QuietChecks) {
-			if (square_bb[k + 1] & mPosition.getCheckSquaresBB(PIECETYPE_ROOK)) {
+			if (square_bb[k + 1] & position.getCheckSquaresBB(PIECETYPE_ROOK)) {
 				push(makeCastle(k, k + 2));
 			}
 		}
@@ -248,22 +248,22 @@ template<MoveType T> void MoveList::pushCastle() {
 }
 
 void MoveList::checkLegal() {
-	for (int i = 0; i < mSize; ++i) {
-		if (!mPosition.isLegal(mList[i].move)) {
-			mList[i--] = mList[--mSize];
+	for (int i = 0; i < sz; ++i) {
+		if (!position.isLegal(moveList[i].move)) {
+			moveList[i--] = moveList[--sz];
 		}
 	}
 }
 
 template<MoveType T> void MoveList::generateMoves() {
-	assert(!mPosition.inCheck());
+	assert(!position.inCheck());
 
 	if (T == MoveType::QuietChecks) {
-		mDiscover = mPosition.getDiscoveredChecks(mPosition.getOurColor());
+		mDiscover = position.getDiscoveredChecks(position.getOurColor());
 	}
-	mValid = T == MoveType::Attacks ? mPosition.getOccupancyBB(mPosition.getTheirColor()) : mPosition.getEmptyBB();
+	valid = T == MoveType::Attacks ? position.getOccupancyBB(position.getTheirColor()) : position.getEmptyBB();
 
-	mPosition.getOurColor() == WHITE ? pushPawnMoves<T, WHITE>() : pushPawnMoves<T, BLACK>();
+	position.getOurColor() == WHITE ? pushPawnMoves<T, WHITE>() : pushPawnMoves<T, BLACK>();
 	pushMoves<T, PIECETYPE_KNIGHT>();
 	pushMoves<T, PIECETYPE_BISHOP>();
 	pushMoves<T, PIECETYPE_ROOK>();
@@ -272,22 +272,22 @@ template<MoveType T> void MoveList::generateMoves() {
 }
 
 template<> void MoveList::generateMoves<MoveType::Evasions>() {
-	assert(mPosition.inCheck());
+	assert(position.inCheck());
 
 	Square k, c;
 
-	mValid = mPosition.getOccupancyBB(mPosition.getTheirColor()) | mPosition.getEmptyBB();
+	valid = position.getOccupancyBB(position.getTheirColor()) | position.getEmptyBB();
 	pushMoves<MoveType::Evasions, PIECETYPE_KING>();
 
-	if (mPosition.inDoubleCheck()) {
+	if (position.inDoubleCheck()) {
 		return;
 	}
 
-	k = mPosition.getKingSquare(mPosition.getOurColor());
-	c = get_lsb(mPosition.getCheckersBB());
-	mValid = between[k][c] | mPosition.getCheckersBB();
+	k = position.getKingSquare(position.getOurColor());
+	c = get_lsb(position.getCheckersBB());
+	valid = between[k][c] | position.getCheckersBB();
 
-	mPosition.getOurColor() == WHITE ? pushPawnMoves<MoveType::Evasions, WHITE>() : pushPawnMoves<MoveType::Evasions, BLACK>();
+	position.getOurColor() == WHITE ? pushPawnMoves<MoveType::Evasions, WHITE>() : pushPawnMoves<MoveType::Evasions, BLACK>();
 	pushMoves<MoveType::Evasions, PIECETYPE_KNIGHT>();
 	pushMoves<MoveType::Evasions, PIECETYPE_BISHOP>();
 	pushMoves<MoveType::Evasions, PIECETYPE_ROOK>();
@@ -295,14 +295,14 @@ template<> void MoveList::generateMoves<MoveType::Evasions>() {
 }
 
 template<> void MoveList::generateMoves<MoveType::All>() {
-	if (mPosition.inCheck()) {
+	if (position.inCheck()) {
 		generateMoves<MoveType::Evasions>();
 		return;
 	}
 
-	mValid = mPosition.getOccupancyBB(mPosition.getTheirColor()) | mPosition.getEmptyBB();
+	valid = position.getOccupancyBB(position.getTheirColor()) | position.getEmptyBB();
 
-	mPosition.getOurColor() == WHITE ? pushPawnMoves<MoveType::All, WHITE>() : pushPawnMoves<MoveType::All, BLACK>();
+	position.getOurColor() == WHITE ? pushPawnMoves<MoveType::All, WHITE>() : pushPawnMoves<MoveType::All, BLACK>();
 	pushMoves<MoveType::All, PIECETYPE_KNIGHT>();
 	pushMoves<MoveType::All, PIECETYPE_BISHOP>();
 	pushMoves<MoveType::All, PIECETYPE_ROOK>();
@@ -314,13 +314,13 @@ template<> void MoveList::generateMoves<MoveType::All>() {
 Move MoveList::getBestMove() {
 	Move move;
 	
-	switch (mStage) {
+	switch (stage) {
 		case BestMove:
 			// Best move
 			// If the move given by the pv or tt is valid, return it.
-			mStage++;
-			if (mPosition.isValid(mBest, FULL) && mPosition.isLegal(mBest)) {
-				return mBest;
+			stage++;
+			if (position.isValid(best, FULL) && position.isLegal(best)) {
+				return best;
 			}
 		case AttacksGen:
 			// Capture generation
@@ -328,41 +328,41 @@ Move MoveList::getBestMove() {
 			// If a move has a positive SEE, score it by LVA-MVV, otherwise store 
 			// its score as its SEE value.
 			generateMoves<MoveType::Attacks>();
-			for (int i = 0; i < mSize; ++i) {
-				int see = mPosition.see(mList[i].move);
+			for (int i = 0; i < sz; ++i) {
+				int see = position.see(moveList[i].move);
 				if (see >= 0) {
-					mList[i].score = mPosition.onSquare(getDst(mList[i].move)) - mPosition.onSquare(getSrc(mList[i].move));
+					moveList[i].score = position.onSquare(getDst(moveList[i].move)) - position.onSquare(getSrc(moveList[i].move));
 				}
 				else {
-					mList[i].score = see;
-					badCaptures.push_back(mList[i]);
-					std::swap(mList[i], mList[mSize - 1]);
+					moveList[i].score = see;
+					badCaptures.push_back(moveList[i]);
+					std::swap(moveList[i], moveList[sz - 1]);
 					pop();
 				}
 			}
-			mStage++;
+			stage++;
 
 		case Attacks:
 			// Captures
 			// No need to sort the captures since there's not many of them in any 
 			// given position. Ensure that each capture move has not already been
 			// seen before!
-			while (mSize) {
-				std::iter_swap(std::max_element(mList.begin(), mList.begin() + mSize), mList.begin() + mSize - 1);
+			while (sz) {
+				std::iter_swap(std::max_element(moveList.begin(), moveList.begin() + sz), moveList.begin() + sz - 1);
 				move = pop();
-				if (move != mBest && mPosition.isLegal(move)) {
+				if (move != best && position.isLegal(move)) {
 					return move;
 				}
 			}
-			mStage++;
+			stage++;
 
 		case Killer1:
 			// First killer move
 			// Ensure that the killer stored at this ply is a valid move and is not 
 			// the same as the best move. Return it before generating any quiets.
-			mStage++;
-			if ((mPosition.isValid(mKiller1, FULL) && mPosition.isLegal(mKiller1) && mPosition.isQuiet(mKiller1)) && mKiller1 != mBest) {
-				return mKiller1;
+			stage++;
+			if ((position.isValid(killer1, FULL) && position.isLegal(killer1) && position.isQuiet(killer1)) && killer1 != best) {
+				return killer1;
 			}
 
 		case Killer2:
@@ -370,9 +370,9 @@ Move MoveList::getBestMove() {
 			// Ensure that the killer stored at this ply is a valid move and is not 
 			// the same as the best move or the first killer move. Return it before 
 			// generating any quiets.
-			mStage++;
-			if ((mPosition.isValid(mKiller2, FULL)) && mPosition.isLegal(mKiller2) && mPosition.isQuiet(mKiller2) && mKiller2 != mBest && mKiller2 != mKiller1) {
-				return mKiller2;
+			stage++;
+			if ((position.isValid(killer2, FULL)) && position.isLegal(killer2) && position.isQuiet(killer2) && killer2 != best && killer2 != killer1) {
+				return killer2;
 			}
 		
 		case QuietsGen:
@@ -383,36 +383,36 @@ Move MoveList::getBestMove() {
 			// based on their PST score.
 			{
 			generateMoves<MoveType::Quiets>();
-			for (int i = 0; i < mSize; ++i) {
-				mList[i].score = mHistory->getHistoryScore(mList[i].move);
+			for (int i = 0; i < sz; ++i) {
+				moveList[i].score = history->getHistoryScore(moveList[i].move);
 			}
-			auto it2 = std::partition(mList.begin(), mList.begin() + mSize, noScore);
-			std::stable_sort(it2, mList.begin() + mSize);
-			auto it1 = mList.begin();
-			for (auto it1 = mList.begin(); it1 != it2; ++it1) {
+			auto it2 = std::partition(moveList.begin(), moveList.begin() + sz, noScore);
+			std::stable_sort(it2, moveList.begin() + sz);
+			auto it1 = moveList.begin();
+			for (auto it1 = moveList.begin(); it1 != it2; ++it1) {
 				Square src = getSrc(it1->move);
 				Square dst = getDst(it1->move);
-				PieceType toMove = mPosition.onSquare(src);
-				it1->score = PieceSquareTable::getTaperedScore(toMove, mPosition.getOurColor(), dst, mPosition.getGamePhase()) 
-					- PieceSquareTable::getTaperedScore(toMove, mPosition.getOurColor(), src, mPosition.getGamePhase());
+				PieceType toMove = position.onSquare(src);
+				it1->score = PieceSquareTable::getTaperedScore(toMove, position.getOurColor(), dst, position.getGamePhase()) 
+					- PieceSquareTable::getTaperedScore(toMove, position.getOurColor(), src, position.getGamePhase());
 			}
-			std::stable_sort(mList.begin(), it2);
-			mStage++;
+			std::stable_sort(moveList.begin(), it2);
+			stage++;
 			}
 		
 		case Quiets:
 			// Quiet moves
 			// Ensure that each move is different from the best move and killers.
-			while (mSize) {
+			while (sz) {
 				move = pop();
-				if (move != mBest && move != mKiller1 && move != mKiller2 && mPosition.isLegal(move)) {
+				if (move != best && move != killer1 && move != killer2 && position.isLegal(move)) {
 					return move;
 				}
 			}
 			while (!badCaptures.empty()) {
 				move = badCaptures.back().move;
 				badCaptures.pop_back();
-				if (move != mBest && mPosition.isLegal(move)) {
+				if (move != best && position.isLegal(move)) {
 					return move;
 				}
 			}
@@ -421,50 +421,50 @@ Move MoveList::getBestMove() {
 		case QBestMove:
 			// Qsearch best move
 			// If the move given by the pv or tt is valid, return it.
-			mStage++;
-			if (mPosition.isValid(mBest, FULL) && mPosition.isLegal(mBest)) {
-				return mBest;
+			stage++;
+			if (position.isValid(best, FULL) && position.isLegal(best)) {
+				return best;
 			}
 
 		case QAttacksGen:
 			// Qsearch capture generation
 			// Generate and sort captures based on LVA-MVV.
 			generateMoves<MoveType::Attacks>();
-			for (int i = 0; i < mSize; ++i) {
-				mList[i].score = mPosition.onSquare(getDst(mList[i].move)) - mPosition.onSquare(getSrc(mList[i].move));
+			for (int i = 0; i < sz; ++i) {
+				moveList[i].score = position.onSquare(getDst(moveList[i].move)) - position.onSquare(getSrc(moveList[i].move));
 			}
-			mStage++;
+			stage++;
 
 		case QAttacks:
 			// Qsearch captures
 			// Ensure that each capture move is different from the best move.
-			while (mSize) {
-				std::iter_swap(std::max_element(mList.begin(), mList.begin() + mSize), mList.begin() + mSize - 1);
+			while (sz) {
+				std::iter_swap(std::max_element(moveList.begin(), moveList.begin() + sz), moveList.begin() + sz - 1);
 				move = pop();
-				if (mPosition.see(move) < 0 && !isPromotion(move)) {
+				if (position.see(move) < 0 && !isPromotion(move)) {
 					continue;
 				}
-				if (move != mBest && mPosition.isLegal(move)) {
+				if (move != best && position.isLegal(move)) {
 					return move;
 				}
 			}
-			mStage++;
+			stage++;
 
 		case QQuietChecksGen:
 			// Qsearch quiet generation
 			// Generate quiet moves.
-			for (int i = 0; i < mSize; ++i) {
-				mList[i].score = mHistory->getHistoryScore(mList[i].move);
+			for (int i = 0; i < sz; ++i) {
+				moveList[i].score = history->getHistoryScore(moveList[i].move);
 			}
-			mStage++;
+			stage++;
 
 		case QQuietChecks:
 			// Qsearch quiet checks
 			// Ensure that each move is different from the best move.
-			while (mSize) {
-				std::iter_swap(std::max_element(mList.begin(), mList.begin() + mSize), mList.begin() + mSize - 1);
+			while (sz) {
+				std::iter_swap(std::max_element(moveList.begin(), moveList.begin() + sz), moveList.begin() + sz - 1);
 				move = pop();
-				if (move != mBest && mPosition.isLegal(move)) {
+				if (move != best && position.isLegal(move)) {
 					return move;
 				}
 			}
@@ -473,9 +473,9 @@ Move MoveList::getBestMove() {
 		case EvadeBestMove:
 			// Evade best move
 			// If the move given by the pv or tt is valid, return it.
-			mStage++;
-			if (mPosition.isValid(mBest, mValid) && mPosition.isLegal(mBest) && !mPosition.inDoubleCheck()) {
-				return mBest;
+			stage++;
+			if (position.isValid(best, valid) && position.isLegal(best) && !position.inDoubleCheck()) {
+				return best;
 			}
 
 		case EvadeMovesGen:
@@ -485,41 +485,41 @@ Move MoveList::getBestMove() {
 			const int CaptureFlag = 0x40000000;
 			const int HistoryFlag = 0x20000000;
 			generateMoves<MoveType::Evasions>();
-			for (int i = 0; i < mSize; ++i) {
-				if (mPosition.isCapture(mList[i].move)) {
-					int see = mPosition.see(mList[i].move);
+			for (int i = 0; i < sz; ++i) {
+				if (position.isCapture(moveList[i].move)) {
+					int see = position.see(moveList[i].move);
 					if (see >= 0) {
-						mList[i].score = mPosition.onSquare(getDst(mList[i].move)) - mPosition.onSquare(getSrc(mList[i].move));
+						moveList[i].score = position.onSquare(getDst(moveList[i].move)) - position.onSquare(getSrc(moveList[i].move));
 					}
 					else {
-						mList[i].score = see;
+						moveList[i].score = see;
 					}
-					mList[i].score |= CaptureFlag;
+					moveList[i].score |= CaptureFlag;
 				}
 				else {
-					int hist = mHistory->getHistoryScore(mList[i].move);
+					int hist = history->getHistoryScore(moveList[i].move);
 					if (hist > 0) {
-						mList[i].score = hist | HistoryFlag;
+						moveList[i].score = hist | HistoryFlag;
 					}
 					else {
-						Square src = getSrc(mList[i].move);
-						Square dst = getDst(mList[i].move);
-						PieceType piece = mPosition.onSquare(src);
-						mList[i].score = PieceSquareTable::getTaperedScore(piece, mPosition.getOurColor(), dst, mPosition.getGamePhase()) 
-										- PieceSquareTable::getTaperedScore(piece, mPosition.getOurColor(), src, mPosition.getGamePhase());
+						Square src = getSrc(moveList[i].move);
+						Square dst = getDst(moveList[i].move);
+						PieceType piece = position.onSquare(src);
+						moveList[i].score = PieceSquareTable::getTaperedScore(piece, position.getOurColor(), dst, position.getGamePhase()) 
+										- PieceSquareTable::getTaperedScore(piece, position.getOurColor(), src, position.getGamePhase());
 					}
 				}
 			}
-			std::stable_sort(mList.begin(), mList.begin() + mSize);
-			mStage++;
+			std::stable_sort(moveList.begin(), moveList.begin() + sz);
+			stage++;
 			}
 	
 		case Evade:
 			// Evade
 			// Return the capture move if it's not the same as the best move.
-			while (mSize) {
+			while (sz) {
 				move = pop();
-				if (move != mBest && mPosition.isLegal(move)) {
+				if (move != best && position.isLegal(move)) {
 					return move;
 				}
 			}
@@ -528,7 +528,7 @@ Move MoveList::getBestMove() {
 		case AllLegal:
 			// All legal
 			// Generate and return each legal move.
-			while (mSize) {
+			while (sz) {
 				move = pop();
 				return move;
 			}
@@ -543,9 +543,9 @@ Move MoveList::getBestMove() {
 }
 
 /* List of moves and related functions */
-MoveList::MoveList(const Position& s) : mPosition(s), mValid(FULL), mQSearch(false), mBest(NULL_MOVE), mSize(0), mHistory(nullptr), mPly(0) {
+MoveList::MoveList(const Position& s) : position(s), valid(FULL), isQSearch(false), best(NULL_MOVE), sz(0), history(nullptr), ply(0) {
 	generateMoves<MoveType::All>();
-	mStage = AllLegal;
+	stage = AllLegal;
 	checkLegal();
 }
 

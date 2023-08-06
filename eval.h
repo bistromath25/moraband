@@ -156,16 +156,16 @@ public:
 	friend std::ostream& operator<<(std::ostream& o, const Evaluate& e);
 private:
 	int mGamePhase;
-	const Position& mPosition;
+	const Position& position;
 	int mScore;
-	std::array<int, PLAYER_SIZE> mMobility;
-	std::array<int, PLAYER_SIZE> mKingSafety;
-	std::array<int, PLAYER_SIZE> mPawnStructure;
-	std::array<int, PLAYER_SIZE> mMaterial;
+	std::array<int, PLAYER_SIZE> mobility;
+	std::array<int, PLAYER_SIZE> king_safety;
+	std::array<int, PLAYER_SIZE> pawn_structure;
+	std::array<int, PLAYER_SIZE> material;
 	//std::array<int, PLAYER_SIZE> mPst;
-	std::array<int, PLAYER_SIZE> mAttacks;
-	std::array<std::array<U64, PIECE_TYPES_SIZE>, PLAYER_SIZE> mPieceAttacksBB;
-	std::array<U64, PLAYER_SIZE> mAllAttacksBB;
+	std::array<int, PLAYER_SIZE> attacks;
+	std::array<std::array<U64, PIECE_TYPES_SIZE>, PLAYER_SIZE> piece_attacks_bb;
+	std::array<U64, PLAYER_SIZE> all_attacks_bb;
 };
 
 #endif

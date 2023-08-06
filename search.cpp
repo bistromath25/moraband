@@ -39,7 +39,7 @@ int qsearch(Position& s, SearchInfo& si, GlobalInfo& gi, int ply, int alpha, int
 	assert(ply <= MAX_PLY);
 
 	if (gi.history.isThreefoldRepetition(s) || s.insufficientMaterial() || s.getFiftyMoveRule() > 99) {
-		return DRAW; // Game must be a draw, return
+		return DRAW; // Game ust be a draw, return
 	}
 
 	if (!(si.nodes & 2047) && (si.quit || stop_search(si) || THREAD_STOP)) {
@@ -55,6 +55,7 @@ int qsearch(Position& s, SearchInfo& si, GlobalInfo& gi, int ply, int alpha, int
 
 	Evaluate evaluate(s);
 	int staticEval = evaluate.getScore();
+	
 	if (staticEval < alpha - QUEEN_WEIGHT_MG) { // Delta pruning
 		return alpha;
 	}
@@ -66,15 +67,43 @@ int qsearch(Position& s, SearchInfo& si, GlobalInfo& gi, int ply, int alpha, int
 			alpha = staticEval;
 		}
 	}
-	
-	int bestScore = NEG_INF;
-	int score = NEG_INF;
-	Move m = NULL_MOVE;
 
+	// Probe tt
+	bool tt_hit = false;
+	int tt_score = NEG_INF;
+	int tt_flag = -1;
+	Move tt_move = 0;
+	TTEntry tt_entry = tt.probe(s.getKey());
+	if (tt_entry.getKey() == s.getKey()) {
+		tt_hit = true;
+		tt_move = tt_entry.getMove();
+		tt_score = value_from_tt(tt_entry.getScore(), s.getFiftyMoveRule());
+		tt_flag = tt_entry.getFlag();
+		if (tt_entry.getDepth() >= ply) {
+			if (tt_flag == FLAG_EXACT || (tt_flag == FLAG_LOWER && tt_score >= beta) || (tt_flag == FLAG_UPPER && tt_score <= alpha)) {
+				return tt_score;
+			}
+		}
+	}
+
+	if (tt_flag == FLAG_EXACT) { // Make use of previous TT score
+		staticEval = tt_score;
+	}
+	else {
+		if (tt_hit) {
+			if (staticEval < tt_score && tt_flag == FLAG_LOWER || staticEval > tt_score && tt_flag == FLAG_UPPER) {
+				staticEval = tt_score;
+			}
+		}
+	}
+	
 	// Generate moves and create the movelist.
-	MoveList mlist(s, NULL_MOVE, &gi.history, ply, true);
+	MoveList moveList(s, tt_move, &gi.history, ply, true);
+	int score = 0;
+	int bestScore = staticEval;
+	Move m = NULL_MOVE;
 	int legalMoves = 0;
-	while ((m = mlist.getBestMove())) {
+	while ((m = moveList.getBestMove())) {
 		if (s.givesCheck(m)) {
 			continue;
 		}
@@ -173,8 +202,6 @@ int search(Position& s, SearchInfo& si, GlobalInfo& gi, int depth, int ply, int 
 			staticEval = tt_score;
 		}
 		else {
-			Evaluate evaluate(s);
-			staticEval = evaluate.getScore();
 			if (tt_hit) {
 				if (staticEval < tt_score && tt_flag == FLAG_LOWER || staticEval > tt_score && tt_flag == FLAG_UPPER) {
 					staticEval = tt_score;
@@ -224,7 +251,7 @@ int search(Position& s, SearchInfo& si, GlobalInfo& gi, int depth, int ply, int 
 		tt_move = tt_entry.getMove();
 	}
 
-	MoveList mlist(s, tt_move, &(gi.history), ply);
+	MoveList moveList(s, tt_move, &(gi.history), ply);
 
 	int score = 0;
 	int bestScore = NEG_INF;
@@ -236,7 +263,7 @@ int search(Position& s, SearchInfo& si, GlobalInfo& gi, int depth, int ply, int 
 	Move m;
 	bool first = true;
 	int d;
-	while ((m = mlist.getBestMove())) {
+	while ((m = moveList.getBestMove())) {
 		d = depth - 1; // Early pruning
 		legalMoves++;
 
@@ -247,12 +274,12 @@ int search(Position& s, SearchInfo& si, GlobalInfo& gi, int depth, int ply, int 
 			}
 			// SEE-based pruning (prune if SEE too low)
 			// Prune if see(move) < -(pawn * 2 ^ (depth - 1))
-			if (depth < 3 && s.see(m) < -PAWN_WEIGHT_MG * (1 << (depth - 1))) { // m != tt_move
+			if (depth <= 3 && s.see(m) < -PAWN_WEIGHT_MG * (1 << (depth - 1)) /*&& m != tt_move*/) {
 				continue;
 			}
 			// Late move reduction
 			if (depth > 2 && legalMoves > (isPv ? 5 : 3) && !s.inCheck()) {
-				d -= 1 + !isPv + (mlist.size() > 10);
+				d -= 1 + !isPv + (moveList.size() > 10);
 				d = std::max(1, d);
 			}
 		}
@@ -345,7 +372,7 @@ int search_root(Position& s, SearchInfo& si, GlobalInfo& gi, int depth, int ply,
 		tt_move = tt_entry.getMove();
 	}
 
-	MoveList mlist(s, tt_move, &(gi.history), ply);
+	MoveList moveList(s, tt_move, &(gi.history), ply);
 	
 	int score = 0;
 	int bestScore = NEG_INF;
@@ -357,7 +384,7 @@ int search_root(Position& s, SearchInfo& si, GlobalInfo& gi, int depth, int ply,
 	Move m;
 	bool first = true;
 	int d;
-	while ((m = mlist.getBestMove())) {
+	while ((m = moveList.getBestMove())) {
 		d = depth - 1;
 		legalMoves++;
 
@@ -475,7 +502,7 @@ Move iterative_deepening(Position& s, SearchInfo& si) {
 		if (si.nodes == si.prevNodes) {
 			break;
 		}
-		if (si.clock.elapsed<std::chrono::milliseconds>() * 2 > si.moveTime) {
+		if (si.clock.elapsed<std::chrono::milliseconds>() * 2 > si.moveTime && !si.infinite) {
 			break; // Insufficient time for next search iteration
 		}
 

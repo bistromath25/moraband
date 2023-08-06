@@ -99,21 +99,21 @@ int BISHOP_OUTPOST = 25;
 PawnHashTable ptable;
 
 /* Evaluation and related functions */
-Evaluate::Evaluate(const Position& s) : mPosition(s), mMaterial{}, mPawnStructure{}, mMobility{}, mKingSafety{}, mAttacks{}, mPieceAttacksBB{}, mAllAttacksBB{} {
+Evaluate::Evaluate(const Position& s) : position(s), material{}, pawn_structure{}, mobility{}, king_safety{}, attacks{}, piece_attacks_bb{}, all_attacks_bb{} {
 	// Tapered-evaluation with 256 phases, 0 (Opening/Middlegame) and 255 (Endgame)
-	mGamePhase = mPosition.getGamePhase();
-	Color c = mPosition.getOurColor();
+	mGamePhase = position.getGamePhase();
+	Color c = position.getOurColor();
 	// Check for entry in pawn hash table
-	if (mPosition.getPieceCount<PIECETYPE_PAWN>()) {
-		const PawnEntry* pawnEntry = ptable.probe(mPosition.getPawnKey());
-		if (pawnEntry && pawnEntry->getKey() == mPosition.getPawnKey()) {
-			mPawnStructure = pawnEntry->getStructure();
-			mMaterial = pawnEntry->getMaterial();
+	if (position.getPieceCount<PIECETYPE_PAWN>()) {
+		const PawnEntry* pawnEntry = ptable.probe(position.getPawnKey());
+		if (pawnEntry && pawnEntry->getKey() == position.getPawnKey()) {
+			pawn_structure = pawnEntry->getStructure();
+			material = pawnEntry->getMaterial();
 		}
 		else {
 			evalPawns(WHITE);
 			evalPawns(BLACK);
-			ptable.store(mPosition.getPawnKey(), mPawnStructure, mMaterial);
+			ptable.store(position.getPawnKey(), pawn_structure, material);
 		}
 	}
 
@@ -121,17 +121,17 @@ Evaluate::Evaluate(const Position& s) : mPosition(s), mMaterial{}, mPawnStructur
 	evalPieces(BLACK);
 
 	// Pawn attacks
-	mPieceAttacksBB[WHITE][PIECETYPE_PAWN] |= (mPosition.getPieceBB<PIECETYPE_PAWN>(WHITE) & NOT_A_FILE) << 9 & mPosition.getOccupancyBB();
-	mPieceAttacksBB[WHITE][PIECETYPE_PAWN] |= (mPosition.getPieceBB<PIECETYPE_PAWN>(WHITE) & NOT_H_FILE) << 7 & mPosition.getOccupancyBB();
-	mPieceAttacksBB[BLACK][PIECETYPE_PAWN] |= (mPosition.getPieceBB<PIECETYPE_PAWN>(BLACK) & NOT_A_FILE) >> 7 & mPosition.getOccupancyBB();
-	mPieceAttacksBB[BLACK][PIECETYPE_PAWN] |= (mPosition.getPieceBB<PIECETYPE_PAWN>(BLACK) & NOT_H_FILE) >> 9 & mPosition.getOccupancyBB();
-	mAllAttacksBB[WHITE] |= mPieceAttacksBB[WHITE][PIECETYPE_PAWN];
-	mAllAttacksBB[BLACK] |= mPieceAttacksBB[BLACK][PIECETYPE_PAWN];
+	piece_attacks_bb[WHITE][PIECETYPE_PAWN] |= (position.getPieceBB<PIECETYPE_PAWN>(WHITE) & NOT_A_FILE) << 9 & position.getOccupancyBB();
+	piece_attacks_bb[WHITE][PIECETYPE_PAWN] |= (position.getPieceBB<PIECETYPE_PAWN>(WHITE) & NOT_H_FILE) << 7 & position.getOccupancyBB();
+	piece_attacks_bb[BLACK][PIECETYPE_PAWN] |= (position.getPieceBB<PIECETYPE_PAWN>(BLACK) & NOT_A_FILE) >> 7 & position.getOccupancyBB();
+	piece_attacks_bb[BLACK][PIECETYPE_PAWN] |= (position.getPieceBB<PIECETYPE_PAWN>(BLACK) & NOT_H_FILE) >> 9 & position.getOccupancyBB();
+	all_attacks_bb[WHITE] |= piece_attacks_bb[WHITE][PIECETYPE_PAWN];
+	all_attacks_bb[BLACK] |= piece_attacks_bb[BLACK][PIECETYPE_PAWN];
 
 	evalAttacks(WHITE);
 	evalAttacks(BLACK);
-	mScore = mMobility[c] - mMobility[!c] + mKingSafety[c] - mKingSafety[!c] + mPawnStructure[c] - mPawnStructure[!c] + mMaterial[c] - mMaterial[!c] + mAttacks[c] - mAttacks[!c];
-	mScore += getTaperedScore(mPosition.getPstScore(MIDDLEGAME), mPosition.getPstScore(ENDGAME));
+	mScore = mobility[c] - mobility[!c] + king_safety[c] - king_safety[!c] + pawn_structure[c] - pawn_structure[!c] + material[c] - material[!c] + attacks[c] - attacks[!c];
+	mScore += getTaperedScore(position.getPstScore(MIDDLEGAME), position.getPstScore(ENDGAME));
 	mScore += TEMPO_BONUS;
 }
 
@@ -144,28 +144,28 @@ int Evaluate::getTaperedScore(int mg, int eg) {
 }
 
 void Evaluate::evalOutposts(const Color c) {
-	for (Square p : mPosition.getPieceList<PIECETYPE_KNIGHT>(c)) {
+	for (Square p : position.getPieceList<PIECETYPE_KNIGHT>(c)) {
 		if (p == no_sq) {
 			break;
 		}
-		if (!(p & outpost_area[c]) || !(pawn_attacks[!c][p] & mPosition.getPieceBB<PIECETYPE_PAWN>(c)) || in_front[c][p] & adj_files[p] & mPosition.getPieceBB<PIECETYPE_PAWN>(!c)) {
+		if (!(p & outpost_area[c]) || !(pawn_attacks[!c][p] & position.getPieceBB<PIECETYPE_PAWN>(c)) || in_front[c][p] & adj_files[p] & position.getPieceBB<PIECETYPE_PAWN>(!c)) {
 			continue;
 		}
-		mMaterial[c] += KNIGHT_OUTPOST;
-		if (!mPosition.getPieceBB<PIECETYPE_KNIGHT>(!c) && !mPosition.getPieceBB<PIECETYPE_BISHOP>(!c) & squares_of_color(p)) {
-			mMaterial[c] += KNIGHT_OUTPOST;
+		material[c] += KNIGHT_OUTPOST;
+		if (!position.getPieceBB<PIECETYPE_KNIGHT>(!c) && !position.getPieceBB<PIECETYPE_BISHOP>(!c) & squares_of_color(p)) {
+			material[c] += KNIGHT_OUTPOST;
 		}
 	}
-	for (Square p : mPosition.getPieceList<PIECETYPE_BISHOP>(c)) {
+	for (Square p : position.getPieceList<PIECETYPE_BISHOP>(c)) {
 		if (p == no_sq) {
 			break;
 		}
-		if (!(p & outpost_area[c]) || !(pawn_attacks[!c][p] & mPosition.getPieceBB<PIECETYPE_PAWN>(c)) || in_front[c][p] & adj_files[p] & mPosition.getPieceBB<PIECETYPE_PAWN>(!c)) {
+		if (!(p & outpost_area[c]) || !(pawn_attacks[!c][p] & position.getPieceBB<PIECETYPE_PAWN>(c)) || in_front[c][p] & adj_files[p] & position.getPieceBB<PIECETYPE_PAWN>(!c)) {
 			continue;
 		}
-		mMaterial[c] += BISHOP_OUTPOST;
-		if (!mPosition.getPieceBB<PIECETYPE_KNIGHT>(!c) && !mPosition.getPieceBB<PIECETYPE_BISHOP>(!c) & squares_of_color(p)) {
-			mMaterial[c] += BISHOP_OUTPOST;
+		material[c] += BISHOP_OUTPOST;
+		if (!position.getPieceBB<PIECETYPE_KNIGHT>(!c) && !position.getPieceBB<PIECETYPE_BISHOP>(!c) & squares_of_color(p)) {
+			material[c] += BISHOP_OUTPOST;
 		}
 	}
 }
@@ -174,64 +174,64 @@ void Evaluate::evalOutposts(const Color c) {
 void Evaluate::evalPawns(const Color c) {
 	const int dir = c == WHITE ? 8 : -8;
 
-	for (Square p : mPosition.getPieceList<PIECETYPE_PAWN>(c)) {
+	for (Square p : position.getPieceList<PIECETYPE_PAWN>(c)) {
 		if (p == no_sq) {
 			break;
 		}
 		int r = c == WHITE ? rank(p) : 8 - rank(p) - 1;
 
-		mMaterial[c] += getTaperedScore(PAWN_WEIGHT_MG, PAWN_WEIGHT_EG);
+		material[c] += getTaperedScore(PAWN_WEIGHT_MG, PAWN_WEIGHT_EG);
 
-		if (!((file_bb[p] | adj_files[p]) & in_front[c][p] & mPosition.getPieceBB<PIECETYPE_PAWN>(!c))) {
-			if ((p + dir) & mPosition.getOccupancyBB()) {
-				mPawnStructure[c] += getTaperedScore(PAWN_PASSED[CANNOT_ADVANCE][MIDDLEGAME][r], PAWN_PASSED[CANNOT_ADVANCE][ENDGAME][r]);
+		if (!((file_bb[p] | adj_files[p]) & in_front[c][p] & position.getPieceBB<PIECETYPE_PAWN>(!c))) {
+			if ((p + dir) & position.getOccupancyBB()) {
+				pawn_structure[c] += getTaperedScore(PAWN_PASSED[CANNOT_ADVANCE][MIDDLEGAME][r], PAWN_PASSED[CANNOT_ADVANCE][ENDGAME][r]);
 			}
 			else {
-				if (!mPosition.attacked(p + dir)) {
-					mPawnStructure[c] += getTaperedScore(PAWN_PASSED[SAFE_ADVANCE][MIDDLEGAME][r], PAWN_PASSED[SAFE_ADVANCE][ENDGAME][r]);
+				if (!position.attacked(p + dir)) {
+					pawn_structure[c] += getTaperedScore(PAWN_PASSED[SAFE_ADVANCE][MIDDLEGAME][r], PAWN_PASSED[SAFE_ADVANCE][ENDGAME][r]);
 				}
 				else {
-					if (mPosition.defended(p + dir, c)) {
-						mPawnStructure[c] += getTaperedScore(PAWN_PASSED[PROTECTED_ADVANCE][MIDDLEGAME][r], PAWN_PASSED[PROTECTED_ADVANCE][ENDGAME][r]);
+					if (position.defended(p + dir, c)) {
+						pawn_structure[c] += getTaperedScore(PAWN_PASSED[PROTECTED_ADVANCE][MIDDLEGAME][r], PAWN_PASSED[PROTECTED_ADVANCE][ENDGAME][r]);
 					}
 					else {
-						mPawnStructure[c] += getTaperedScore(PAWN_PASSED[UNSAFE_ADVANCE][MIDDLEGAME][r], PAWN_PASSED[UNSAFE_ADVANCE][ENDGAME][r]);
+						pawn_structure[c] += getTaperedScore(PAWN_PASSED[UNSAFE_ADVANCE][MIDDLEGAME][r], PAWN_PASSED[UNSAFE_ADVANCE][ENDGAME][r]);
 					}
 				}
 			}
 		}
-		else if (!(file_bb[p] & in_front[c][p] & mPosition.getPieceBB<PIECETYPE_PAWN>(!c))) {
+		else if (!(file_bb[p] & in_front[c][p] & position.getPieceBB<PIECETYPE_PAWN>(!c))) {
 			int sentries, helpers;
 			assert(p < 56 && p > 7);
 
-			sentries = pop_count(pawn_attacks[c][p + dir] & mPosition.getPieceBB<PIECETYPE_PAWN>(!c));
+			sentries = pop_count(pawn_attacks[c][p + dir] & position.getPieceBB<PIECETYPE_PAWN>(!c));
 			if (sentries > 0) {
-				helpers = pop_count(pawn_attacks[!c][p + dir] & mPosition.getPieceBB<PIECETYPE_PAWN>(c));
+				helpers = pop_count(pawn_attacks[!c][p + dir] & position.getPieceBB<PIECETYPE_PAWN>(c));
 				if (helpers >= sentries) {
-					mPawnStructure[c] += PAWN_PASSED_CANDIDATE;
+					pawn_structure[c] += PAWN_PASSED_CANDIDATE;
 				}
-				else if (!(~in_front[c][p] & adj_files[p] & mPosition.getPieceBB<PIECETYPE_PAWN>(c))) {
-					if (pawn_attacks[c][p] & mPosition.getPieceBB<PIECETYPE_PAWN>(c)) {
+				else if (!(~in_front[c][p] & adj_files[p] & position.getPieceBB<PIECETYPE_PAWN>(c))) {
+					if (pawn_attacks[c][p] & position.getPieceBB<PIECETYPE_PAWN>(c)) {
 						if (sentries == 2) {
-							mPawnStructure[c] += PAWN_FULL_BACKWARDS;
+							pawn_structure[c] += PAWN_FULL_BACKWARDS;
 						}
 						else {
-							mPawnStructure[c] += PAWN_BACKWARDS;
+							pawn_structure[c] += PAWN_BACKWARDS;
 						}
 					}
 				}
 			}
 		}
 
-		if (!(adj_files[p] & mPosition.getPieceBB<PIECETYPE_PAWN>(c))) {
-			mPawnStructure[c] += PAWN_ISOLATED;
+		if (!(adj_files[p] & position.getPieceBB<PIECETYPE_PAWN>(c))) {
+			pawn_structure[c] += PAWN_ISOLATED;
 		}
-		else if (rank_bb[p - dir] & mPosition.getPieceBB<PIECETYPE_PAWN>(c) & adj_files[p]) {
-			mPawnStructure[c] += PAWN_CONNECTED;
+		else if (rank_bb[p - dir] & position.getPieceBB<PIECETYPE_PAWN>(c) & adj_files[p]) {
+			pawn_structure[c] += PAWN_CONNECTED;
 		}
 		
-		if (pop_count(file_bb[p] & mPosition.getPieceBB<PIECETYPE_PAWN>(c)) > 1) {
-			mPawnStructure[c] += PAWN_DOUBLED;
+		if (pop_count(file_bb[p] & position.getPieceBB<PIECETYPE_PAWN>(c)) > 1) {
+			pawn_structure[c] += PAWN_DOUBLED;
 		}
 	}
 }
@@ -241,161 +241,161 @@ void Evaluate::evalPieces(const Color c) {
 	U64 mobilityNet;
 	int king_threats = 0;
 	U64 bottomRank = c == WHITE ? RANK_1 : RANK_8;
-	Square kingSq = mPosition.getKingSquare(c);
+	Square kingSq = position.getKingSquare(c);
 
-	mobilityNet = mPosition.getEmptyBB(); // All squares not attacked by pawns
+	mobilityNet = position.getEmptyBB(); // All squares not attacked by pawns
 	if (c == WHITE) {
-		mobilityNet &= ~((mPosition.getPieceBB<PIECETYPE_PAWN>(BLACK) & NOT_A_FILE) >> 7 | (mPosition.getPieceBB<PIECETYPE_PAWN>(BLACK) & NOT_H_FILE) >> 9);
+		mobilityNet &= ~((position.getPieceBB<PIECETYPE_PAWN>(BLACK) & NOT_A_FILE) >> 7 | (position.getPieceBB<PIECETYPE_PAWN>(BLACK) & NOT_H_FILE) >> 9);
 	}
 	else {
-		mobilityNet &= ~((mPosition.getPieceBB<PIECETYPE_PAWN>(WHITE) & NOT_A_FILE) << 9 | (mPosition.getPieceBB<PIECETYPE_PAWN>(WHITE) & NOT_H_FILE) << 7);
+		mobilityNet &= ~((position.getPieceBB<PIECETYPE_PAWN>(WHITE) & NOT_A_FILE) << 9 | (position.getPieceBB<PIECETYPE_PAWN>(WHITE) & NOT_H_FILE) << 7);
 	}
 	
-	pins = mPosition.getPinsBB(c);
+	pins = position.getPinsBB(c);
 
-	for (Square p : mPosition.getPieceList<PIECETYPE_KNIGHT>(c)) {
+	for (Square p : position.getPieceList<PIECETYPE_KNIGHT>(c)) {
 		if (p == no_sq) {
 			break;
 		}
-		mMaterial[c] += getTaperedScore(KNIGHT_WEIGHT_MG, KNIGHT_WEIGHT_EG);
+		material[c] += getTaperedScore(KNIGHT_WEIGHT_MG, KNIGHT_WEIGHT_EG);
 		if (square_bb[p] & pins) {
-			mMobility[c] += getTaperedScore(KNIGHT_MOBILITY[MIDDLEGAME][0], KNIGHT_MOBILITY[ENDGAME][0]);
+			mobility[c] += getTaperedScore(KNIGHT_MOBILITY[MIDDLEGAME][0], KNIGHT_MOBILITY[ENDGAME][0]);
 			continue;
 		}
-		moves = mPosition.getAttackBB<PIECETYPE_KNIGHT>(p);
-		mPieceAttacksBB[c][PIECETYPE_KNIGHT] |= moves & mPosition.getOccupancyBB();
-		mAllAttacksBB[c] |= mPieceAttacksBB[c][PIECETYPE_KNIGHT];
-		mMobility[c] += getTaperedScore(KNIGHT_MOBILITY[MIDDLEGAME][pop_count(moves & mobilityNet)], KNIGHT_MOBILITY[ENDGAME][pop_count(moves & mobilityNet)]);
-		if (moves & king_net_bb[!c][mPosition.getKingSquare(!c)] & mobilityNet) {
+		moves = position.getAttackBB<PIECETYPE_KNIGHT>(p);
+		piece_attacks_bb[c][PIECETYPE_KNIGHT] |= moves & position.getOccupancyBB();
+		all_attacks_bb[c] |= piece_attacks_bb[c][PIECETYPE_KNIGHT];
+		mobility[c] += getTaperedScore(KNIGHT_MOBILITY[MIDDLEGAME][pop_count(moves & mobilityNet)], KNIGHT_MOBILITY[ENDGAME][pop_count(moves & mobilityNet)]);
+		if (moves & king_net_bb[!c][position.getKingSquare(!c)] & mobilityNet) {
 			king_threats += KNIGHT_THREAT;
 		}
 	}
 
-	for (Square p : mPosition.getPieceList<PIECETYPE_BISHOP>(c)) {
+	for (Square p : position.getPieceList<PIECETYPE_BISHOP>(c)) {
 		if (p == no_sq) {
 			break;
 		}
-		mMaterial[c] += getTaperedScore(BISHOP_WEIGHT_MG, BISHOP_WEIGHT_EG);
-		moves = mPosition.getAttackBB<PIECETYPE_BISHOP>(p);
+		material[c] += getTaperedScore(BISHOP_WEIGHT_MG, BISHOP_WEIGHT_EG);
+		moves = position.getAttackBB<PIECETYPE_BISHOP>(p);
 		if (square_bb[p] & pins) {
 			moves &= coplanar[p][kingSq];
 		}
-		mPieceAttacksBB[c][PIECETYPE_BISHOP] = moves & mPosition.getOccupancyBB();
-		mAllAttacksBB[c] |= mPieceAttacksBB[c][PIECETYPE_BISHOP];
-		if (moves & king_net_bb[!c][mPosition.getKingSquare(!c)] & mobilityNet) {
+		piece_attacks_bb[c][PIECETYPE_BISHOP] = moves & position.getOccupancyBB();
+		all_attacks_bb[c] |= piece_attacks_bb[c][PIECETYPE_BISHOP];
+		if (moves & king_net_bb[!c][position.getKingSquare(!c)] & mobilityNet) {
 			king_threats += BISHOP_THREAT;
 		}
-		mMobility[c] += getTaperedScore(BISHOP_MOBILITY[MIDDLEGAME][pop_count(moves & mobilityNet)], BISHOP_MOBILITY[ENDGAME][pop_count(moves & mobilityNet)]);
-		mMaterial[c] += BAD_BISHOP * pop_count(squares_of_color(p) & mPosition.getPieceBB<PIECETYPE_PAWN>(c));
+		mobility[c] += getTaperedScore(BISHOP_MOBILITY[MIDDLEGAME][pop_count(moves & mobilityNet)], BISHOP_MOBILITY[ENDGAME][pop_count(moves & mobilityNet)]);
+		material[c] += BAD_BISHOP * pop_count(squares_of_color(p) & position.getPieceBB<PIECETYPE_PAWN>(c));
 	}
 	
-	for (Square p : mPosition.getPieceList<PIECETYPE_ROOK>(c)) {
+	for (Square p : position.getPieceList<PIECETYPE_ROOK>(c)) {
 		if (p == no_sq) {
 			break;
 		}
-		mMaterial[c] += getTaperedScore(ROOK_WEIGHT_MG, ROOK_WEIGHT_EG);
-		moves = mPosition.getAttackBB<PIECETYPE_ROOK>(p);
+		material[c] += getTaperedScore(ROOK_WEIGHT_MG, ROOK_WEIGHT_EG);
+		moves = position.getAttackBB<PIECETYPE_ROOK>(p);
 		if (square_bb[p] & pins) {
 			moves &= coplanar[p][kingSq];
 		}
-		mPieceAttacksBB[c][PIECETYPE_ROOK] = moves & mPosition.getOccupancyBB();
-		mAllAttacksBB[c] |= mPieceAttacksBB[c][PIECETYPE_ROOK];
-		if (moves & king_net_bb[!c][mPosition.getKingSquare(!c)] & mobilityNet) {
+		piece_attacks_bb[c][PIECETYPE_ROOK] = moves & position.getOccupancyBB();
+		all_attacks_bb[c] |= piece_attacks_bb[c][PIECETYPE_ROOK];
+		if (moves & king_net_bb[!c][position.getKingSquare(!c)] & mobilityNet) {
 			king_threats += ROOK_THREAT;
 		}
-		mMobility[c] += getTaperedScore(ROOK_MOBILITY[MIDDLEGAME][pop_count(moves & mobilityNet)], ROOK_MOBILITY[ENDGAME][pop_count(moves & mobilityNet)]);
+		mobility[c] += getTaperedScore(ROOK_MOBILITY[MIDDLEGAME][pop_count(moves & mobilityNet)], ROOK_MOBILITY[ENDGAME][pop_count(moves & mobilityNet)]);
 		// Trapped rooks
 		/*
-		if (mPosition.getPieceBB<PIECETYPE_KING>(c) & bottomRank && square_bb[p] & bottomRank) { // **NOTE** check if this is working properly
-			if ((kingSq > p && !mPosition.canCastleKingside(c) && square_bb[kingSq] & RIGHTSIDE) || (kingSq < p && !mPosition.canCastleQueenside(c) && square_bb[kingSq] & LEFTSIDE)) {
+		if (position.getPieceBB<PIECETYPE_KING>(c) & bottomRank && square_bb[p] & bottomRank) { // **NOTE** check if this is working properly
+			if ((kingSq > p && !position.canCastleKingside(c) && square_bb[kingSq] & RIGHTSIDE) || (kingSq < p && !position.canCastleQueenside(c) && square_bb[kingSq] & LEFTSIDE)) {
 				if (pop_count(moves & mobilityNet & ~(bottomRank)) <= 3) {
-					mMaterial[c] += TRAPPED_ROOK;
+					material[c] += TRAPPED_ROOK;
 				}
 			}
 		}
 		*/
 	}
 	
-	for (Square p : mPosition.getPieceList<PIECETYPE_QUEEN>(c)) {
+	for (Square p : position.getPieceList<PIECETYPE_QUEEN>(c)) {
 		if (p == no_sq) {
 			break;
 		}
-		mMaterial[c] += getTaperedScore(QUEEN_WEIGHT_MG, QUEEN_WEIGHT_EG);
-		moves = mPosition.getAttackBB<PIECETYPE_QUEEN>(p);
+		material[c] += getTaperedScore(QUEEN_WEIGHT_MG, QUEEN_WEIGHT_EG);
+		moves = position.getAttackBB<PIECETYPE_QUEEN>(p);
 		if (square_bb[p] & pins) {
 			moves &= coplanar[p][kingSq];
 		}
-		mPieceAttacksBB[c][PIECETYPE_QUEEN] = moves & mPosition.getOccupancyBB();
-		mAllAttacksBB[c] |= mPieceAttacksBB[c][PIECETYPE_QUEEN];
-		if (moves & king_net_bb[!c][mPosition.getKingSquare(!c)] & mobilityNet) {
+		piece_attacks_bb[c][PIECETYPE_QUEEN] = moves & position.getOccupancyBB();
+		all_attacks_bb[c] |= piece_attacks_bb[c][PIECETYPE_QUEEN];
+		if (moves & king_net_bb[!c][position.getKingSquare(!c)] & mobilityNet) {
 			king_threats += QUEEN_THREAT;
 		}
-		mMobility[c] += getTaperedScore(QUEEN_MOBILITY[MIDDLEGAME][pop_count(moves & mobilityNet)], QUEEN_MOBILITY[ENDGAME][pop_count(moves & mobilityNet)]);
+		mobility[c] += getTaperedScore(QUEEN_MOBILITY[MIDDLEGAME][pop_count(moves & mobilityNet)], QUEEN_MOBILITY[ENDGAME][pop_count(moves & mobilityNet)]);
 	}
 	
 	// Bishop pair
-	if (mPosition.getPieceCount<PIECETYPE_BISHOP>(c) >= 2) {
-		mMaterial[c] += getTaperedScore(BISHOP_PAIR_MG, BISHOP_PAIR_EG);
+	if (position.getPieceCount<PIECETYPE_BISHOP>(c) >= 2) {
+		material[c] += getTaperedScore(BISHOP_PAIR_MG, BISHOP_PAIR_EG);
 	}
 	
-	mKingSafety[!c] -= SAFETY_TABLE[king_threats];
+	king_safety[!c] -= SAFETY_TABLE[king_threats];
 }
 
 void Evaluate::evalAttacks(const Color c) {
 	U64 attackedByPawn, hanging;
-	attackedByPawn = mPieceAttacksBB[!c][PIECETYPE_PAWN] & (mPosition.getOccupancyBB(c) ^ mPosition.getPieceBB<PIECETYPE_PAWN>(c));
+	attackedByPawn = piece_attacks_bb[!c][PIECETYPE_PAWN] & (position.getOccupancyBB(c) ^ position.getPieceBB<PIECETYPE_PAWN>(c));
 
 	while (attackedByPawn) {
 		Square to = pop_lsb(attackedByPawn);
-		if (mPosition.getAttackBB<PIECETYPE_PAWN>(to, c) & mPosition.getPieceBB<PIECETYPE_PAWN>(!c) & mAllAttacksBB[!c]) {
-			mAttacks[c] += STRONG_PAWN_ATTACK;
+		if (position.getAttackBB<PIECETYPE_PAWN>(to, c) & position.getPieceBB<PIECETYPE_PAWN>(!c) & all_attacks_bb[!c]) {
+			attacks[c] += STRONG_PAWN_ATTACK;
 		}
 		else {
-			mAttacks[c] += WEAK_PAWN_ATTACK;
+			attacks[c] += WEAK_PAWN_ATTACK;
 		}
 	}
 
-	hanging = mAllAttacksBB[!c] & mPosition.getOccupancyBB(c) & ~mAllAttacksBB[c];
+	hanging = all_attacks_bb[!c] & position.getOccupancyBB(c) & ~all_attacks_bb[c];
 	
-	mAttacks[c] += pop_count(hanging) * HANGING;
+	attacks[c] += pop_count(hanging) * HANGING;
 }
 
 std::ostream& operator<<(std::ostream& os, const Evaluate& e) {
-	Color c = e.mPosition.getOurColor();
+	Color c = e.position.getOurColor();
 	std::string us = c == WHITE ? "White" : "Black";
 	std::string them = c == WHITE ? "Black" : "White";
-	int pstMid = e.mPosition.getPstScore(MIDDLEGAME) * (256 - e.mGamePhase) / 256;
-	int pstLate = e.mPosition.getPstScore(ENDGAME) * e.mGamePhase / 256;
+	int pstMid = e.position.getPstScore(MIDDLEGAME) * (256 - e.mGamePhase) / 256;
+	int pstLate = e.position.getPstScore(ENDGAME) * e.mGamePhase / 256;
 
 	os  << "-------------------------------------------------------------\n"
 		<< "| Evaluation Type |    " << us << "    |    " << them 
 		<< "    |    Total    |\n"
 		<< "-------------------------------------------------------------\n"
 		<< "| Material        |"
-		<< std::setw(12) << e.mMaterial[c] << " |"
-		<< std::setw(12) << e.mMaterial[!c] << " |"
-		<< std::setw(12) << e.mMaterial[c] - e.mMaterial[!c] << " |\n"
+		<< std::setw(12) << e.material[c] << " |"
+		<< std::setw(12) << e.material[!c] << " |"
+		<< std::setw(12) << e.material[c] - e.material[!c] << " |\n"
 		<< "-------------------------------------------------------------\n"
 		<< "| Mobility        |" 
-		<< std::setw(12) << e.mMobility[c] << " |" 
-		<< std::setw(12) << e.mMobility[!c] << " |"
-		<< std::setw(12) << e.mMobility[c] - e.mMobility[!c] << " |\n"
+		<< std::setw(12) << e.mobility[c] << " |" 
+		<< std::setw(12) << e.mobility[!c] << " |"
+		<< std::setw(12) << e.mobility[c] - e.mobility[!c] << " |\n"
 		<< "-------------------------------------------------------------\n"
 		<< "| Pawn Structure  |"
-		<< std::setw(12) << e.mPawnStructure[c] << " |" 
-		<< std::setw(12) << e.mPawnStructure[!c] << " |"
-		<< std::setw(12) << e.mPawnStructure[c] - e.mPawnStructure[!c] 
+		<< std::setw(12) << e.pawn_structure[c] << " |" 
+		<< std::setw(12) << e.pawn_structure[!c] << " |"
+		<< std::setw(12) << e.pawn_structure[c] - e.pawn_structure[!c] 
 		<< " |\n"
 		<< "-------------------------------------------------------------\n"
 		<< "| King Safety     |"
-		<< std::setw(12) << e.mKingSafety[c] << " |" 
-		<< std::setw(12) << e.mKingSafety[!c] << " |"
-		<< std::setw(12) << e.mKingSafety[c] - e.mKingSafety[!c] << " |\n"
+		<< std::setw(12) << e.king_safety[c] << " |" 
+		<< std::setw(12) << e.king_safety[!c] << " |"
+		<< std::setw(12) << e.king_safety[c] - e.king_safety[!c] << " |\n"
 		<< "-------------------------------------------------------------\n"
 		<< "| Attacks         |"
-		<< std::setw(12) << e.mAttacks[c] << " |" 
-		<< std::setw(12) << e.mAttacks[!c] << " |"
-		<< std::setw(12) << e.mAttacks[c] - e.mAttacks[!c] << " |\n"
+		<< std::setw(12) << e.attacks[c] << " |" 
+		<< std::setw(12) << e.attacks[!c] << " |"
+		<< std::setw(12) << e.attacks[c] - e.attacks[!c] << " |\n"
 		<< "-------------------------------------------------------------\n"
 		<< "| PST             |"
 		<< std::setw(12) << pstMid << " |" 

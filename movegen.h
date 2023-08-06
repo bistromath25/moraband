@@ -60,29 +60,29 @@ public:
 	Move getBestMove();
 	Move pop();
 	void checkLegal();
-	void setStage(int stage) { mStage = stage; }
+	void setStage(int stage) { stage = stage; }
 	
 	template<MoveType T> void generateMoves();
 	template<MoveType T, Color C> void pushPawnMoves();
 	template<MoveType T, PieceType P> void pushMoves();
 	template<MoveType T> void pushCastle();
 	template<MoveType T> void pushPromotion(Square src, Square dst);
-	friend std::ostream & operator << (std::ostream & os, const MoveList & mlist);
+	friend std::ostream & operator << (std::ostream & os, const MoveList & moveList);
 
 private:
-	bool mQSearch;
-	U64 mValid;
+	bool isQSearch;
+	U64 valid;
 	U64 mDiscover;
-	const Position& mPosition;
-	const History* mHistory;
-	int mPly;
-	int mStage;
-	std::array<MoveEntry, MOVELIST_MAX_SIZE> mList;
+	const Position& position;
+	const History* history;
+	int ply;
+	int stage;
+	std::array<MoveEntry, MOVELIST_MAX_SIZE> moveList;
 	std::vector<MoveEntry> badCaptures;
-	std::size_t mSize;
-	Move mBest;
-	Move mKiller1;
-	Move mKiller2;
+	std::size_t sz;
+	Move best;
+	Move killer1;
+	Move killer2;
 };
 
 void mg_init();

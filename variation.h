@@ -33,8 +33,8 @@ public:
 	void printPv();
 private:
 	std::array<std::pair<Move, U64>, MAX_PV_SIZE> mPv; // (move, key)
-	bool mMatingLine;
-	std::size_t mSize;
+	bool isMatingLine;
+	std::size_t sz;
 };
 
 #endif
