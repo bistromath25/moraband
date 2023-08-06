@@ -45,12 +45,14 @@ uciok
     - [Tapered evaluation](https://www.chessprogramming.org/Tapered_Eval)
 
 ## Compiling
-Use the provided makefile. It may be necessary to change the compiler from `clang` to something else and replace `-mcpu=apple-m1` with `-march=native`, for example `g++ -pthread -w -march=native -std=c++17 -O3 *.cpp -o Moraband`.
+Compile via `make` or `clang++ -pthread -w -mcpu=apple-m1 -std=c++17 -O3 *.cpp -o Moraband`, assuming an Apple m1 environemnt with the clang compiler. Otherwise, change the compiler as needed and similarly replace `-mcpu=apple-m1` with `-march=native`, for example `g++ -pthread -w -march=native -std=c++17 -O3 *.cpp -o Moraband`.
 
 ## Background
 Like everyone else, I found myself playing a great deal of chess online during the past few years, encouraged by the advent of Netflix's *Queen's Gambit* and a general lack of things to do during the pandemic lockdowns. It was also during this time that I developed an interest in algorithmic contest problem solving, and it wasn't soon before I decided to try my hand at writing my own chess-playing program, a suitable sparring partner, following along closely to BlueFeverSoft's video tutorials. Eventually I lost interest in my endeavor, weighed down by my final years of high school and the (somewhat?) easing Covid restrictions.
 
-I "restarted" this project during the current winter break, having just completed my Fall 2022 1A term at the University of Waterloo. As was the case a few years ago, writing my own chess program is an excellent way to combine passion of chess with my love of computer programming, and no doubt bolster my rather experience-less resume. Morever, it would be an excellent opportunity to practice developing and testing "professional" software in anticipation of my first co-op. 
+I "restarted" this project during the current winter break, having just completed my Fall 2022 1A term at the University of Waterloo. As was the case a few years ago, writing my own chess program is an excellent way to combine passion of chess with my love of computer programming, and no doubt bolster my rather experience-less resume. Morever, it would be an excellent opportunity to practice developing and testing "professional" software in anticipation of my first coop. 
+
+[Challenge Moraband on Lichess!](https://lichess.org/@/morabandbot) 
 
 ## Credit and Resources
 - [Vice chess engine tutorial](https://www.chessprogramming.org/Vice)
