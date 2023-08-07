@@ -493,21 +493,12 @@ Move iterative_deepening(Position& s, SearchInfo& si) {
 			results[0].first = search_root(s, si, global_info[0], d, 0, NEG_INF, POS_INF);
 		}
 
+		if (si.quit || (d > 1 && stop_search(si))) {
+			break;
+		}
+
 		score = results[results_index].first;
 		global_info[results_index].variation.checkPv(s);
-		if (si.quit || stop_search(si)) {
-			break;
-		}
-
-		if (si.nodes == si.prevNodes) {
-			break;
-		}
-		if (si.clock.elapsed<std::chrono::milliseconds>() * 2 > si.moveTime && !si.infinite) {
-			break; // Insufficient time for next search iteration
-		}
-
-		si.prevNodes = si.nodes;
-		si.nodes = 0;
 
 		std::cout << "info depth " << d;
 		if (global_info[results_index].variation.isMate()) {
@@ -526,15 +517,18 @@ Move iterative_deepening(Position& s, SearchInfo& si) {
 
 		best_move = global_info[results_index].variation.getPvMove();
 
+		if (si.nodes == si.prevNodes) {
+			break;
+		}
 		if (si.clock.elapsed<std::chrono::milliseconds>() * 2 > si.moveTime) {
 			break; // Insufficient time for next search iteration
-		}
-		if (d > 1 && stop_search(si)) {
-			break;
 		}
 		if ((si.depth && d >= si.depth) || (si.max_nodes && si.totalNodes >= si.max_nodes)) {
 			break;
 		}
+
+		si.prevNodes = si.nodes;
+		si.nodes = 0;
 	}
 
 	return best_move;
