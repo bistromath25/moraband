@@ -104,7 +104,7 @@ PawnHashTable ptable;
 /* Evaluation and related functions */
 Evaluate::Evaluate(const Position& s) : position(s), material{}, pawn_structure{}, mobility{}, king_safety{}, attacks{}, piece_attacks_bb{}, all_attacks_bb{} {
 	// Tapered-evaluation with 256 phases, 0 (Opening/Middlegame) and 255 (Endgame)
-	mGamePhase = position.getGamePhase();
+	gamePhase = position.getGamePhase();
 	Color c = position.getOurColor();
 	// Check for entry in pawn hash table
 	if (position.getPieceCount<PIECETYPE_PAWN>()) {
@@ -135,18 +135,17 @@ Evaluate::Evaluate(const Position& s) : position(s), material{}, pawn_structure{
 	evalPawnShield(BLACK);
 	evalAttacks(WHITE);
 	evalAttacks(BLACK);
-	mScore = mobility[c] - mobility[!c] + king_safety[c] - king_safety[!c] + pawn_structure[c] - pawn_structure[!c] + material[c] - material[!c] + attacks[c] - attacks[!c];
-	mScore = material[c] - material[!c];
-	mScore += getTaperedScore(position.getPstScore(MIDDLEGAME), position.getPstScore(ENDGAME));
-	mScore += TEMPO_BONUS;
+	score = mobility[c] - mobility[!c] + king_safety[c] - king_safety[!c] + pawn_structure[c] - pawn_structure[!c] + material[c] - material[!c] + attacks[c] - attacks[!c];
+	score += getTaperedScore(position.getPstScore(MIDDLEGAME), position.getPstScore(ENDGAME));
+	score += TEMPO_BONUS;
 }
 
 int Evaluate::getScore() const {
-	return mScore + CONTEMPT;
+	return score + CONTEMPT;
 }
 
 int Evaluate::getTaperedScore(int mg, int eg) {
-	return (mg * (256 - mGamePhase) + eg * mGamePhase) / 256;
+	return (mg * (256 - gamePhase) + eg * gamePhase) / 256;
 }
 
 void Evaluate::evalOutposts(const Color c) {
@@ -407,8 +406,8 @@ std::ostream& operator<<(std::ostream& os, const Evaluate& e) {
 	Color c = e.position.getOurColor();
 	std::string us = c == WHITE ? "White" : "Black";
 	std::string them = c == WHITE ? "Black" : "White";
-	int pstMid = e.position.getPstScore(MIDDLEGAME) * (256 - e.mGamePhase) / 256;
-	int pstLate = e.position.getPstScore(ENDGAME) * e.mGamePhase / 256;
+	int pstMid = e.position.getPstScore(MIDDLEGAME) * (256 - e.gamePhase) / 256;
+	int pstLate = e.position.getPstScore(ENDGAME) * e.gamePhase / 256;
 
 	os  << "-------------------------------------------------------------\n"
 		<< "| Evaluation Type |    " << us << "    |    " << them 
@@ -446,7 +445,7 @@ std::ostream& operator<<(std::ostream& os, const Evaluate& e) {
 		<< std::setw(12) << pstMid + pstLate << " |\n"
 		<< "-------------------------------------------------------------\n"
 		<< "| Total           |             |             |"
-		<< std::setw(12) << e.mScore << " |\n"
+		<< std::setw(12) << e.score << " |\n"
 		<< "-------------------------------------------------------------\n";
 
 	return os;

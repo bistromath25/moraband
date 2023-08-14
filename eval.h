@@ -160,9 +160,9 @@ public:
 	int getTaperedScore(int mg, int eg);
 	friend std::ostream& operator<<(std::ostream& o, const Evaluate& e);
 private:
-	int mGamePhase;
+	int gamePhase;
 	const Position& position;
-	int mScore;
+	int score;
 	std::array<int, PLAYER_SIZE> mobility;
 	std::array<int, PLAYER_SIZE> king_safety;
 	std::array<int, PLAYER_SIZE> pawn_structure;
