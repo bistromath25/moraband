@@ -131,7 +131,7 @@ template<MoveType T, PieceType P> void MoveList::pushMoves() {
 		m = position.getAttackBB<P>(src) & valid;
 
 		if (T == MoveType::QuietChecks) {
-			if (square_bb[src] & mDiscover) {
+			if (square_bb[src] & discover) {
 				if (P == PIECETYPE_KING) {
 					m &= ~coplanar[src][position.getKingSquare(!c)];
 				}
@@ -205,7 +205,7 @@ template<MoveType T, Color C> void MoveList::pushPawnMoves() {
 			up  &= position.getCheckSquaresBB(PIECETYPE_PAWN);
 			dbl &= position.getCheckSquaresBB(PIECETYPE_PAWN);
 
-			dis = mDiscover & pawns & ~file_bb[position.getKingSquare(!C)];
+			dis = discover & pawns & ~file_bb[position.getKingSquare(!C)];
 			dis = (C == WHITE ? dis << 8 : dis >> 8) & empty;
 			up  |= dis;
 			dbl |= (C == WHITE ? (dis & RANK_3) << 8 
@@ -259,7 +259,7 @@ template<MoveType T> void MoveList::generateMoves() {
 	assert(!position.inCheck());
 
 	if (T == MoveType::QuietChecks) {
-		mDiscover = position.getDiscoveredChecks(position.getOurColor());
+		discover = position.getDiscoveredChecks(position.getOurColor());
 	}
 	valid = T == MoveType::Attacks ? position.getOccupancyBB(position.getTheirColor()) : position.getEmptyBB();
 

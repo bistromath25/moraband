@@ -159,7 +159,7 @@ inline Rank get_rank(U64 bb) {
 }
 
 inline U64 shift_up(U64 bb, const Dir D) {
-	return D == N  ? bb << 8 
+	return D == N ? bb << 8 
 		: D == NE ? (bb & NOT_H_FILE) << 9
 			: D == NW ? (bb & NOT_A_FILE) << 7
 				: 0;

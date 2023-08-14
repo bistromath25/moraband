@@ -33,7 +33,7 @@ bool stop_search(SearchInfo& si) {
 	return false;
 }
 
-/* Qsearch routine */
+/* Quiescence search */
 int qsearch(Position& s, SearchInfo& si, GlobalInfo& gi, int ply, int alpha, int beta) {
 	si.nodes++;
 	assert(ply <= MAX_PLY);
@@ -68,37 +68,8 @@ int qsearch(Position& s, SearchInfo& si, GlobalInfo& gi, int ply, int alpha, int
 		}
 	}
 
-	// Probe tt
-	bool tt_hit = false;
-	int tt_score = NEG_INF;
-	int tt_flag = -1;
-	Move tt_move = 0;
-	TTEntry tt_entry = tt.probe(s.getKey());
-	if (tt_entry.getKey() == s.getKey()) {
-		tt_hit = true;
-		tt_move = tt_entry.getMove();
-		tt_score = value_from_tt(tt_entry.getScore(), s.getFiftyMoveRule());
-		tt_flag = tt_entry.getFlag();
-		if (tt_entry.getDepth() >= ply) {
-			if (tt_flag == FLAG_EXACT || (tt_flag == FLAG_LOWER && tt_score >= beta) || (tt_flag == FLAG_UPPER && tt_score <= alpha)) {
-				return tt_score;
-			}
-		}
-	}
-
-	if (tt_flag == FLAG_EXACT) { // Make use of previous TT score
-		staticEval = tt_score;
-	}
-	else {
-		if (tt_hit) {
-			if (staticEval < tt_score && tt_flag == FLAG_LOWER || staticEval > tt_score && tt_flag == FLAG_UPPER) {
-				staticEval = tt_score;
-			}
-		}
-	}
-	
 	// Generate moves and create the movelist.
-	MoveList moveList(s, tt_move, &gi.history, ply, true);
+	MoveList moveList(s, NULL_MOVE, &gi.history, ply, true);
 	int score = 0;
 	int bestScore = staticEval;
 	Move m = NULL_MOVE;
@@ -147,7 +118,7 @@ int qsearch(Position& s, SearchInfo& si, GlobalInfo& gi, int ply, int alpha, int
 }
 
 /* Regular search function */
-int search(Position& s, SearchInfo& si, GlobalInfo& gi, int depth, int ply, int alpha, int beta, bool isPv, bool isNull, bool isRoot) {
+int search(Position& s, SearchInfo& si, GlobalInfo& gi, int depth, int ply, int alpha, int beta, bool isPv, bool isNull) {
 	assert(depth >= 0);
 
 	if (depth == 0 || ply > MAX_PLY) { // Perform qsearch when regular search is completed
@@ -203,7 +174,7 @@ int search(Position& s, SearchInfo& si, GlobalInfo& gi, int depth, int ply, int 
 		}
 		else {
 			if (tt_hit) {
-				if (staticEval < tt_score && tt_flag == FLAG_LOWER || staticEval > tt_score && tt_flag == FLAG_UPPER) {
+				if ((staticEval < tt_score && tt_flag == FLAG_LOWER) || (staticEval > tt_score && tt_flag == FLAG_UPPER)) {
 					staticEval = tt_score;
 				}
 			}
@@ -211,7 +182,7 @@ int search(Position& s, SearchInfo& si, GlobalInfo& gi, int depth, int ply, int 
 	}
 
 	// Pruning
-	if (!isPv && !isNull && !s.inCheck() && s.getNonPawnPieceCount(s.getOurColor()) && beta > -CHECKMATE_BOUND) {
+	if (!isPv && !s.inCheck() && s.getNonPawnPieceCount() && beta > -CHECKMATE_BOUND) {
 		// Reverse futility pruning
 		if (depth < REVERSE_FUTILITY_DEPTH && staticEval - REVERSE_FUTILITY_MARGIN * depth >= beta) {
 			return staticEval;
@@ -227,12 +198,12 @@ int search(Position& s, SearchInfo& si, GlobalInfo& gi, int depth, int ply, int 
 
 		// Null move pruning
 		// Make a null move and search to a reduced depth
-		if (depth > NULL_MOVE_DEPTH && staticEval + NULL_MOVE_MARGIN >= beta) {
+		if (!isNull && depth > NULL_MOVE_DEPTH && staticEval + NULL_MOVE_MARGIN >= beta) {
 			Position n;
 			std::memmove(&n, &s, sizeof s);
 			n.makeNull();
 			gi.history.push(std::make_pair(NULL_MOVE, n.getKey()));
-			int nullScore = -search(n, si, gi, depth - 3, ply + 1, -beta, -(beta - 1), false, true, false);
+			int nullScore = -search(n, si, gi, depth - 3, ply + 1, -beta - 1, -beta, false, true);
 			gi.history.pop();
 			if (nullScore >= beta) {
 				if (nullScore >= CHECKMATE_BOUND) {
@@ -246,7 +217,7 @@ int search(Position& s, SearchInfo& si, GlobalInfo& gi, int depth, int ply, int 
 	// Internal iterative deepening
 	// In case no best move was found, perform a shallower search to determine which move to properly seach first
 	if (!tt_move && !isNull && !s.inCheck() && (isPv || staticEval + 100 >= beta) && depth >= 5) {
-		search(s, si, gi, depth - 2, ply, alpha, beta, isPv, true, false);
+		search(s, si, gi, depth - 2, ply, alpha, beta, isPv, true);
 		tt_entry = tt.probe(s.getKey());
 		tt_move = tt_entry.getMove();
 	}
@@ -258,18 +229,16 @@ int search(Position& s, SearchInfo& si, GlobalInfo& gi, int depth, int ply, int 
 	Move best_move = tt_move;
 
 	int legalMoves = 0;
-	int a = alpha;
-	int b = beta;
+	int oldAlpha = alpha;
 	Move m;
-	bool first = true;
 	int d;
 	while ((m = moveList.getBestMove())) {
 		d = depth - 1; // Early pruning
 		legalMoves++;
 
-		if (!isPv && bestScore > -CHECKMATE_BOUND && !s.inCheck() && !s.givesCheck(m) && !isPromotion(m) && s.getNonPawnPieceCount(s.getOurColor())) {
+		if (bestScore > -CHECKMATE_BOUND && !s.inCheck() && !s.givesCheck(m) && !isPromotion(m) && s.getNonPawnPieceCount()) {
 			// Futility pruning
-			if (depth < 8 && !isPv && staticEval + 100 * d < a) {
+			if (depth < 8 && !isPv && staticEval + 100 * d <= alpha) {
 				continue;
 			}
 			// SEE-based pruning (prune if SEE too low)
@@ -278,7 +247,7 @@ int search(Position& s, SearchInfo& si, GlobalInfo& gi, int depth, int ply, int 
 				continue;
 			}
 			// Late move reduction
-			if (depth > 2 && legalMoves > (isPv ? 5 : 3) && !s.inCheck()) {
+			if (depth > 2 && legalMoves > (isPv ? 5 : 3) && !s.isCapture(m)) {
 				d -= 1 + !isPv + (moveList.size() > 10);
 				d = std::max(1, d);
 			}
@@ -293,18 +262,17 @@ int search(Position& s, SearchInfo& si, GlobalInfo& gi, int depth, int ply, int 
 		}
 
 		// Search PV move
-		if (first) {
+		if (legalMoves == 1) {
 			best_move = m;
-			score = -search(c, si, gi, d, ply + 1, -b, -a, isPv, isNull, true);
-			first = false;
+			score = -search(c, si, gi, d, ply + 1, -beta, -alpha, isPv, isNull);
 		}     
 		else {
-			score = -search(c, si, gi, d, ply + 1, -(a + 1), -a, false, isNull, false);
-			if (score > a) {
-				score = -search(c, si, gi, std::max(d, depth - 1), ply + 1, -(a + 1), -a, false, isNull, false);
+			score = -search(c, si, gi, d, ply + 1, -alpha - 1, -alpha, false, isNull);
+			if (score > alpha) {
+				score = -search(c, si, gi, std::max(d, depth - 1), ply + 1, -alpha - 1, -alpha, false, isNull);
 			}
-			if (a < score && score < b) {
-				score = -search(c, si, gi, d, ply + 1, -b, -a, true, isNull, false);
+			if (alpha < score && score < beta) {
+				score = -search(c, si, gi, d, ply + 1, -beta, -alpha, true, isNull);
 			}
 		}
 		
@@ -317,12 +285,10 @@ int search(Position& s, SearchInfo& si, GlobalInfo& gi, int depth, int ply, int 
 		if (score > bestScore) {
 			bestScore = score;
 			best_move = m;
-			//gi.variation.pushToPv(best_move, s.getKey(), ply, bestScore);
-			a = std::max(a, bestScore);
 		}
-		// Alpha-Beta pruning
-		if (a >= b) {
-			a = b;
+		alpha = std::max(alpha, bestScore);
+		if (alpha >= beta) {
+			alpha = beta;
 			if (s.isQuiet(m)) {
 				gi.history.update(m, depth, ply, true);
 			}
@@ -339,19 +305,17 @@ int search(Position& s, SearchInfo& si, GlobalInfo& gi, int depth, int ply, int 
 		return s.check() ? -CHECKMATE + ply : STALEMATE;
 	}
 
-	if (alpha < a && a < b && !si.quit) {
-		gi.variation.pushToPv(best_move, s.getKey(), ply, bestScore);
+	if (oldAlpha < alpha && alpha < beta && !si.quit) {
+		gi.variation.pushToPv(best_move, s.getKey(), ply, alpha);
 	}
 
-	U64 flag = a >= b ? FLAG_LOWER
-		: a > alpha ? FLAG_EXACT
+	U64 flag = alpha >= beta ? FLAG_LOWER
+		: alpha > oldAlpha ? FLAG_EXACT
 			: FLAG_UPPER;
 	
 	assert(best_move != NULL_MOVE);
-	tt.insert(best_move, flag, depth, value_to_tt(a, ply), s.getKey());
-
-	//assert(variation.getPvMove() != NULL_MOVE);
-	return a;
+	tt.insert(best_move, flag, depth, value_to_tt(alpha, ply), s.getKey());
+	return alpha;
 }
 
 /* Root search */
@@ -379,10 +343,8 @@ int search_root(Position& s, SearchInfo& si, GlobalInfo& gi, int depth, int ply,
 	Move best_move = NULL_MOVE;
 
 	int legalMoves = 0;
-	int a = alpha;
-	int b = beta;
+	int oldAlpha = alpha;
 	Move m;
-	bool first = true;
 	int d;
 	while ((m = moveList.getBestMove())) {
 		d = depth - 1;
@@ -396,18 +358,17 @@ int search_root(Position& s, SearchInfo& si, GlobalInfo& gi, int depth, int ply,
 			d++;
 		}
 
-		if (first) {
+		if (legalMoves == 1) {
 			best_move = m;
-			score = -search(c, si, gi, d, ply + 1, -b, -a, true, false, true);
-			first = false;
+			score = -search(c, si, gi, d, ply + 1, -beta, -alpha, true, false);
 		}     
 		else {
-			score = -search(c, si, gi, d, ply + 1, -(a + 1), -a, false, false, false);	
-			if (score > a) {
-				score = -search(c, si, gi, std::max(d, depth - 1), ply + 1, -(a + 1), -a, false, false, false);
+			score = -search(c, si, gi, d, ply + 1, -alpha - 1, -alpha, false, false);	
+			if (score > alpha) {
+				score = -search(c, si, gi, std::max(d, depth - 1), ply + 1, -alpha - 1, -alpha, false, false);
 			}
-			if (a < score && score < b) {
-				score = -search(c, si, gi, d, ply + 1, -b, -a, true, true, false);
+			if (alpha < score && score < beta) {
+				score = -search(c, si, gi, d, ply + 1, -beta, -alpha, true, false);
 			}
 		}
 		
@@ -420,11 +381,10 @@ int search_root(Position& s, SearchInfo& si, GlobalInfo& gi, int depth, int ply,
 		if (score > bestScore) {
 			bestScore = score;
 			best_move = m;
-			//gi.variation.pushToPv(best_move, s.getKey(), ply, bestScore);
-			a = std::max(a, bestScore);
 		}
-		if (a >= b) {
-			a = b;
+		alpha = std::max(alpha, bestScore);
+		if (alpha >= beta) {
+			alpha = beta;
 			if (s.isQuiet(m)) {
 				gi.history.update(m, depth, ply, true);
 			}
@@ -441,18 +401,17 @@ int search_root(Position& s, SearchInfo& si, GlobalInfo& gi, int depth, int ply,
 		return s.check() ? -CHECKMATE + ply : STALEMATE;
 	}
 
-	if (alpha < a && a < b && !si.quit) {
-		gi.variation.pushToPv(best_move, s.getKey(), ply, bestScore);
+	if (oldAlpha < alpha && alpha < beta && !si.quit) {
+		gi.variation.pushToPv(best_move, s.getKey(), ply, alpha);
 	}
 
-	U64 flag = a >= b ? FLAG_LOWER
-		: a > alpha ? FLAG_EXACT
+	U64 flag = alpha >= beta ? FLAG_LOWER
+		: alpha > oldAlpha ? FLAG_EXACT
 			: FLAG_UPPER;
-
-	//assert(best_move != NULL_MOVE);
-	tt.insert(best_move, flag, depth, value_to_tt(a, ply), s.getKey());
-
-	return a;
+	
+	assert(best_move != NULL_MOVE);
+	tt.insert(best_move, flag, depth, value_to_tt(alpha, ply), s.getKey());
+	return alpha;
 }
 
 /* Multi-threaded search driver */

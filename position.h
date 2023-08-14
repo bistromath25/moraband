@@ -60,6 +60,7 @@ public:
 	template<PieceType P> int getPieceCount(Color c) const;
 	template<PieceType P> int getPieceCount() const;
 	int getNonPawnPieceCount(Color c) const;
+	int getNonPawnPieceCount() const;
 
 	// Board occupancy
 	U64 getOccupancyBB() const;
@@ -271,6 +272,10 @@ template<PieceType P> inline int Position::getPieceCount(Color c) const {
 
 inline int Position::getNonPawnPieceCount(Color c) const {
 	return pieceCounts[c][PIECETYPE_KNIGHT] + pieceCounts[c][PIECETYPE_BISHOP] + pieceCounts[c][PIECETYPE_ROOK]   + pieceCounts[c][PIECETYPE_QUEEN];
+}
+
+inline int Position::getNonPawnPieceCount() const {
+	return getNonPawnPieceCount(WHITE) + getNonPawnPieceCount(BLACK);
 }
 
 inline Square Position::getKingSquare(Color c) const {
