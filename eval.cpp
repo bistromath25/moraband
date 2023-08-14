@@ -104,7 +104,7 @@ PawnHashTable ptable;
 /* Evaluation and related functions */
 Evaluate::Evaluate(const Position& s) : position(s), material{}, pawn_structure{}, mobility{}, king_safety{}, attacks{}, piece_attacks_bb{}, all_attacks_bb{} {
 	// Tapered-evaluation with 256 phases, 0 (Opening/Middlegame) and 255 (Endgame)
-	mGamePhase = position.getGamePhase();
+	gamePhase = position.getGamePhase();
 	Color c = position.getOurColor();
 	// Check for entry in pawn hash table
 	if (position.getPieceCount<PIECETYPE_PAWN>()) {
@@ -120,9 +120,6 @@ Evaluate::Evaluate(const Position& s) : position(s), material{}, pawn_structure{
 		}
 	}
 
-	evalPieces(WHITE);
-	evalPieces(BLACK);
-
 	// Pawn attacks
 	piece_attacks_bb[WHITE][PIECETYPE_PAWN] |= (position.getPieceBB<PIECETYPE_PAWN>(WHITE) & NOT_A_FILE) << 9 & position.getOccupancyBB();
 	piece_attacks_bb[WHITE][PIECETYPE_PAWN] |= (position.getPieceBB<PIECETYPE_PAWN>(WHITE) & NOT_H_FILE) << 7 & position.getOccupancyBB();
@@ -131,22 +128,23 @@ Evaluate::Evaluate(const Position& s) : position(s), material{}, pawn_structure{
 	all_attacks_bb[WHITE] |= piece_attacks_bb[WHITE][PIECETYPE_PAWN];
 	all_attacks_bb[BLACK] |= piece_attacks_bb[BLACK][PIECETYPE_PAWN];
 
+	evalPieces(WHITE);
+	evalPieces(BLACK);
 	evalPawnShield(WHITE);
 	evalPawnShield(BLACK);
 	evalAttacks(WHITE);
 	evalAttacks(BLACK);
-	mScore = mobility[c] - mobility[!c] + king_safety[c] - king_safety[!c] + pawn_structure[c] - pawn_structure[!c] + material[c] - material[!c] + attacks[c] - attacks[!c];
-	mScore = material[c] - material[!c];
-	mScore += getTaperedScore(position.getPstScore(MIDDLEGAME), position.getPstScore(ENDGAME));
-	mScore += TEMPO_BONUS;
+	score = mobility[c] - mobility[!c] + king_safety[c] - king_safety[!c] + pawn_structure[c] - pawn_structure[!c] + material[c] - material[!c] + attacks[c] - attacks[!c];
+	score += getTaperedScore(position.getPstScore(MIDDLEGAME), position.getPstScore(ENDGAME));
+	score += TEMPO_BONUS;
 }
 
 int Evaluate::getScore() const {
-	return mScore + CONTEMPT;
+	return score + CONTEMPT;
 }
 
 int Evaluate::getTaperedScore(int mg, int eg) {
-	return (mg * (256 - mGamePhase) + eg * mGamePhase) / 256;
+	return (mg * (256 - gamePhase) + eg * gamePhase) / 256;
 }
 
 void Evaluate::evalOutposts(const Color c) {
@@ -179,7 +177,6 @@ void Evaluate::evalOutposts(const Color c) {
 /* Evaluate pawn structure */
 void Evaluate::evalPawns(const Color c) {
 	const int dir = c == WHITE ? 8 : -8;
-	Square kingSq = position.getKingSquare(c);
 
 	for (Square p : position.getPieceList<PIECETYPE_PAWN>(c)) {
 		if (p == no_sq) {
@@ -407,8 +404,8 @@ std::ostream& operator<<(std::ostream& os, const Evaluate& e) {
 	Color c = e.position.getOurColor();
 	std::string us = c == WHITE ? "White" : "Black";
 	std::string them = c == WHITE ? "Black" : "White";
-	int pstMid = e.position.getPstScore(MIDDLEGAME) * (256 - e.mGamePhase) / 256;
-	int pstLate = e.position.getPstScore(ENDGAME) * e.mGamePhase / 256;
+	int pstMid = e.position.getPstScore(MIDDLEGAME) * (256 - e.gamePhase) / 256;
+	int pstLate = e.position.getPstScore(ENDGAME) * e.gamePhase / 256;
 
 	os  << "-------------------------------------------------------------\n"
 		<< "| Evaluation Type |    " << us << "    |    " << them 
@@ -446,7 +443,7 @@ std::ostream& operator<<(std::ostream& os, const Evaluate& e) {
 		<< std::setw(12) << pstMid + pstLate << " |\n"
 		<< "-------------------------------------------------------------\n"
 		<< "| Total           |             |             |"
-		<< std::setw(12) << e.mScore << " |\n"
+		<< std::setw(12) << e.score << " |\n"
 		<< "-------------------------------------------------------------\n";
 
 	return os;
