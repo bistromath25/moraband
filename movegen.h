@@ -72,7 +72,7 @@ public:
 private:
 	bool isQSearch;
 	U64 valid;
-	U64 mDiscover;
+	U64 discover;
 	const Position& position;
 	const History* history;
 	int ply;

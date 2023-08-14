@@ -81,6 +81,9 @@ int PAWN_ISOLATED = -10;
 int PAWN_DOUBLED = -10;
 int PAWN_FULL_BACKWARDS = -15;
 int PAWN_BACKWARDS = -10;
+int PAWN_SHIELD_CLOSE = 10;
+int PAWN_SHIELD_FAR = 8;
+int PAWN_SHIELD_MISSING = -8;
 
 int BAD_BISHOP = -10;
 int TRAPPED_ROOK = -25;
@@ -128,9 +131,12 @@ Evaluate::Evaluate(const Position& s) : position(s), material{}, pawn_structure{
 	all_attacks_bb[WHITE] |= piece_attacks_bb[WHITE][PIECETYPE_PAWN];
 	all_attacks_bb[BLACK] |= piece_attacks_bb[BLACK][PIECETYPE_PAWN];
 
+	evalPawnShield(WHITE);
+	evalPawnShield(BLACK);
 	evalAttacks(WHITE);
 	evalAttacks(BLACK);
 	mScore = mobility[c] - mobility[!c] + king_safety[c] - king_safety[!c] + pawn_structure[c] - pawn_structure[!c] + material[c] - material[!c] + attacks[c] - attacks[!c];
+	mScore = material[c] - material[!c];
 	mScore += getTaperedScore(position.getPstScore(MIDDLEGAME), position.getPstScore(ENDGAME));
 	mScore += TEMPO_BONUS;
 }
@@ -173,6 +179,7 @@ void Evaluate::evalOutposts(const Color c) {
 /* Evaluate pawn structure */
 void Evaluate::evalPawns(const Color c) {
 	const int dir = c == WHITE ? 8 : -8;
+	Square kingSq = position.getKingSquare(c);
 
 	for (Square p : position.getPieceList<PIECETYPE_PAWN>(c)) {
 		if (p == no_sq) {
@@ -304,16 +311,6 @@ void Evaluate::evalPieces(const Color c) {
 			king_threats += ROOK_THREAT;
 		}
 		mobility[c] += getTaperedScore(ROOK_MOBILITY[MIDDLEGAME][pop_count(moves & mobilityNet)], ROOK_MOBILITY[ENDGAME][pop_count(moves & mobilityNet)]);
-		// Trapped rooks
-		/*
-		if (position.getPieceBB<PIECETYPE_KING>(c) & bottomRank && square_bb[p] & bottomRank) { // **NOTE** check if this is working properly
-			if ((kingSq > p && !position.canCastleKingside(c) && square_bb[kingSq] & RIGHTSIDE) || (kingSq < p && !position.canCastleQueenside(c) && square_bb[kingSq] & LEFTSIDE)) {
-				if (pop_count(moves & mobilityNet & ~(bottomRank)) <= 3) {
-					material[c] += TRAPPED_ROOK;
-				}
-			}
-		}
-		*/
 	}
 	
 	for (Square p : position.getPieceList<PIECETYPE_QUEEN>(c)) {
@@ -337,8 +334,54 @@ void Evaluate::evalPieces(const Color c) {
 	if (position.getPieceCount<PIECETYPE_BISHOP>(c) >= 2) {
 		material[c] += getTaperedScore(BISHOP_PAIR_MG, BISHOP_PAIR_EG);
 	}
-	
+
+	// Threats on enemy King
 	king_safety[!c] -= SAFETY_TABLE[king_threats];
+}
+
+void Evaluate::evalPawnShield(const Color c) {
+	if (position.getPieceCount<PIECETYPE_ROOK>() + position.getPieceCount<PIECETYPE_QUEEN>() == 0) {
+		return;
+	}
+	Square kingSq = position.getKingSquare(c);
+
+	if (c == WHITE) {
+		if (rank(kingSq) > 1) {
+			return;
+		}
+		if (file(kingSq) <= 2) { // Kingside
+			evalPawnShield(WHITE, square_bb[F2] | square_bb[G2] | square_bb[H2]);
+		}
+		else if (file(kingSq) >= 5) { // Queenside
+			evalPawnShield(WHITE, square_bb[A2] | square_bb[B2] | square_bb[C2]);
+		}
+	}
+	else {
+		if (rank(kingSq) < 6) {
+			return;
+		}
+		if (file(kingSq) <= 2) { // Kingside
+			evalPawnShield(BLACK, square_bb[F7] | square_bb[G7] | square_bb[H7]);
+		}
+		else if (file(kingSq) >= 5) { // Queenside
+			evalPawnShield(BLACK, square_bb[A7] | square_bb[B7] | square_bb[C7]);
+		}
+	}
+}
+
+void Evaluate::evalPawnShield(const Color c, U64 pawnShieldCloseMask) {
+	U64 pawnShieldFarMask = shift(pawnShieldCloseMask, c == WHITE ? N : S);
+	U64 pawnsBB = position.getPieceBB<PIECETYPE_PAWN>(c);
+
+	U64 pawnShieldClose = pawnsBB & pawnShieldCloseMask;
+	U64 pawnShieldFar = pawnsBB & pawnShieldFarMask;
+	pawnShieldFar &= ~shift(pawnShieldClose, c == WHITE ? N : S);
+
+	U64 pawnShieldMissing = ~(pawnShieldClose | shift(pawnShieldFar, c == WHITE ? S : N)) & pawnShieldCloseMask;
+
+	king_safety[c] += PAWN_SHIELD_CLOSE * pop_count(pawnShieldClose);
+	king_safety[c] += PAWN_SHIELD_FAR * pop_count(pawnShieldFar);
+	king_safety[c] += PAWN_SHIELD_MISSING * pop_count(pawnShieldMissing);
 }
 
 void Evaluate::evalAttacks(const Color c) {

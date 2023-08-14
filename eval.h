@@ -57,6 +57,9 @@ extern int PAWN_ISOLATED;
 extern int PAWN_DOUBLED;
 extern int PAWN_FULL_BACKWARDS;
 extern int PAWN_BACKWARDS;
+extern int PAWN_SHIELD_CLOSE;
+extern int PAWN_SHIELD_FAR;
+extern int PAWN_SHIELD_MISSING;
 
 extern int BAD_BISHOP;
 extern int TRAPPED_ROOK;
@@ -151,6 +154,8 @@ public:
 	void evalPieces(const Color c);
 	void evalAttacks(const Color c);
 	void evalOutposts(const Color c);
+	void evalPawnShield(const Color c);
+	void evalPawnShield(const Color c, U64 pawnShieldMask);
 	int getScore() const;
 	int getTaperedScore(int mg, int eg);
 	friend std::ostream& operator<<(std::ostream& o, const Evaluate& e);

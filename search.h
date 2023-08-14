@@ -27,7 +27,7 @@
 static const int LMR_COUNT = 3;
 static const int LMR_DEPTH = 2;
 static const int NULL_MOVE_COUNT = 3;
-static const int NULL_MOVE_DEPTH = 3;
+static const int NULL_MOVE_DEPTH = 4;
 static const int NULL_MOVE_MARGIN = 100; // NMP pruning margin
 static const int REVERSE_FUTILITY_DEPTH = 3;
 static const int REVERSE_FUTILITY_MARGIN = 200;
@@ -90,7 +90,7 @@ extern GlobalInfo global_info[MAX_THREADS];
 extern std::pair<int, bool> results[MAX_THREADS];
 
 int qsearch(Position& s, SearchInfo& si, GlobalInfo& gi, int ply, int alpha, int beta);
-int search(Position& s, SearchInfo& si, GlobalInfo& gi, int depth, int ply, int alpha, int beta, bool isPv, bool isNull, bool isRoot);
+int search(Position& s, SearchInfo& si, GlobalInfo& gi, int depth, int ply, int alpha, int beta, bool isPv, bool isNull);
 int search_root(Position& s, SearchInfo& si, GlobalInfo& gi, int depth, int ply, int alpha, int beta);
 Move iterative_deepening(Position& s, SearchInfo& si);
 Move search(Position& s, SearchInfo& si);
