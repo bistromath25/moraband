@@ -210,7 +210,7 @@ int search(Position& s, SearchInfo& si, GlobalInfo& gi, int depth, int ply, int 
 			std::memmove(&n, &s, sizeof s);
 			n.makeNull();
 			gi.history.push(std::make_pair(NULL_MOVE, n.getKey()));
-			int nullScore = -search(n, si, gi, depth - 3, ply + 1, -beta - 1, -beta, false, true);
+			int nullScore = -search(n, si, gi, depth - 3, ply + 1, -beta, -beta + 1, false, true);
 			gi.history.pop();
 			if (nullScore >= beta) {
 				if (nullScore >= CHECKMATE_BOUND) {
