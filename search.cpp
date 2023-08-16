@@ -55,10 +55,6 @@ int qsearch(Position& s, SearchInfo& si, GlobalInfo& gi, int ply, int alpha, int
 
 	Evaluate evaluate(s);
 	int staticEval = evaluate.getScore();
-	
-	if (staticEval < alpha - QUEEN_WEIGHT_MG) { // Delta pruning
-		return alpha;
-	}
 	if (!s.inCheck()) {
 		if (staticEval >= beta) {
 			return beta;
@@ -68,8 +64,22 @@ int qsearch(Position& s, SearchInfo& si, GlobalInfo& gi, int ply, int alpha, int
 		}
 	}
 
+	// Probe tt
+	int tt_score = NEG_INF;
+	int tt_flag = -1;
+	Move tt_move = 0;
+	TTEntry tt_entry = tt.probe(s.getKey());
+	if (tt_entry.getKey() == s.getKey()) {
+		tt_move = tt_entry.getMove();
+		tt_score = value_from_tt(tt_entry.getScore(), s.getFiftyMoveRule());
+		tt_flag = tt_entry.getFlag();
+		if (tt_flag == FLAG_EXACT || (tt_flag == FLAG_LOWER && tt_score >= beta) || (tt_flag == FLAG_UPPER && tt_score <= alpha)) {
+			return tt_score;
+		}
+	}
+
 	// Generate moves and create the movelist.
-	MoveList moveList(s, NULL_MOVE, &gi.history, ply, true);
+	MoveList moveList(s, tt_move, &gi.history, ply, true);
 	int score = 0;
 	int bestScore = staticEval;
 	Move m = NULL_MOVE;
@@ -181,19 +191,16 @@ int search(Position& s, SearchInfo& si, GlobalInfo& gi, int depth, int ply, int 
 		}
 	}
 
+	Move best_move = tt_move;
+	if (gi.variation.getPvKey() == s.getKey()) {
+		best_move = gi.variation.getPvMove(ply);
+	}
+
 	// Pruning
 	if (!isPv && !s.inCheck() && s.getNonPawnPieceCount() && beta > -CHECKMATE_BOUND) {
 		// Reverse futility pruning
 		if (depth < REVERSE_FUTILITY_DEPTH && staticEval - REVERSE_FUTILITY_MARGIN * depth >= beta) {
 			return staticEval;
-		}
-		
-		// Razoring
-		if (depth <= RAZORING_DEPTH && staticEval <= alpha - RAZORING_MARGIN[depth]) {
-			int rscore = qsearch(s, si, gi, 0, alpha - RAZORING_MARGIN[depth], alpha - RAZORING_MARGIN[depth] + 1);
-			if (rscore <= alpha - RAZORING_MARGIN[depth]) {
-				return rscore;
-			}
 		}
 
 		// Null move pruning
@@ -226,7 +233,6 @@ int search(Position& s, SearchInfo& si, GlobalInfo& gi, int depth, int ply, int 
 
 	int score = 0;
 	int bestScore = NEG_INF;
-	Move best_move = tt_move;
 
 	int legalMoves = 0;
 	int oldAlpha = alpha;
@@ -236,7 +242,7 @@ int search(Position& s, SearchInfo& si, GlobalInfo& gi, int depth, int ply, int 
 		d = depth - 1; // Early pruning
 		legalMoves++;
 
-		if (bestScore > -CHECKMATE_BOUND && !s.inCheck() && !s.givesCheck(m) && !isPromotion(m) && s.getNonPawnPieceCount()) {
+		if (bestScore > -CHECKMATE_BOUND && legalMoves > 1 && !s.inCheck() && !s.givesCheck(m) && !isPromotion(m) && s.getNonPawnPieceCount()) {
 			// Futility pruning
 			if (depth < 8 && !isPv && staticEval + 100 * d <= alpha) {
 				continue;
@@ -248,7 +254,7 @@ int search(Position& s, SearchInfo& si, GlobalInfo& gi, int depth, int ply, int 
 			}
 			// Late move reduction
 			if (depth > 2 && legalMoves > (isPv ? 5 : 3) && !s.isCapture(m)) {
-				d -= 1 + !isPv + (moveList.size() > 10);
+				d -= 1 + !isPv + (legalMoves > 8);
 				d = std::max(1, d);
 			}
 		}

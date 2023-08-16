@@ -31,10 +31,6 @@ static const int NULL_MOVE_DEPTH = 4;
 static const int NULL_MOVE_MARGIN = 100; // NMP pruning margin
 static const int REVERSE_FUTILITY_DEPTH = 3;
 static const int REVERSE_FUTILITY_MARGIN = 200;
-static const int RAZORING_DEPTH = 2;
-static const int RAZORING_MARGIN[] = { 0, 200, 400 };
-static const int TT_REDUCTION_DEPTH = 4;
-static const int ASP_DELTA[] = { 10, 20, 40, 100, 200, 400, POS_INF };
 
 inline int value_to_tt(int value, int ply) {
 	if (value >= CHECKMATE_BOUND) {

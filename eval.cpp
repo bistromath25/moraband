@@ -120,9 +120,6 @@ Evaluate::Evaluate(const Position& s) : position(s), material{}, pawn_structure{
 		}
 	}
 
-	evalPieces(WHITE);
-	evalPieces(BLACK);
-
 	// Pawn attacks
 	piece_attacks_bb[WHITE][PIECETYPE_PAWN] |= (position.getPieceBB<PIECETYPE_PAWN>(WHITE) & NOT_A_FILE) << 9 & position.getOccupancyBB();
 	piece_attacks_bb[WHITE][PIECETYPE_PAWN] |= (position.getPieceBB<PIECETYPE_PAWN>(WHITE) & NOT_H_FILE) << 7 & position.getOccupancyBB();
@@ -131,6 +128,8 @@ Evaluate::Evaluate(const Position& s) : position(s), material{}, pawn_structure{
 	all_attacks_bb[WHITE] |= piece_attacks_bb[WHITE][PIECETYPE_PAWN];
 	all_attacks_bb[BLACK] |= piece_attacks_bb[BLACK][PIECETYPE_PAWN];
 
+	evalPieces(WHITE);
+	evalPieces(BLACK);
 	evalPawnShield(WHITE);
 	evalPawnShield(BLACK);
 	evalAttacks(WHITE);
@@ -178,7 +177,6 @@ void Evaluate::evalOutposts(const Color c) {
 /* Evaluate pawn structure */
 void Evaluate::evalPawns(const Color c) {
 	const int dir = c == WHITE ? 8 : -8;
-	Square kingSq = position.getKingSquare(c);
 
 	for (Square p : position.getPieceList<PIECETYPE_PAWN>(c)) {
 		if (p == no_sq) {
