@@ -93,7 +93,7 @@ int qsearch(Position& s, SearchInfo& si, GlobalInfo& gi, int ply, int alpha, int
 		
 		// Avoid pruning tactical positions
 		if (!s.inCheck() && !s.givesCheck(m) && !s.isEnPassant(m) && !isPromotion(m)) {
-			int fScore = staticEval + 100 + PieceValue[s.onSquare(getDst(m))];
+			int fScore = staticEval + 100 + PIECE_VALUE[s.onSquare(getDst(m))].score();
 			if (fScore <= alpha) {
 				bestScore = std::max(bestScore, fScore);
 				continue;
@@ -249,7 +249,7 @@ int search(Position& s, SearchInfo& si, GlobalInfo& gi, int depth, int ply, int 
 			}
 			// SEE-based pruning (prune if SEE too low)
 			// Prune if see(move) < -(pawn * 2 ^ (depth - 1))
-			if (depth <= 3 && s.see(m) < -PAWN_WEIGHT_MG * (1 << (depth - 1)) /*&& m != tt_move*/) {
+			if (depth <= 3 && s.see(m) < -PIECE_VALUE[PIECETYPE_PAWN].score() * (1 << (depth - 1)) /*&& m != tt_move*/) {
 				continue;
 			}
 			// Late move reduction

@@ -15,7 +15,27 @@
 #include "Position.h"
 #include "pst.h"
 
-extern int TEMPO_BONUS; // Side-to-move bonus
+struct Score {
+	Score() : mg(0), eg(0) {}
+	Score(int m, int e) : mg(m), eg(e) {}
+	Score(const Score& s) : mg(s.mg), eg(s.eg) {}
+	Score operator+(const int s) { return Score(mg + s, eg + s); }
+	Score operator*(const int s) { return Score(mg * s, eg * s); }
+	Score operator+(const Score& s) { return Score(mg + s.mg, eg + s.eg); }
+	Score operator-(const Score& s) { return Score(mg - s.mg, eg - s.eg); }
+	Score& operator+=(const int s) { mg += s; eg += s; return *this; }
+	Score& operator-=(const int s) { mg -= s; eg -= s; return *this; }
+	Score& operator+=(const Score& s) { mg += s.mg; eg += s.eg; return *this; }
+	Score& operator-=(const Score& s) { mg -= s.mg; eg -= s.eg; return *this; }
+	int score(int phase) const { return (mg * (256 - phase) + eg * phase) / 256; }
+	int score() const { return mg; }
+
+private:
+	int mg;
+	int eg;
+};
+
+extern Score TEMPO_BONUS; // Side-to-move bonus
 extern int CONTEMPT;
 
 extern int KNIGHT_THREAT; // Threats on enemy King
@@ -23,25 +43,18 @@ extern int BISHOP_THREAT;
 extern int ROOK_THREAT;
 extern int QUEEN_THREAT;
 
-extern int PAWN_WEIGHT_MG;
-extern int KNIGHT_WEIGHT_MG;
-extern int BISHOP_WEIGHT_MG;
-extern int ROOK_WEIGHT_MG;
-extern int QUEEN_WEIGHT_MG;
+extern Score PAWN_WEIGHT;
+extern Score KNIGHT_WEIGHT;
+extern Score BISHOP_WEIGHT;
+extern Score ROOK_WEIGHT;
+extern Score QUEEN_WEIGHT;
 
-extern int PAWN_WEIGHT_EG;
-extern int KNIGHT_WEIGHT_EG;
-extern int BISHOP_WEIGHT_EG;
-extern int ROOK_WEIGHT_EG;
-extern int QUEEN_WEIGHT_EG;
+extern const Score PIECE_VALUE[7];
 
-extern const int KING_WEIGHT;
-extern const int PieceValue[7];
-
-extern int KNIGHT_MOBILITY[2][9];
-extern int BISHOP_MOBILITY[2][14];
-extern int ROOK_MOBILITY[2][15];
-extern int QUEEN_MOBILITY[2][28];
+extern Score KNIGHT_MOBILITY[9];
+extern Score BISHOP_MOBILITY[14];
+extern Score ROOK_MOBILITY[15];
+extern Score QUEEN_MOBILITY[28];
 
 // Pawn eval
 enum PAWN_PASSED_TYPES {
@@ -50,30 +63,31 @@ enum PAWN_PASSED_TYPES {
 	PROTECTED_ADVANCE,
 	SAFE_ADVANCE
 };
-extern int PAWN_PASSED[4][2][7];
-extern int PAWN_PASSED_CANDIDATE;
-extern int PAWN_CONNECTED;
-extern int PAWN_ISOLATED;
-extern int PAWN_DOUBLED;
-extern int PAWN_FULL_BACKWARDS;
-extern int PAWN_BACKWARDS;
-extern int PAWN_SHIELD_CLOSE;
-extern int PAWN_SHIELD_FAR;
-extern int PAWN_SHIELD_MISSING;
+extern Score PAWN_PASSED[4][7];
+extern Score PAWN_PASSED_CANDIDATE;
+extern Score PAWN_CONNECTED;
+extern Score PAWN_ISOLATED;
+extern Score PAWN_DOUBLED;
+extern Score PAWN_FULL_BACKWARDS;
+extern Score PAWN_BACKWARDS;
+extern Score PAWN_SHIELD_CLOSE;
+extern Score PAWN_SHIELD_FAR;
+extern Score PAWN_SHIELD_MISSING;
 
-extern int BAD_BISHOP;
-extern int TRAPPED_ROOK;
-extern int STRONG_PAWN_ATTACK;
-extern int WEAK_PAWN_ATTACK;
-extern int HANGING;
+extern Score BAD_BISHOP;
+extern Score TRAPPED_ROOK;
+extern Score KNIGHT_PAWN_PENALTY;
+extern Score ROOK_PAWN_BONUS;
+extern Score STRONG_PAWN_ATTACK;
+extern Score WEAK_PAWN_ATTACK;
+extern Score HANGING;
 
 // Assorted bonuses
-extern int BISHOP_PAIR_MG;
-extern int BISHOP_PAIR_EG;
-extern int ROOK_OPEN_FILE;
-extern int ROOK_ON_SEVENTH_RANK;
-extern int KNIGHT_OUTPOST;
-extern int BISHOP_OUTPOST;
+extern Score BISHOP_PAIR;
+extern Score ROOK_OPEN_FILE;
+extern Score ROOK_ON_SEVENTH_RANK;
+extern Score KNIGHT_OUTPOST;
+extern Score BISHOP_OUTPOST;
 
 const int CHECKMATE = 32767;
 const int CHECKMATE_BOUND = CHECKMATE - MAX_PLY;
@@ -101,20 +115,20 @@ struct PawnEntry {
 	U64 getKey() const {
 		return key;
 	}
-	const std::array<int, PLAYER_SIZE>& getStructure() const {
+	const std::array<Score, PLAYER_SIZE>& getStructure() const {
 		return structure;
 	}
-	const std::array<int, PLAYER_SIZE>& getMaterial() const	{
+	const std::array<Score, PLAYER_SIZE>& getMaterial() const	{
 		return material;
 	}
 	void clear() {
 		key = 0;
-		std::fill(structure.begin(), structure.end(), 0);
-		std::fill(material.begin(), material.end(), 0);
+		std::fill(structure.begin(), structure.end(), Score{});
+		std::fill(material.begin(), material.end(), Score{});
 	}
 	U64 key;
-	std::array<int, PLAYER_SIZE> structure;
-	std::array<int, PLAYER_SIZE> material;
+	std::array<Score, PLAYER_SIZE> structure;
+	std::array<Score, PLAYER_SIZE> material;
 };
 
 /* Pawn hash table for pawn evaluation */
@@ -135,7 +149,7 @@ struct PawnHashTable {
 	PawnEntry* probe(U64 key) {
 		return &table[key % size];
 	}
-	void store(U64 key, const std::array<int, PLAYER_SIZE>& structure, const std::array<int, PLAYER_SIZE>& material) {
+	void store(U64 key, const std::array<Score, PLAYER_SIZE>& structure, const std::array<Score, PLAYER_SIZE>& material) {
 		table[key % size].key = key;
 		table[key % size].structure = structure;
 		table[key % size].material = material;
@@ -157,18 +171,18 @@ public:
 	void evalPawnShield(const Color c);
 	void evalPawnShield(const Color c, U64 pawnShieldMask);
 	int getScore() const;
-	int getTaperedScore(int mg, int eg);
+	//int getTaperedScore(int mg, int eg);
 	friend std::ostream& operator<<(std::ostream& o, const Evaluate& e);
 private:
 	int gamePhase;
 	const Position& position;
-	int score;
-	std::array<int, PLAYER_SIZE> mobility;
-	std::array<int, PLAYER_SIZE> king_safety;
-	std::array<int, PLAYER_SIZE> pawn_structure;
-	std::array<int, PLAYER_SIZE> material;
+	Score score;
+	std::array<Score, PLAYER_SIZE> mobility;
+	std::array<Score, PLAYER_SIZE> king_safety;
+	std::array<Score, PLAYER_SIZE> pawn_structure;
+	std::array<Score, PLAYER_SIZE> material;
 	//std::array<int, PLAYER_SIZE> mPst;
-	std::array<int, PLAYER_SIZE> attacks;
+	std::array<Score, PLAYER_SIZE> attacks;
 	std::array<std::array<U64, PIECE_TYPES_SIZE>, PLAYER_SIZE> piece_attacks_bb;
 	std::array<U64, PLAYER_SIZE> all_attacks_bb;
 };

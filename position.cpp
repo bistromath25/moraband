@@ -372,13 +372,13 @@ int Position::see(Move move) const {
 	from = square_bb[src];
 	// Check if the move is en passant
 	if (onSquare(src) == PIECETYPE_PAWN && square_bb[dst] & enPassant) {
-		gain[d] = PieceValue[PIECETYPE_PAWN];
+		gain[d] = PIECE_VALUE[PIECETYPE_PAWN].score();
 	}
 	else if (getPiecePromotion(move) == PIECETYPE_QUEEN) {
-		gain[d] = QUEEN_WEIGHT_MG - PAWN_WEIGHT_MG;
+		gain[d] = PIECE_VALUE[PIECETYPE_QUEEN].score() - PIECE_VALUE[PIECETYPE_PAWN].score();
 	}
 	else {
-		gain[d] = PieceValue[onSquare(dst)];
+		gain[d] = PIECE_VALUE[onSquare(dst)].score();
 	}
 	
 	occupancy = getOccupancyBB();
@@ -395,7 +395,7 @@ int Position::see(Move move) const {
 		d++;
 
 		// Storing the potential gain, if defended
-		gain[d] = PieceValue[target] - gain[d - 1];
+		gain[d] = PIECE_VALUE[target].score() - gain[d - 1];
 
 		// Prune if the gain cannot be improved
 		if (std::max(-gain[d - 1], gain[d]) < 0) {
