@@ -73,17 +73,15 @@ extern Score PAWN_BACKWARDS;
 extern Score PAWN_SHIELD_CLOSE;
 extern Score PAWN_SHIELD_FAR;
 extern Score PAWN_SHIELD_MISSING;
-
-extern Score BAD_BISHOP;
-extern Score TRAPPED_ROOK;
-extern Score KNIGHT_PAWN_PENALTY;
-extern Score ROOK_PAWN_BONUS;
 extern Score STRONG_PAWN_ATTACK;
 extern Score WEAK_PAWN_ATTACK;
 extern Score HANGING;
+extern Score KNIGHT_PAWN_PENALTY;
+extern Score ROOK_PAWN_BONUS;
 
-// Assorted bonuses
 extern Score BISHOP_PAIR;
+extern Score BAD_BISHOP;
+extern Score TRAPPED_ROOK;
 extern Score ROOK_OPEN_FILE;
 extern Score ROOK_ON_SEVENTH_RANK;
 extern Score KNIGHT_OUTPOST;

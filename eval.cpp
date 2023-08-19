@@ -7,7 +7,7 @@
 
 #define S(mg, eg) Score(mg, eg)
 
-Score TEMPO_BONUS = S(16, 1); // Side-to-move bonus
+Score TEMPO_BONUS = S(16, 16); // Side-to-move bonus
 
 int KNIGHT_THREAT = 3; // Threats on enemy King
 int BISHOP_THREAT = 3;
@@ -23,13 +23,13 @@ Score QUEEN_WEIGHT = S(1025, 936);
 const Score KING_WEIGHT = S(32767, 32767);
 
 const Score PIECE_VALUE[7] =  {
-    PAWN_WEIGHT,
-    KNIGHT_WEIGHT,
-    BISHOP_WEIGHT,
-    ROOK_WEIGHT,
-    QUEEN_WEIGHT,
+	PAWN_WEIGHT,
+	KNIGHT_WEIGHT,
+	BISHOP_WEIGHT,
+	ROOK_WEIGHT,
+	QUEEN_WEIGHT,
 	KING_WEIGHT,
-    S(0, 0) // none
+	S(0, 0) // none
 };
 
 Score KNIGHT_MOBILITY[9] = {
@@ -63,27 +63,24 @@ Score PAWN_PASSED[4][7] = {
 		S(0, 0), S(8, 8), S(15, 15), S(20, 24), S(40, 60), S(100, 190), S(150, 290)
 	}
 };
-
 Score PAWN_PASSED_CANDIDATE = S(20, 40);
-Score PAWN_CONNECTED = S(10, 11);
-Score PAWN_ISOLATED = S(-10, -9);
-Score PAWN_DOUBLED = S(-10, -9);
-Score PAWN_FULL_BACKWARDS = S(-15, -14);
-Score PAWN_BACKWARDS = S(-10, -9);
-Score PAWN_SHIELD_CLOSE = S(10, 5);
-Score PAWN_SHIELD_FAR = S(8, 4);
-Score PAWN_SHIELD_MISSING = S(-8, -4);
-
-Score BAD_BISHOP = S(-10, -20);
-Score TRAPPED_ROOK = S(-25, -50); 
-Score KNIGHT_PAWN_PENALTY = S(-1, -1);
-Score ROOK_PAWN_BONUS = S(3, 1);
+Score PAWN_CONNECTED = S(10, 15);
+Score PAWN_ISOLATED = S(-10, -5);
+Score PAWN_DOUBLED = S(-10, -5);
+Score PAWN_FULL_BACKWARDS = S(-15, -7);
+Score PAWN_BACKWARDS = S(-10, -5);
+Score PAWN_SHIELD_CLOSE = S(10, 0);
+Score PAWN_SHIELD_FAR = S(8, 0);
+Score PAWN_SHIELD_MISSING = S(-8, 0);
 Score STRONG_PAWN_ATTACK = S(-60, -60);
 Score WEAK_PAWN_ATTACK = S(-30, -30);
 Score HANGING = S(-15, -15);
+Score KNIGHT_PAWN_PENALTY = S(-1, -1);
+Score ROOK_PAWN_BONUS = S(3, 1);
 
-// Assorted bonuses
 Score BISHOP_PAIR = S(50, 80);
+Score BAD_BISHOP = S(-10, -20);
+Score TRAPPED_ROOK = S(-25, -50);
 Score ROOK_OPEN_FILE = S(30, 15);
 Score ROOK_ON_SEVENTH_RANK = S(40, 20);
 Score KNIGHT_OUTPOST = S(45, 10);
@@ -333,9 +330,6 @@ void Evaluate::evalPieces(const Color c) {
 }
 
 void Evaluate::evalPawnShield(const Color c) {
-	if (position.getPieceCount<PIECETYPE_ROOK>() + position.getPieceCount<PIECETYPE_QUEEN>() == 0) {
-		return;
-	}
 	Square kingSq = position.getKingSquare(c);
 
 	if (c == WHITE) {
