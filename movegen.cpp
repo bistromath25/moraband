@@ -21,7 +21,14 @@ MoveList::MoveList(const Position& s, Move bestMove, History* history, int ply, 
 		Square k = position.getKingSquare(position.getOurColor());
 		Square c = get_lsb(position.getCheckersBB());
 		valid = between[k][c] | position.getCheckersBB();
-		stage = EvadeBestMove;
+		if (position.inDoubleCheck()) {
+			pushMoves<MoveType::All, PIECETYPE_KING>();
+			checkLegal();
+			stage = AllLegal;
+		}
+		else {
+			stage = EvadeBestMove;
+		}
 	}
 	else {
 		stage = qsearch ? QBestMove : BestMove;
@@ -545,8 +552,8 @@ Move MoveList::getBestMove() {
 /* List of moves and related functions */
 MoveList::MoveList(const Position& s) : position(s), valid(FULL), isQSearch(false), best(NULL_MOVE), sz(0), history(nullptr), ply(0) {
 	generateMoves<MoveType::All>();
-	stage = AllLegal;
 	checkLegal();
+	stage = AllLegal;
 }
 
 std::ostream& operator<<(std::ostream& os, const MoveList& moveList) {
