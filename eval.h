@@ -188,4 +188,6 @@ private:
 	std::array<U64, PLAYER_SIZE> all_attacks_bb;
 };
 
+void initKingRing();
+
 #endif
