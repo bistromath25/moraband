@@ -35,6 +35,36 @@ private:
 	int eg;
 };
 
+struct KingRing {
+	KingRing() : masks() {
+		for (int ring = 1; ring <= 2; ++ring) {
+			for (int i = 0; i < 8; ++i) {
+				for (int j = 0; j < 8; ++j) {
+					masks[ring - 1][i * 8 + j] = 0ULL;
+					for (int y = i - ring; y <= i + ring; ++y) {
+						for (int x = j - ring; x <= j + ring; ++x) {
+							if (y < 0 || y >= 8 || x < 0 || x >= 8) {
+								continue;
+							}
+							else if (y == i - ring || y == i + ring || x == j - ring || x == j + ring) {
+								masks[ring - 1][i * 8 + j] |= 1ULL << (y * 8 + x);
+							}
+						}
+					}
+				}
+			}
+		}
+	}
+	U64 getRing(int r, Square s) {
+		return masks[r - 1][s];
+	}
+
+private:
+	U64 masks[2][64];
+};
+
+extern KingRing kingRing;
+
 extern Score TEMPO_BONUS; // Side-to-move bonus
 extern int CONTEMPT;
 
@@ -104,6 +134,8 @@ const int SAFETY_TABLE[100] =  {
 	650, 650, 650, 650, 650, 650, 650, 650, 650, 650,
 	650, 650, 650, 650, 650, 650, 650, 650, 650, 650
 };
+
+extern Score KING_RING_ATTACK[2][5];
 
 const int PAWN_HASH_SIZE = 2;
 

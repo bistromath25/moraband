@@ -86,6 +86,16 @@ Score ROOK_ON_SEVENTH_RANK = S(40, 20);
 Score KNIGHT_OUTPOST = S(45, 10);
 Score BISHOP_OUTPOST = S(25, 5);
 
+Score KING_RING_ATTACK[2][5] = {
+	{
+		S(40, -15), S(30, -10), S(45, -5), S(40, -10), S(35, 5)
+	},
+	{
+		S(25, -8), S(25, -1), S(25, -3), S(20, -3), S(20, 8)
+	}
+};
+
+KingRing kingRing;
 PawnHashTable ptable;
 
 /* Evaluation and related functions */
@@ -327,6 +337,14 @@ void Evaluate::evalPieces(const Color c) {
 
 	// Threats on enemy King
 	king_safety[!c] -= SAFETY_TABLE[king_threats];
+
+	// King ring attacks
+	U64 kingRing1 = kingRing.getRing(1, position.getKingSquare(!c));
+	U64 kingRing2 = kingRing.getRing(2, position.getKingSquare(!c));
+	for (int pt = PIECETYPE_PAWN; pt <= PIECETYPE_QUEEN; ++pt) {
+		king_safety[!c] -= KING_RING_ATTACK[0][pt] * pop_count(kingRing1 & piece_attacks_bb[c][pt]);
+		king_safety[!c] -= KING_RING_ATTACK[1][pt] * pop_count(kingRing2 & piece_attacks_bb[c][pt]);
+	}
 }
 
 void Evaluate::evalPawnShield(const Color c) {
