@@ -172,7 +172,7 @@ void Evaluate::evalPawns(const Color c) {
 		if (p == no_sq) {
 			break;
 		}
-		int r = c == WHITE ? rank(p) : 8 - rank(p) - 1;
+		int r = c == WHITE ? rank(p) : 7 - rank(p);
 
 		material[c] += PAWN_WEIGHT;
 
@@ -331,27 +331,23 @@ void Evaluate::evalPieces(const Color c) {
 
 void Evaluate::evalPawnShield(const Color c) {
 	Square kingSq = position.getKingSquare(c);
-
-	if (c == WHITE) {
-		if (rank(kingSq) > 1) {
-			return;
+	int r = c == WHITE ? rank(kingSq) : 7 - rank(kingSq);
+	if (r <= 1) {
+		if (c == WHITE) {
+			if (file(kingSq) <= 2) { // Kingside
+				evalPawnShield(WHITE, square_bb[F2] | square_bb[G2] | square_bb[H2]);
+			}
+			else if (file(kingSq) >= 5) { // Queenside
+				evalPawnShield(WHITE, square_bb[A2] | square_bb[B2] | square_bb[C2]);
+			}
 		}
-		if (file(kingSq) <= 2) { // Kingside
-			evalPawnShield(WHITE, square_bb[F2] | square_bb[G2] | square_bb[H2]);
-		}
-		else if (file(kingSq) >= 5) { // Queenside
-			evalPawnShield(WHITE, square_bb[A2] | square_bb[B2] | square_bb[C2]);
-		}
-	}
-	else {
-		if (rank(kingSq) < 6) {
-			return;
-		}
-		if (file(kingSq) <= 2) { // Kingside
-			evalPawnShield(BLACK, square_bb[F7] | square_bb[G7] | square_bb[H7]);
-		}
-		else if (file(kingSq) >= 5) { // Queenside
-			evalPawnShield(BLACK, square_bb[A7] | square_bb[B7] | square_bb[C7]);
+		else {
+			if (file(kingSq) <= 2) { // Kingside
+				evalPawnShield(BLACK, square_bb[F7] | square_bb[G7] | square_bb[H7]);
+			}
+			else if (file(kingSq) >= 5) { // Queenside
+				evalPawnShield(BLACK, square_bb[A7] | square_bb[B7] | square_bb[C7]);
+			}
 		}
 	}
 }
@@ -369,6 +365,13 @@ void Evaluate::evalPawnShield(const Color c, U64 pawnShieldCloseMask) {
 	king_safety[c] += PAWN_SHIELD_CLOSE * pop_count(pawnShieldClose);
 	king_safety[c] += PAWN_SHIELD_FAR * pop_count(pawnShieldFar);
 	king_safety[c] += PAWN_SHIELD_MISSING * pop_count(pawnShieldMissing);
+
+	U64 themPawnsBB = position.getPieceBB<PIECETYPE_PAWN>(!c);
+	while (pawnShieldMissing) {
+		if (themPawnsBB & file(pop_lsb(pawnShieldMissing))) {
+			king_safety[c] += PAWN_SHIELD_MISSING;
+		}
+	}
 }
 
 void Evaluate::evalAttacks(const Color c) {
