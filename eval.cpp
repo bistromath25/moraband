@@ -86,6 +86,7 @@ Score ROOK_ON_SEVENTH_RANK = S(40, 20);
 Score KNIGHT_OUTPOST = S(45, 10);
 Score BISHOP_OUTPOST = S(25, 5);
 
+int KING_RING[2][64];
 Score KING_RING_ATTACK[2][5] = {
 	{
 		S(40, -15), S(30, -10), S(45, -5), S(40, -10), S(35, 5)
@@ -95,7 +96,6 @@ Score KING_RING_ATTACK[2][5] = {
 	}
 };
 
-KingRing kingRing;
 PawnHashTable ptable;
 
 /* Evaluation and related functions */
@@ -339,8 +339,8 @@ void Evaluate::evalPieces(const Color c) {
 	king_safety[!c] -= SAFETY_TABLE[king_threats];
 
 	// King ring attacks
-	U64 kingRing1 = kingRing.getRing(1, position.getKingSquare(!c));
-	U64 kingRing2 = kingRing.getRing(2, position.getKingSquare(!c));
+	U64 kingRing1 = KING_RING[0][position.getKingSquare(!c)];
+	U64 kingRing2 = KING_RING[1][position.getKingSquare(!c)];
 	for (int pt = PIECETYPE_PAWN; pt <= PIECETYPE_QUEEN; ++pt) {
 		king_safety[!c] -= KING_RING_ATTACK[0][pt] * pop_count(kingRing1 & piece_attacks_bb[c][pt]);
 		king_safety[!c] -= KING_RING_ATTACK[1][pt] * pop_count(kingRing2 & piece_attacks_bb[c][pt]);
@@ -458,4 +458,24 @@ std::ostream& operator<<(std::ostream& os, const Evaluate& e) {
 		<< "-------------------------------------------------------------\n";
 
 	return os;
+}
+
+void initKingRing() {
+	for (int ring = 1; ring <= 2; ++ring) {
+		for (int i = 0; i < 8; ++i) {
+			for (int j = 0; j < 8; ++j) {
+				KING_RING[ring - 1][i * 8 + j] = 0ULL;
+				for (int y = i - ring; y <= i + ring; ++y) {
+					for (int x = j - ring; x <= j + ring; ++x) {
+						if (y < 0 || y >= 8 || x < 0 || x >= 8) {
+							continue;
+						}
+						else if (y == i - ring || y == i + ring || x == j - ring || x == j + ring) {
+							KING_RING[ring - 1][i * 8 + j] |= 1ULL << (y * 8 + x);
+						}
+					}
+				}
+			}
+		}
+	}
 }
