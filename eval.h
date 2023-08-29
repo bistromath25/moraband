@@ -172,7 +172,6 @@ public:
 	void evalPawnShield(const Color c);
 	void evalPawnShield(const Color c, U64 pawnShieldMask);
 	int getScore() const;
-	//int getTaperedScore(int mg, int eg);
 	friend std::ostream& operator<<(std::ostream& o, const Evaluate& e);
 private:
 	int gamePhase;
@@ -182,7 +181,6 @@ private:
 	std::array<Score, PLAYER_SIZE> king_safety;
 	std::array<Score, PLAYER_SIZE> pawn_structure;
 	std::array<Score, PLAYER_SIZE> material;
-	//std::array<int, PLAYER_SIZE> mPst;
 	std::array<Score, PLAYER_SIZE> attacks;
 	std::array<std::array<U64, PIECE_TYPES_SIZE>, PLAYER_SIZE> piece_attacks_bb;
 	std::array<U64, PLAYER_SIZE> all_attacks_bb;

@@ -137,15 +137,8 @@ Evaluate::Evaluate(const Position& s) : position(s), material{}, pawn_structure{
 }
 
 int Evaluate::getScore() const {
-	//return score + CONTEMPT;
 	return score.score(gamePhase) + CONTEMPT;
 }
-
-/*
-int Evaluate::getTaperedScore(int mg, int eg) {
-	return (mg * (256 - gamePhase) + eg * gamePhase) / 256;
-}
-*/
 
 void Evaluate::evalOutposts(const Color c) {
 	for (Square p : position.getPieceList<PIECETYPE_KNIGHT>(c)) {
