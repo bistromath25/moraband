@@ -24,6 +24,7 @@ int main() {
 	mg_init();
 	Zobrist::init();
 	bb_init();
+	initKingRing();
 	uci();
     return 0;
 }
