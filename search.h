@@ -28,7 +28,7 @@ static const int LMR_COUNT = 3;
 static const int LMR_DEPTH = 2;
 static const int NULL_MOVE_COUNT = 3;
 static const int NULL_MOVE_DEPTH = 4;
-static const int NULL_MOVE_MARGIN = 100; // NMP pruning margin
+static const int NULL_MOVE_MARGIN = 100;
 static const int REVERSE_FUTILITY_DEPTH = 3;
 static const int REVERSE_FUTILITY_MARGIN = 200;
 static const int RAZOR_DEPTH = 3;
@@ -55,11 +55,6 @@ inline int value_from_tt(int value, int ply) {
 	}
 	return value;
 }
-
-enum SearchType {
-	qSearch,
-	scoutSearch
-};
 
 struct SearchInfo {
 	SearchInfo() : moveTime(0), nodes(0), prevNodes(0), totalNodes(0), moves_to_go(0), quit(false), infinite(false), depth(MAX_PLY), time{}, inc{} {}
