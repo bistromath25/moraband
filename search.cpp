@@ -196,11 +196,21 @@ int search(Position& s, SearchInfo& si, GlobalInfo& gi, int depth, int ply, int 
 		best_move = gi.variation.getPvMove(ply);
 	}
 
+	int score = 0;
+	int bestScore = NEG_INF;
 	// Pruning
 	if (!isPv && !s.inCheck() && s.getNonPawnPieceCount() && beta > -CHECKMATE_BOUND) {
 		// Reverse futility pruning
-		if (depth < REVERSE_FUTILITY_DEPTH && staticEval - REVERSE_FUTILITY_MARGIN * depth >= beta) {
+		if (depth <= REVERSE_FUTILITY_DEPTH && staticEval - REVERSE_FUTILITY_MARGIN * depth >= beta) {
 			return staticEval;
+		}
+
+		// Razoring
+		if (depth <= RAZOR_DEPTH && staticEval + RAZOR_MARGIN * depth < beta) {
+			score = qsearch(s, si, gi, 0, alpha, beta);
+			if (score < beta) {
+				return score;
+			}
 		}
 
 		// Null move pruning
@@ -219,6 +229,30 @@ int search(Position& s, SearchInfo& si, GlobalInfo& gi, int depth, int ply, int 
 				return nullScore;
 			}
 		}
+
+		// Probcut
+		if (depth >= PROBCUT_DEPTH) {
+			int betaCut = beta + PROBCUT_MARGIN;
+			MoveList moveListProbcut(s, tt_move, &(gi.history), ply, true);
+			Move m;
+			while ((m = moveListProbcut.getBestMove())) {
+				if ((!isPromotion(m) && !s.isCapture(m)) || s.see(m) < betaCut - staticEval) {
+					continue;
+				}
+
+				Position c(s);
+				c.makeMove(m);
+				gi.history.push(std::make_pair(m, c.getKey()));
+				score = -qsearch(s, si, gi, 0, -betaCut, -betaCut + 1);
+				if (score > betaCut) {
+					score = -search(s, si, gi, depth - PROBCUT_DEPTH, ply + 1, -betaCut, -betaCut + 1, true, false);
+				}
+				gi.history.pop();
+				if (score >= betaCut) {
+					return score;
+				}
+			}
+		}
 	}
 
 	// Internal iterative deepening
@@ -230,9 +264,6 @@ int search(Position& s, SearchInfo& si, GlobalInfo& gi, int depth, int ply, int 
 	}
 
 	MoveList moveList(s, tt_move, &(gi.history), ply);
-
-	int score = 0;
-	int bestScore = NEG_INF;
 
 	int legalMoves = 0;
 	int oldAlpha = alpha;
