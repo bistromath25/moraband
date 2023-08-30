@@ -61,6 +61,7 @@ public:
 	Move pop();
 	void checkLegal();
 	void setStage(int stage) { stage = stage; }
+	Move getKiller(int k) const;
 	
 	template<MoveType T> void generateMoves();
 	template<MoveType T, Color C> void pushPawnMoves();

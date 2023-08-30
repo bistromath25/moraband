@@ -253,7 +253,7 @@ int search(Position& s, SearchInfo& si, GlobalInfo& gi, int depth, int ply, int 
 				continue;
 			}
 			// Late move reduction
-			if (depth > 2 && legalMoves > (isPv ? 5 : 3) && !s.isCapture(m)) {
+			if (depth > 2 && legalMoves > (isPv ? 5 : 3) && !s.isCapture(m) && m != moveList.getKiller(1) && m != moveList.getKiller(2)) {
 				d -= 1 + !isPv + (legalMoves > 8);
 				d = std::max(1, d);
 			}

@@ -549,6 +549,10 @@ Move MoveList::getBestMove() {
 	return NULL_MOVE; // No move found?!?
 }
 
+Move MoveList::getKiller(int k) const {
+	return k == 1 ? killer1 : killer2;
+}
+
 /* List of moves and related functions */
 MoveList::MoveList(const Position& s) : position(s), valid(FULL), isQSearch(false), best(NULL_MOVE), sz(0), history(nullptr), ply(0) {
 	generateMoves<MoveType::All>();
