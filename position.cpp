@@ -696,19 +696,19 @@ std::string Position::getFen() { // Current FEN
 
 // Print board
 std::ostream & operator << (std::ostream & os, const Position & s) {
-	static const char * W_pawn   = "\u2659";
-	static const char * W_knight = "\u2658";
-	static const char * W_bishop = "\u2657";
-	static const char * W_rook   = "\u2656";
-	static const char * W_queen  = "\u2655";
-	static const char * W_king   = "\u2654";
-	static const char * B_pawn   = "\u265F";
-	static const char * B_knight = "\u265E";
-	static const char * B_bishop = "\u265D";
-	static const char * B_rook   = "\u265C";
-	static const char * B_queen  = "\u265B";
-	static const char * B_king   = "\u265A";
-	static const char * Empty    = " ";
+	constexpr char * W_pawn   = "\u2659";
+	constexpr char * W_knight = "\u2658";
+	constexpr char * W_bishop = "\u2657";
+	constexpr char * W_rook   = "\u2656";
+	constexpr char * W_queen  = "\u2655";
+	constexpr char * W_king   = "\u2654";
+	constexpr char * B_pawn   = "\u265F";
+	constexpr char * B_knight = "\u265E";
+	constexpr char * B_bishop = "\u265D";
+	constexpr char * B_rook   = "\u265C";
+	constexpr char * B_queen  = "\u265B";
+	constexpr char * B_king   = "\u265A";
+	constexpr char * Empty    = " ";
 	
 	std::string nums[8] = {"1", "2", "3", "4", "5", "6", "7", "8"};
 	const std::string bar = "  + - + - + - + - + - + - + - + - + ";
