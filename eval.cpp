@@ -86,6 +86,16 @@ Score ROOK_ON_SEVENTH_RANK = S(40, 20);
 Score KNIGHT_OUTPOST = S(45, 10);
 Score BISHOP_OUTPOST = S(25, 5);
 
+int KING_RING[2][64];
+Score KING_RING_ATTACK[2][5] = {
+	{
+		S(40, -15), S(30, -10), S(45, -5), S(40, -10), S(35, 5)
+	},
+	{
+		S(25, -8), S(25, -1), S(25, -3), S(20, -3), S(20, 8)
+	}
+};
+
 PawnHashTable ptable;
 
 /* Evaluation and related functions */
@@ -127,15 +137,8 @@ Evaluate::Evaluate(const Position& s) : position(s), material{}, pawn_structure{
 }
 
 int Evaluate::getScore() const {
-	//return score + CONTEMPT;
 	return score.score(gamePhase) + CONTEMPT;
 }
-
-/*
-int Evaluate::getTaperedScore(int mg, int eg) {
-	return (mg * (256 - gamePhase) + eg * gamePhase) / 256;
-}
-*/
 
 void Evaluate::evalOutposts(const Color c) {
 	for (Square p : position.getPieceList<PIECETYPE_KNIGHT>(c)) {
@@ -172,7 +175,7 @@ void Evaluate::evalPawns(const Color c) {
 		if (p == no_sq) {
 			break;
 		}
-		int r = c == WHITE ? rank(p) : 8 - rank(p) - 1;
+		int r = c == WHITE ? rank(p) : 7 - rank(p);
 
 		material[c] += PAWN_WEIGHT;
 
@@ -327,31 +330,35 @@ void Evaluate::evalPieces(const Color c) {
 
 	// Threats on enemy King
 	king_safety[!c] -= SAFETY_TABLE[king_threats];
+
+	// King ring attacks
+	U64 kingRing1 = KING_RING[0][position.getKingSquare(!c)];
+	U64 kingRing2 = KING_RING[1][position.getKingSquare(!c)];
+	for (int pt = PIECETYPE_PAWN; pt <= PIECETYPE_QUEEN; ++pt) {
+		king_safety[!c] -= KING_RING_ATTACK[0][pt] * pop_count(kingRing1 & piece_attacks_bb[c][pt]);
+		king_safety[!c] -= KING_RING_ATTACK[1][pt] * pop_count(kingRing2 & piece_attacks_bb[c][pt]);
+	}
 }
 
 void Evaluate::evalPawnShield(const Color c) {
 	Square kingSq = position.getKingSquare(c);
-
-	if (c == WHITE) {
-		if (rank(kingSq) > 1) {
-			return;
+	int r = c == WHITE ? rank(kingSq) : 7 - rank(kingSq);
+	if (r <= 1) {
+		if (c == WHITE) {
+			if (file(kingSq) <= 2) { // Kingside
+				evalPawnShield(WHITE, square_bb[F2] | square_bb[G2] | square_bb[H2]);
+			}
+			else if (file(kingSq) >= 5) { // Queenside
+				evalPawnShield(WHITE, square_bb[A2] | square_bb[B2] | square_bb[C2]);
+			}
 		}
-		if (file(kingSq) <= 2) { // Kingside
-			evalPawnShield(WHITE, square_bb[F2] | square_bb[G2] | square_bb[H2]);
-		}
-		else if (file(kingSq) >= 5) { // Queenside
-			evalPawnShield(WHITE, square_bb[A2] | square_bb[B2] | square_bb[C2]);
-		}
-	}
-	else {
-		if (rank(kingSq) < 6) {
-			return;
-		}
-		if (file(kingSq) <= 2) { // Kingside
-			evalPawnShield(BLACK, square_bb[F7] | square_bb[G7] | square_bb[H7]);
-		}
-		else if (file(kingSq) >= 5) { // Queenside
-			evalPawnShield(BLACK, square_bb[A7] | square_bb[B7] | square_bb[C7]);
+		else {
+			if (file(kingSq) <= 2) { // Kingside
+				evalPawnShield(BLACK, square_bb[F7] | square_bb[G7] | square_bb[H7]);
+			}
+			else if (file(kingSq) >= 5) { // Queenside
+				evalPawnShield(BLACK, square_bb[A7] | square_bb[B7] | square_bb[C7]);
+			}
 		}
 	}
 }
@@ -369,6 +376,13 @@ void Evaluate::evalPawnShield(const Color c, U64 pawnShieldCloseMask) {
 	king_safety[c] += PAWN_SHIELD_CLOSE * pop_count(pawnShieldClose);
 	king_safety[c] += PAWN_SHIELD_FAR * pop_count(pawnShieldFar);
 	king_safety[c] += PAWN_SHIELD_MISSING * pop_count(pawnShieldMissing);
+
+	U64 themPawnsBB = position.getPieceBB<PIECETYPE_PAWN>(!c);
+	while (pawnShieldMissing) {
+		if (themPawnsBB & file(pop_lsb(pawnShieldMissing))) {
+			king_safety[c] += PAWN_SHIELD_MISSING;
+		}
+	}
 }
 
 void Evaluate::evalAttacks(const Color c) {
@@ -437,4 +451,24 @@ std::ostream& operator<<(std::ostream& os, const Evaluate& e) {
 		<< "-------------------------------------------------------------\n";
 
 	return os;
+}
+
+void initKingRing() {
+	for (int ring = 1; ring <= 2; ++ring) {
+		for (int i = 0; i < 8; ++i) {
+			for (int j = 0; j < 8; ++j) {
+				KING_RING[ring - 1][i * 8 + j] = 0ULL;
+				for (int y = i - ring; y <= i + ring; ++y) {
+					for (int x = j - ring; x <= j + ring; ++x) {
+						if (y < 0 || y >= 8 || x < 0 || x >= 8) {
+							continue;
+						}
+						else if (y == i - ring || y == i + ring || x == j - ring || x == j + ring) {
+							KING_RING[ring - 1][i * 8 + j] |= 1ULL << (y * 8 + x);
+						}
+					}
+				}
+			}
+		}
+	}
 }
