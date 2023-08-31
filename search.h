@@ -31,6 +31,7 @@ constexpr int NULL_MOVE_DEPTH = 4;
 constexpr int NULL_MOVE_MARGIN = 100; // NMP pruning margin
 constexpr int REVERSE_FUTILITY_DEPTH = 3;
 constexpr int REVERSE_FUTILITY_MARGIN = 200;
+constexpr int FUTILITY_DEPTH = 8;
 
 inline int value_to_tt(int value, int ply) {
 	if (value >= CHECKMATE_BOUND) {
