@@ -10,7 +10,7 @@
 #include <string>
 #include <sstream>
 #include <utility>
-#include "Position.h"
+#include "position.h"
 #include "tt.h"
 #include "defs.h"
 #include "movegen.h"
