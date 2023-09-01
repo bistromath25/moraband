@@ -9,10 +9,10 @@
 #include <iostream>
 #include <vector>
 #include <algorithm>
-#include "Position.h"
+#include "position.h"
 #include "move.h"
 #include "defs.h"
-#include "Position.h"
+#include "position.h"
 
 /* History heuristic */
 class History {

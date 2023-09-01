@@ -10,7 +10,7 @@
 #include <algorithm>
 #include <vector>
 #include <array>
-#include "Position.h"
+#include "position.h"
 #include "board.h"
 #include "MagicMoves.hpp"
 #include "defs.h"

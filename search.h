@@ -15,7 +15,7 @@
 #include <vector>
 #include "eval.h"
 #include "movegen.h"
-#include "Position.h"
+#include "position.h"
 #include "defs.h"
 #include "tt.h"
 #include "timeman.h"

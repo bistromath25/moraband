@@ -9,7 +9,7 @@
 #include <array>
 #include <algorithm>
 #include <iterator>
-#include "Position.h"
+#include "position.h"
 #include "movegen.h"
 #include "defs.h"
 #include "move.h"
