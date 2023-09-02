@@ -45,7 +45,7 @@ uciok
     - [Tapered evaluation](https://www.chessprogramming.org/Tapered_Eval)
 
 ## Compiling
-Compile via `make` or `clang++ -pthread -w -mcpu=apple-m1 -std=c++17 -O3 *.cpp -o Moraband`, assuming an Apple m1 environment with the clang compiler. Otherwise, change the compiler as needed and similarly replace `-mcpu=apple-m1` with `-march=native`, for example `g++ -pthread -w -march=native -std=c++17 -O3 *.cpp -o Moraband`.
+Compile via `cmake` or simply `g++ -pthread -w -march=native -std=c++17 -O3 *.cpp -o Moraband`.
 
 ## Background
 Like everyone else, I found myself playing a great deal of chess online during the past few years, encouraged by the advent of Netflix's *Queen's Gambit* and a general lack of things to do during the pandemic lockdowns. It was also during this time that I developed an interest in algorithmic contest problem solving, and it wasn't soon before I decided to try my hand at writing my own chess-playing program, a suitable sparring partner, following along closely to BlueFeverSoft's video tutorials. Eventually I lost interest in my endeavor, weighed down by my final years of high school and the (somewhat?) easing Covid restrictions.
