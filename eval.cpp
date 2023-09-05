@@ -343,7 +343,7 @@ void Evaluate::evalPieces(const Color c) {
 void Evaluate::evalPawnShield(const Color c) {
 	Square kingSq = position.getKingSquare(c);
 	int r = c == WHITE ? rank(kingSq) : 7 - rank(kingSq);
-	if (r <= 1) {
+	if (r <= 1 && position.getPieceCount<PIECETYPE_QUEEN>(!c)) {
 		if (c == WHITE) {
 			if (file(kingSq) <= 2) { // Kingside
 				evalPawnShield(WHITE, square_bb[F2] | square_bb[G2] | square_bb[H2]);
