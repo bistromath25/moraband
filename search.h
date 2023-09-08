@@ -59,7 +59,7 @@ enum SearchType {
 };
 
 struct SearchInfo {
-	SearchInfo() : moveTime(0), nodes(0), prevNodes(0), totalNodes(0), moves_to_go(0), quit(false), infinite(false), depth(MAX_PLY), time{}, inc{} {}
+	SearchInfo() : time{}, inc{}, moves_to_go(0), depth(MAX_PLY), nodes(0), prevNodes(0), totalNodes(0), moveTime(0), quit(false), infinite(false) {}
 	int time[PLAYER_SIZE], inc[PLAYER_SIZE];
 	int moves_to_go, depth, max_nodes, nodes, prevNodes;
 	U64 totalNodes;

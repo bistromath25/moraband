@@ -60,7 +60,7 @@ public:
 	Move getBestMove();
 	Move pop();
 	void checkLegal();
-	void setStage(int stage) { stage = stage; }
+	void setStage(int s) { stage = s; }
 	
 	template<MoveType T> void generateMoves();
 	template<MoveType T, Color C> void pushPawnMoves();
