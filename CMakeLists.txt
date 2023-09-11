@@ -1,6 +1,6 @@
 cmake_minimum_required(VERSION 3.18)
 project(Moraband VERSION 1.1 LANGUAGES CXX)
-set(CMAKE_SYSTEM_NAME Generic)
+set(CMAKE_SYSTEM_NAME CMAKE_HOST_SYSTEM_NAME)
 set(CMAKE_CXX_COMPILER g++)
 
 
