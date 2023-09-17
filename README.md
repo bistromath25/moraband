@@ -44,8 +44,8 @@ uciok
     - [Basic King safety using King safety table](https://www.chessprogramming.org/King_Safety)
     - [Tapered evaluation](https://www.chessprogramming.org/Tapered_Eval)
 
-## Compiling
-Compile via `cmake` or simply `g++ -pthread -w -march=native -std=c++17 -O3 *.cpp -o Moraband`.
+## Compile Moraband
+Compile via `cmake` or simply `g++ -Wall -pipe -march=native -std=c++17 -O3 *.cpp -o Moraband`.
 
 ## Background
 Like everyone else, I found myself playing a great deal of chess online during the past few years, encouraged by the advent of Netflix's *Queen's Gambit* and a general lack of things to do during the pandemic lockdowns. It was also during this time that I developed an interest in algorithmic contest problem solving, and it wasn't soon before I decided to try my hand at writing my own chess-playing program, a suitable sparring partner, following along closely to BlueFeverSoft's video tutorials. Eventually I lost interest in my endeavor, weighed down by my final years of high school and the (somewhat?) easing Covid restrictions.
