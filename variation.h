@@ -9,7 +9,7 @@
 #include <array>
 #include <algorithm>
 #include <iterator>
-#include "Position.h"
+#include "position.h"
 #include "movegen.h"
 #include "defs.h"
 #include "move.h"
@@ -32,7 +32,7 @@ public:
 	void checkPv(Position& s);
 	void printPv();
 private:
-	std::array<std::pair<Move, U64>, MAX_PV_SIZE> mPv; // (move, key)
+	std::array<std::pair<Move, U64>, MAX_PV_SIZE> pv; // (move, key)
 	bool isMatingLine;
 	std::size_t sz;
 };

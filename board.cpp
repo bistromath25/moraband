@@ -151,7 +151,6 @@ void print_bb(U64 bb) {
 			}
 			res.append("+\n|");
 		}
-		U64 bit = pow(2, i);
 		if (bb << i & MSB) {
 			res.append("1|");
 		}

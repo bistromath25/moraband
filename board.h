@@ -33,34 +33,34 @@ extern const U64 KING_MOVES[BOARD_SIZE];
 extern U64 bishopMoves[BOARD_SIZE];
 extern U64 rookMoves[BOARD_SIZE];
 
-static const U64 DARK_SQUARES  = 0xAA55AA55AA55AA55ULL;
-static const U64 LIGHT_SQUARES = 0x55AA55AA55AA55AAULL;
+constexpr U64 DARK_SQUARES  = 0xAA55AA55AA55AA55ULL;
+constexpr U64 LIGHT_SQUARES = 0x55AA55AA55AA55AAULL;
 
-static const U64 RANK_1 = 0x00000000000000FFULL;
-static const U64 RANK_2 = 0x000000000000FF00ULL;
-static const U64 RANK_3 = 0x0000000000FF0000ULL;
-static const U64 RANK_4 = 0x00000000FF000000ULL;
-static const U64 RANK_5 = 0x000000FF00000000ULL;
-static const U64 RANK_6 = 0x0000FF0000000000ULL;
-static const U64 RANK_7 = 0x00FF000000000000ULL;
-static const U64 RANK_8 = 0xFF00000000000000ULL;
-static const U64 RANK_PROMOTION = RANK_1 | RANK_8;
-static const U64 RANK_PAWN_START = RANK_2 | RANK_7;
+constexpr U64 RANK_1 = 0x00000000000000FFULL;
+constexpr U64 RANK_2 = 0x000000000000FF00ULL;
+constexpr U64 RANK_3 = 0x0000000000FF0000ULL;
+constexpr U64 RANK_4 = 0x00000000FF000000ULL;
+constexpr U64 RANK_5 = 0x000000FF00000000ULL;
+constexpr U64 RANK_6 = 0x0000FF0000000000ULL;
+constexpr U64 RANK_7 = 0x00FF000000000000ULL;
+constexpr U64 RANK_8 = 0xFF00000000000000ULL;
+constexpr U64 RANK_PROMOTION = RANK_1 | RANK_8;
+constexpr U64 RANK_PAWN_START = RANK_2 | RANK_7;
 
-static const U64 FILE_A = 0x8080808080808080ULL;
-static const U64 FILE_B = 0x4040404040404040ULL;
-static const U64 FILE_C = 0x2020202020202020ULL;
-static const U64 FILE_D = 0x1010101010101010ULL;
-static const U64 FILE_E = 0x0808080808080808ULL;
-static const U64 FILE_F = 0x0404040404040404ULL;
-static const U64 FILE_G = 0x0202020202020202ULL;
-static const U64 FILE_H = 0x0101010101010101ULL;
+constexpr U64 FILE_A = 0x8080808080808080ULL;
+constexpr U64 FILE_B = 0x4040404040404040ULL;
+constexpr U64 FILE_C = 0x2020202020202020ULL;
+constexpr U64 FILE_D = 0x1010101010101010ULL;
+constexpr U64 FILE_E = 0x0808080808080808ULL;
+constexpr U64 FILE_F = 0x0404040404040404ULL;
+constexpr U64 FILE_G = 0x0202020202020202ULL;
+constexpr U64 FILE_H = 0x0101010101010101ULL;
 
-static const U64 NOT_A_FILE = 0x7F7F7F7F7F7F7F7F;
-static const U64 NOT_H_FILE = 0xFEFEFEFEFEFEFEFE;
-static const U64 CENTER_FILES = NOT_A_FILE & NOT_H_FILE;
-static const U64 RIGHTSIDE = 0x0F0F0F0F0F0F0F0F;
-static const U64 LEFTSIDE = 0xF0F0F0F0F0F0F0F0;
+constexpr U64 NOT_A_FILE = 0x7F7F7F7F7F7F7F7F;
+constexpr U64 NOT_H_FILE = 0xFEFEFEFEFEFEFEFE;
+constexpr U64 CENTER_FILES = NOT_A_FILE & NOT_H_FILE;
+constexpr U64 RIGHTSIDE = 0x0F0F0F0F0F0F0F0F;
+constexpr U64 LEFTSIDE = 0xF0F0F0F0F0F0F0F0;
 
 void bb_init();
 
@@ -83,10 +83,10 @@ inline int pop_count(U64 bb) {
 #elif defined(__GNUC__)
 	return __builtin_popcountll(bb);
 #else
-	static const U64 m1 = 0x5555555555555555ull;
-	static const U64 m2 = 0x3333333333333333ull;
-	static const U64 m4 = 0x0f0f0f0f0f0f0f0full;
-	static const U64 h1 = 0x0101010101010101ull;
+	constexpr U64 m1 = 0x5555555555555555ull;
+	constexpr U64 m2 = 0x3333333333333333ull;
+	constexpr U64 m4 = 0x0f0f0f0f0f0f0f0full;
+	constexpr U64 h1 = 0x0101010101010101ull;
 	bb -= (bb >> 1) & m1;
 	bb = (bb & m2) + ((bb >> 2) & m2);
 	bb = (bb + (bb >> 4)) & m4;
@@ -112,8 +112,8 @@ inline Square get_lsb(U64 bb) {
 #elif defined(__GNUC__)
 	return static_cast<Square>(__builtin_ctzll(bb));
 #else
-	static const U64 DeBrujin = 0x03f79d71b4cb0a89;
-	static const int DeBrujin_table[64] = {
+	constexpr U64 DeBrujin = 0x03f79d71b4cb0a89;
+	constexpr int DeBrujin_table[64] = {
 		0,  1, 48,  2, 57, 49, 28,  3,
 		61, 58, 50, 42, 38, 29, 17,  4,
 		62, 55, 59, 36, 53, 51, 43, 22,

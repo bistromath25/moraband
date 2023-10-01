@@ -6,7 +6,7 @@
 #include <string>
 #include <iomanip>
 #include "movegen.h"
-#include "Position.h"
+#include "position.h"
 #include "defs.h"
 #include "timeman.h"
 #include "move.h"

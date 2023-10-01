@@ -5,7 +5,6 @@
 
 #include "variation.h"
 #include "eval.h"
-//#include "io.h"
 
 Variation::Variation() : isMatingLine(false), sz(0) {}
 
@@ -19,19 +18,19 @@ void Variation::pushToPv(Move move, U64 key, int ply, int score) {
 	int copyFromEnd = copyFromStart + MAX_PLY - ply - 1;
 
 	// Store the current move.
-	mPv[copyTo++] = std::make_pair(move, key);
+	pv[copyTo++] = std::make_pair(move, key);
 
 	// Copy from the previous iteration.
-	std::copy(std::make_move_iterator(mPv.begin() + copyFromStart), 
-	std::make_move_iterator(mPv.begin() + copyFromEnd), mPv.begin() + copyTo);
+	std::copy(std::make_move_iterator(pv.begin() + copyFromStart), 
+	std::make_move_iterator(pv.begin() + copyFromEnd), pv.begin() + copyTo);
 }
 
 U64 Variation::getPvKey(int ply) const {
-	return mPv[ply].second;
+	return pv[ply].second;
 }
 
 Move Variation::getPvMove(int ply) const {
-	return mPv[ply].first;
+	return pv[ply].first;
 }
 
 bool Variation::isMate() const {
@@ -44,7 +43,7 @@ int Variation::getMateInN() const {
 
 void Variation::clearPv() {
 	sz = 0;
-	std::fill(mPv.begin(), mPv.begin() + MAX_PLY, std::make_pair(0, 0));
+	std::fill(pv.begin(), pv.begin() + MAX_PLY, std::make_pair(0, 0));
 }
 
 void Variation::checkPv(Position& s) {
@@ -52,7 +51,7 @@ void Variation::checkPv(Position& s) {
 	Move nextMove;
 	std::memmove(&c, &s, sizeof(s));
 	for (int i = 0; i < MAX_PLY; ++i) {
-		nextMove = mPv[i].first;
+		nextMove = pv[i].first;
 		if (nextMove == NULL_MOVE) {
 			sz = i;
 			break;
@@ -74,7 +73,7 @@ void Variation::checkPv(Position& s) {
 
 void Variation::printPv() {
 	std::cout << " pv ";
-	for (auto it = mPv.begin(); it != mPv.begin() + sz; ++it) {
+	for (auto it = pv.begin(); it != pv.begin() + sz; ++it) {
 		std::cout << to_string(it->first) << " ";
 	}
 }
