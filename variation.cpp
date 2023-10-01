@@ -5,7 +5,6 @@
 
 #include "variation.h"
 #include "eval.h"
-//#include "io.h"
 
 Variation::Variation() : isMatingLine(false), sz(0) {}
 
