@@ -15,7 +15,7 @@
 #include <vector>
 #include "eval.h"
 #include "movegen.h"
-#include "Position.h"
+#include "position.h"
 #include "defs.h"
 #include "tt.h"
 #include "timeman.h"
@@ -24,13 +24,14 @@
 #include "history.h"
 //#include "book.h"
 
-static const int LMR_COUNT = 3;
-static const int LMR_DEPTH = 2;
-static const int NULL_MOVE_COUNT = 3;
-static const int NULL_MOVE_DEPTH = 4;
-static const int NULL_MOVE_MARGIN = 100; // NMP pruning margin
-static const int REVERSE_FUTILITY_DEPTH = 3;
-static const int REVERSE_FUTILITY_MARGIN = 200;
+constexpr int LMR_COUNT = 3;
+constexpr int LMR_DEPTH = 2;
+constexpr int NULL_MOVE_COUNT = 3;
+constexpr int NULL_MOVE_DEPTH = 4;
+constexpr int NULL_MOVE_MARGIN = 100; // NMP pruning margin
+constexpr int REVERSE_FUTILITY_DEPTH = 3;
+constexpr int REVERSE_FUTILITY_MARGIN = 200;
+constexpr int FUTILITY_DEPTH = 8;
 
 inline int value_to_tt(int value, int ply) {
 	if (value >= CHECKMATE_BOUND) {
@@ -58,7 +59,7 @@ enum SearchType {
 };
 
 struct SearchInfo {
-	SearchInfo() : moveTime(0), nodes(0), prevNodes(0), totalNodes(0), moves_to_go(0), quit(false), infinite(false), depth(MAX_PLY), time{}, inc{} {}
+	SearchInfo() : time{}, inc{}, moves_to_go(0), depth(MAX_PLY), nodes(0), prevNodes(0), totalNodes(0), moveTime(0), quit(false), infinite(false) {}
 	int time[PLAYER_SIZE], inc[PLAYER_SIZE];
 	int moves_to_go, depth, max_nodes, nodes, prevNodes;
 	U64 totalNodes;

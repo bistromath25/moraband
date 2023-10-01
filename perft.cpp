@@ -18,7 +18,7 @@ U64 perft(Position & s, int depth) {
 	MoveList moveList(s);
 	if (depth == 1) return moveList.size();
 	Move m;
-	while (m = moveList.getBestMove()) {
+	while ((m = moveList.getBestMove())) {
 		Position c(s);
 		c.makeMove(m);
 		nodes += perft(c, depth - 1);
@@ -52,7 +52,7 @@ U64 MTperft(Position& s, int depth) {
 
 void perftTest(Position& s, int depth, bool mt) {
 	U64 nodes = 0;
-	double nps, time;
+	double time;
 	Clock clock;
 	clock.set();
 	nodes = mt ? MTperft(s, depth) : perft(s, depth);

@@ -54,7 +54,7 @@ void Position::operator=(const Position & s) {
 }
 
 Position::Position(const std::string & fen) {
-	int i, enpass, position;
+	int enpass, position;
 	std::string::const_iterator it;
 	Square s;
 	Color c;
@@ -253,7 +253,6 @@ bool Position::isValid(Move move, U64 validMoves) const {
 	assert(getDst(move) < no_sq);
 
 	Square src, dst;
-	U64 ray;
 	src = getSrc(move);
 	dst = getDst(move);
 
@@ -358,7 +357,6 @@ bool Position::givesCheck(Move move) const {
 }
 
 int Position::see(Move move) const {
-	Prop prop;
 	Color color;
 	Square src, dst, mayAttack;
 	PieceType target;
@@ -696,19 +694,19 @@ std::string Position::getFen() { // Current FEN
 
 // Print board
 std::ostream & operator << (std::ostream & os, const Position & s) {
-	static const char * W_pawn   = "\u2659";
-	static const char * W_knight = "\u2658";
-	static const char * W_bishop = "\u2657";
-	static const char * W_rook   = "\u2656";
-	static const char * W_queen  = "\u2655";
-	static const char * W_king   = "\u2654";
-	static const char * B_pawn   = "\u265F";
-	static const char * B_knight = "\u265E";
-	static const char * B_bishop = "\u265D";
-	static const char * B_rook   = "\u265C";
-	static const char * B_queen  = "\u265B";
-	static const char * B_king   = "\u265A";
-	static const char * Empty    = " ";
+	std::string W_pawn   = "\u2659";
+	std::string W_knight = "\u2658";
+	std::string W_bishop = "\u2657";
+	std::string W_rook   = "\u2656";
+	std::string W_queen  = "\u2655";
+	std::string W_king   = "\u2654";
+	std::string B_pawn   = "\u265F";
+	std::string B_knight = "\u265E";
+	std::string B_bishop = "\u265D";
+	std::string B_rook   = "\u265C";
+	std::string B_queen  = "\u265B";
+	std::string B_king   = "\u265A";
+	std::string Empty    = " ";
 	
 	std::string nums[8] = {"1", "2", "3", "4", "5", "6", "7", "8"};
 	const std::string bar = "  + - + - + - + - + - + - + - + - + ";

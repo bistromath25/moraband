@@ -10,31 +10,6 @@ void mg_init() {
 	initmagicmoves();
 }
 
-/* List of moves and related functions */
-MoveList::MoveList(const Position& s, Move bestMove, History* history, int ply, bool qsearch) 
-: position(s), valid(FULL), best(bestMove), isQSearch(qsearch), killer1(NULL_MOVE), killer2(NULL_MOVE) , sz(0), history(history), ply(ply) {
-	if (history) {
-		killer1 = history->getKiller(ply).first;
-		killer2 = history->getKiller(ply).second;
-	}
-	if (position.inCheck()) {
-		Square k = position.getKingSquare(position.getOurColor());
-		Square c = get_lsb(position.getCheckersBB());
-		valid = between[k][c] | position.getCheckersBB();
-		if (position.inDoubleCheck()) {
-			pushMoves<MoveType::All, PIECETYPE_KING>();
-			checkLegal();
-			stage = AllLegal;
-		}
-		else {
-			stage = EvadeBestMove;
-		}
-	}
-	else {
-		stage = qsearch ? QBestMove : BestMove;
-	}
-}
-
 std::size_t MoveList::size() const {
 	return sz;
 }
@@ -547,6 +522,31 @@ Move MoveList::getBestMove() {
 	}
 	
 	return NULL_MOVE; // No move found?!?
+}
+
+/* List of moves and related functions */
+MoveList::MoveList(const Position& s, Move bestMove, History* history, int ply, bool qsearch) 
+: position(s), valid(FULL), best(bestMove), isQSearch(qsearch), killer1(NULL_MOVE), killer2(NULL_MOVE) , sz(0), history(history), ply(ply) {
+	if (history) {
+		killer1 = history->getKiller(ply).first;
+		killer2 = history->getKiller(ply).second;
+	}
+	if (position.inCheck()) {
+		Square k = position.getKingSquare(position.getOurColor());
+		Square c = get_lsb(position.getCheckersBB());
+		valid = between[k][c] | position.getCheckersBB();
+		if (position.inDoubleCheck()) {
+			generateMoves<MoveType::All>();
+			checkLegal();
+			stage = AllLegal;
+		}
+		else {
+			stage = EvadeBestMove;
+		}
+	}
+	else {
+		stage = qsearch ? QBestMove : BestMove;
+	}
 }
 
 /* List of moves and related functions */

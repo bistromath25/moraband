@@ -30,13 +30,13 @@ if (!(x)) { \
 typedef unsigned long long U64;
 #define C64(u) u##ULL;
 
-static const int BOARD_SIZE = 64;
-static const int PIECE_TYPES_SIZE = 6;
-static const int PLAYER_SIZE = 2;
-static const int PIECE_MAX = 10;
+constexpr int BOARD_SIZE = 64;
+constexpr int PIECE_TYPES_SIZE = 6;
+constexpr int PLAYER_SIZE = 2;
+constexpr int PIECE_MAX = 10;
 const std::string START_FEN = "rnbqkbnr/pppppppp/8/8/8/8/PPPPPPPP/RNBQKBNR w KQkq";
 
-static const int CASTLE_RIGHTS[BOARD_SIZE] = {
+constexpr int CASTLE_RIGHTS[BOARD_SIZE] = {
 	14, 15, 15, 12, 15, 15, 15, 13,
 	15, 15, 15, 15, 15, 15, 15, 15,
 	15, 15, 15, 15, 15, 15, 15, 15,
@@ -47,7 +47,7 @@ static const int CASTLE_RIGHTS[BOARD_SIZE] = {
 	11, 15, 15,  3, 15, 15, 15,  7
 };
 
-static const int GAMESTAGE_SIZE = 2;
+constexpr int GAMESTAGE_SIZE = 2;
 
 enum GameStage {
 	MIDDLEGAME,
@@ -119,7 +119,7 @@ enum CASTLINGRIGHTS {
     BLACK_QUEENSIDE_CASTLE = 8
 };
 
-static const int SCORE[PIECE_TYPES_SIZE][PIECE_TYPES_SIZE] = {
+constexpr int SCORE[PIECE_TYPES_SIZE][PIECE_TYPES_SIZE] = {
 	{ 26, 30, 31, 33, 36, 0 },  
 	{ 20, 25, 27, 29, 35, 0 },  
 	{ 19, 21, 24, 28, 34, 0 },  

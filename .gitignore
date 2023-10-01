@@ -1,0 +1,8 @@
+.DS_Store
+.vscode/
+Moraband
+CMakeFiles
+CMakeCache.txt
+cmake_install.cmake
+Makefile
+makefile

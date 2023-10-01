@@ -34,11 +34,11 @@ inline bool operator<(const MoveEntry& entry1, const MoveEntry& entry2) {
 	return entry1.score < entry2.score;
 }
 
-static const Move NULL_MOVE = 0;
-static const Move SRC_MASK = 0x003F;
-static const Move DST_MASK = 0x0FC0;
-static const Move PIECE_PROMOTION_MASK = 0x7000;
-static const Move CASTLE_FLAG = 0x8000;
+constexpr Move NULL_MOVE = 0;
+constexpr Move SRC_MASK = 0x003F;
+constexpr Move DST_MASK = 0x0FC0;
+constexpr Move PIECE_PROMOTION_MASK = 0x7000;
+constexpr Move CASTLE_FLAG = 0x8000;
 
 inline Move makeMove(Square src, Square dst) {
 	return static_cast<Move>(src) | static_cast<Move>(dst) << 6;

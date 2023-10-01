@@ -244,7 +244,7 @@ int search(Position& s, SearchInfo& si, GlobalInfo& gi, int depth, int ply, int 
 
 		if (bestScore > -CHECKMATE_BOUND && legalMoves > 1 && !s.inCheck() && !s.givesCheck(m) && !isPromotion(m) && s.getNonPawnPieceCount()) {
 			// Futility pruning
-			if (depth < 8 && !isPv && staticEval + 100 * d <= alpha) {
+			if (depth < FUTILITY_DEPTH && !isPv && staticEval + 100 * d <= alpha) {
 				continue;
 			}
 			// SEE-based pruning (prune if SEE too low)

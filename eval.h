@@ -12,7 +12,7 @@
 #include <iomanip>
 #include <array>
 #include <algorithm>
-#include "Position.h"
+#include "position.h"
 #include "pst.h"
 
 struct Score {
