@@ -17,7 +17,7 @@ std::pair<int, bool> results[MAX_THREADS];
 /* Check if search should be stopped */
 bool stop_search(SearchInfo& si) {
 	// Not enough time left for search
-	if (si.clock.elapsed<std::chrono::milliseconds>() >= si.moveTime) {
+	if (U64(si.clock.elapsed<std::chrono::milliseconds>()) >= si.moveTime) {
 		si.quit = true;
 		return true;
 	}
@@ -206,7 +206,7 @@ int search(Position& s, SearchInfo& si, GlobalInfo& gi, int depth, int ply, int 
 		// Null move pruning
 		// Make a null move and search to a reduced depth
 		if (!isNull && depth > NULL_MOVE_DEPTH && staticEval + NULL_MOVE_MARGIN >= beta) {
-			Position n;
+			Position n(s);
 			std::memmove(&n, &s, sizeof s);
 			n.makeNull();
 			gi.history.push(std::make_pair(NULL_MOVE, n.getKey()));
@@ -485,10 +485,10 @@ Move iterative_deepening(Position& s, SearchInfo& si) {
 		if (si.nodes == si.prevNodes) {
 			break;
 		}
-		if (si.clock.elapsed<std::chrono::milliseconds>() * 2 > si.moveTime) {
+		if (U64(si.clock.elapsed<std::chrono::milliseconds>()) * 2 > si.moveTime) {
 			break; // Insufficient time for next search iteration
 		}
-		if ((si.depth && d >= si.depth) || (si.max_nodes && si.totalNodes >= si.max_nodes)) {
+		if ((si.depth && d >= si.depth) || (si.max_nodes && si.totalNodes >= U64(si.max_nodes))) {
 			break;
 		}
 

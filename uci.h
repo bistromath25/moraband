@@ -18,7 +18,7 @@
 #include "timeman.h"
 
 #define ENGINE_NAME "Moraband"
-#define ENGINE_VERSION "1.1"
+#define ENGINE_VERSION "1.1.1"
 #define ENGINE_AUTHOR "Brighten Zhang"
 
 extern int HASH_SIZE;

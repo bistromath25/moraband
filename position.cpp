@@ -9,7 +9,7 @@
 #include <utility>
 
 /* Board position and related functions */
-Position::Position(const Position & s)
+Position::Position(const Position &s)
 	: us(s.us)
 	, them(s.them)
 	, fiftyMoveRule(s.fiftyMoveRule)
@@ -25,13 +25,13 @@ Position::Position(const Position & s)
 	, occupancy(s.occupancy)
 	, pieceIndex(s.pieceIndex)
 	, board(s.board)
-	, pstScore(s.pstScore)
 	, pieces(s.pieces)
 	, pieceCounts(s.pieceCounts)
+	, pstScore(s.pstScore)
 	, pieceList(s.pieceList)
 {}
 
-void Position::operator=(const Position & s) {
+void Position::operator=(const Position &s) {
 	us = s.us;
 	them = s.them;
 	fiftyMoveRule = s.fiftyMoveRule;
@@ -53,7 +53,7 @@ void Position::operator=(const Position & s) {
 	pieceList = s.pieceList;
 }
 
-Position::Position(const std::string & fen) {
+Position::Position(const std::string &fen) {
 	int enpass, position;
 	std::string::const_iterator it;
 	Square s;
@@ -278,7 +278,7 @@ bool Position::isValid(Move move, U64 validMoves) const {
 			if ((square_bb[dst] & RANK_PROMOTION) && !getPiecePromotion(move)) {
 				return false;
 			}
-			if (src < dst == us) {
+			if ((src < dst) == us) {
 				return false;
 			}
 
@@ -295,7 +295,6 @@ bool Position::isValid(Move move, U64 validMoves) const {
 					return false;
 			}
 		}
-		
 		case PIECETYPE_KNIGHT:
 			return getAttackBB<PIECETYPE_KNIGHT>(src) & square_bb[dst] & validMoves;
 		case PIECETYPE_BISHOP:
@@ -304,7 +303,6 @@ bool Position::isValid(Move move, U64 validMoves) const {
 			return getAttackBB<PIECETYPE_ROOK>(src) & square_bb[dst] & validMoves;
 		case PIECETYPE_QUEEN:
 			return getAttackBB<PIECETYPE_QUEEN>(src) & square_bb[dst] & validMoves;
-
 		case PIECETYPE_KING:
 		{
 			Square k = getKingSquare(us);
@@ -693,7 +691,7 @@ std::string Position::getFen() { // Current FEN
 }
 
 // Print board
-std::ostream & operator << (std::ostream & os, const Position & s) {
+std::ostream &operator<<(std::ostream &os, const Position &s) {
 	std::string W_pawn   = "\u2659";
 	std::string W_knight = "\u2658";
 	std::string W_bishop = "\u2657";

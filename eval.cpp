@@ -99,7 +99,7 @@ Score KING_RING_ATTACK[2][5] = {
 PawnHashTable ptable;
 
 /* Evaluation and related functions */
-Evaluate::Evaluate(const Position& s) : position(s), material{}, pawn_structure{}, mobility{}, king_safety{}, attacks{}, piece_attacks_bb{}, all_attacks_bb{} {
+Evaluate::Evaluate(const Position& s) : position(s), mobility{}, king_safety{}, pawn_structure{}, material{}, attacks{}, piece_attacks_bb{}, all_attacks_bb{} {
 	// Tapered-evaluation with 256 phases, 0 (Opening/Middlegame) and 255 (Endgame)
 	gamePhase = position.getGamePhase();
 	Color c = position.getOurColor();
@@ -149,7 +149,7 @@ void Evaluate::evalOutposts(const Color c) {
 			continue;
 		}
 		material[c] += KNIGHT_OUTPOST;
-		if (!position.getPieceBB<PIECETYPE_KNIGHT>(!c) && !position.getPieceBB<PIECETYPE_BISHOP>(!c) & squares_of_color(p)) {
+		if (!position.getPieceBB<PIECETYPE_KNIGHT>(!c) && ((!position.getPieceBB<PIECETYPE_BISHOP>(!c)) & squares_of_color(p))) {
 			material[c] += KNIGHT_OUTPOST;
 		}
 	}
@@ -161,7 +161,7 @@ void Evaluate::evalOutposts(const Color c) {
 			continue;
 		}
 		material[c] += BISHOP_OUTPOST;
-		if (!position.getPieceBB<PIECETYPE_KNIGHT>(!c) && !position.getPieceBB<PIECETYPE_BISHOP>(!c) & squares_of_color(p)) {
+		if (!position.getPieceBB<PIECETYPE_KNIGHT>(!c) && ((!position.getPieceBB<PIECETYPE_BISHOP>(!c)) & squares_of_color(p))) {
 			material[c] += BISHOP_OUTPOST;
 		}
 	}
@@ -237,7 +237,6 @@ void Evaluate::evalPieces(const Color c) {
 	U64 moves, pins;
 	U64 mobilityNet;
 	int king_threats = 0;
-	U64 bottomRank = c == WHITE ? RANK_1 : RANK_8;
 	Square kingSq = position.getKingSquare(c);
 	const int missingPawns = 8 - position.getPieceCount<PIECETYPE_PAWN>(c);
 
