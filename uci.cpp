@@ -13,7 +13,7 @@ int MOVE_OVERHEAD = 500;
 int CONTEMPT = 0;
 
 // Validate incoming UCI move
-Move get_uci_move(std::string & token, Position & s) {
+Move get_uci_move(std::string &token, Position &s) {
 	Move m;
 	token.erase(std::remove(token.begin(), token.end(), ','),
 	token.end());
@@ -31,7 +31,7 @@ Move get_uci_move(std::string & token, Position & s) {
 }
 
 // UCI go command
-void go(std::istringstream & is, Position & s) {
+void go(std::istringstream &is, Position &s) {
 	std::string token;
 	SearchInfo search_info;
 	Move m;
@@ -81,7 +81,7 @@ void go(std::istringstream & is, Position & s) {
 }
 
 // Set position
-void position(std::istringstream & is, Position & s) {
+void position(std::istringstream &is, Position &s) {
 	std::string token, fen;
 	Move m;
 
@@ -123,7 +123,7 @@ void position(std::istringstream & is, Position & s) {
 }
 
 // UCI setoption command
-void set_option(std::string & name, std::string & value) {
+void set_option(std::string &name, std::string &value) {
 	if (name == "Hash") {
 		HASH_SIZE = std::stoi(value);
 		tt.resize(HASH_SIZE);

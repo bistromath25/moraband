@@ -103,7 +103,6 @@ template<MoveType T> void MoveList::pushPromotion(Square src, Square dst) {
 
 template<MoveType T, PieceType P> void MoveList::pushMoves() {
 	U64 m;
-	Square dst;
 	Color c = position.getOurColor();
 
 	for (Square src : position.getPieceList<P>(c)) {
@@ -230,7 +229,7 @@ template<MoveType T> void MoveList::pushCastle() {
 }
 
 void MoveList::checkLegal() {
-	for (int i = 0; i < sz; ++i) {
+	for (int i = 0; i < int(sz); ++i) {
 		if (!position.isLegal(moveList[i].move)) {
 			moveList[i--] = moveList[--sz];
 		}
@@ -310,7 +309,7 @@ Move MoveList::getBestMove() {
 			// If a move has a positive SEE, score it by LVA-MVV, otherwise store 
 			// its score as its SEE value.
 			generateMoves<MoveType::Attacks>();
-			for (int i = 0; i < sz; ++i) {
+			for (int i = 0; i < int(sz); ++i) {
 				int see = position.see(moveList[i].move);
 				if (see >= 0) {
 					moveList[i].score = position.onSquare(getDst(moveList[i].move)) - position.onSquare(getSrc(moveList[i].move));
@@ -365,12 +364,11 @@ Move MoveList::getBestMove() {
 			// based on their PST score.
 			{
 			generateMoves<MoveType::Quiets>();
-			for (int i = 0; i < sz; ++i) {
+			for (int i = 0; i < int(sz); ++i) {
 				moveList[i].score = history->getHistoryScore(moveList[i].move);
 			}
 			auto it2 = std::partition(moveList.begin(), moveList.begin() + sz, noScore);
 			std::stable_sort(it2, moveList.begin() + sz);
-			auto it1 = moveList.begin();
 			for (auto it1 = moveList.begin(); it1 != it2; ++it1) {
 				Square src = getSrc(it1->move);
 				Square dst = getDst(it1->move);
@@ -412,7 +410,7 @@ Move MoveList::getBestMove() {
 			// Qsearch capture generation
 			// Generate and sort captures based on LVA-MVV.
 			generateMoves<MoveType::Attacks>();
-			for (int i = 0; i < sz; ++i) {
+			for (int i = 0; i < int(sz); ++i) {
 				moveList[i].score = position.onSquare(getDst(moveList[i].move)) - position.onSquare(getSrc(moveList[i].move));
 			}
 			stage++;
@@ -435,7 +433,7 @@ Move MoveList::getBestMove() {
 		case QQuietChecksGen:
 			// Qsearch quiet generation
 			// Generate quiet moves.
-			for (int i = 0; i < sz; ++i) {
+			for (int i = 0; i < int(sz); ++i) {
 				moveList[i].score = history->getHistoryScore(moveList[i].move);
 			}
 			stage++;
@@ -467,7 +465,7 @@ Move MoveList::getBestMove() {
 			const int CaptureFlag = 0x40000000;
 			const int HistoryFlag = 0x20000000;
 			generateMoves<MoveType::Evasions>();
-			for (int i = 0; i < sz; ++i) {
+			for (int i = 0; i < int(sz); ++i) {
 				if (position.isCapture(moveList[i].move)) {
 					int see = position.see(moveList[i].move);
 					if (see >= 0) {
@@ -526,7 +524,7 @@ Move MoveList::getBestMove() {
 
 /* List of moves and related functions */
 MoveList::MoveList(const Position& s, Move bestMove, History* history, int ply, bool qsearch) 
-: position(s), valid(FULL), best(bestMove), isQSearch(qsearch), killer1(NULL_MOVE), killer2(NULL_MOVE) , sz(0), history(history), ply(ply) {
+: isQSearch(qsearch), valid(FULL), position(s), history(history), ply(ply), sz(0), best(bestMove), killer1(NULL_MOVE), killer2(NULL_MOVE) {
 	if (history) {
 		killer1 = history->getKiller(ply).first;
 		killer2 = history->getKiller(ply).second;
@@ -550,7 +548,7 @@ MoveList::MoveList(const Position& s, Move bestMove, History* history, int ply, 
 }
 
 /* List of moves and related functions */
-MoveList::MoveList(const Position& s) : position(s), valid(FULL), isQSearch(false), best(NULL_MOVE), sz(0), history(nullptr), ply(0) {
+MoveList::MoveList(const Position& s) : isQSearch(false), valid(FULL), position(s), history(nullptr), ply(0), sz(0), best(NULL_MOVE) {
 	generateMoves<MoveType::All>();
 	checkLegal();
 	stage = AllLegal;

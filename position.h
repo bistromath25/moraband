@@ -32,9 +32,9 @@ enum Phase {
 class Position {
 public:
 	Position() {};
-	Position(const std::string & fen);
-	Position(const Position & s);
-	void operator=(const Position & s);
+	Position(const std::string &fen);
+	Position(const Position &s);
+	void operator=(const Position &s);
 	void init();
 
 	Color getOurColor() const;
@@ -112,7 +112,7 @@ public:
 	U64 getXRayAttacks(Square sq) const;
 	
 	// Print
-	friend std::ostream & operator << (std::ostream & os, const Position & Position);
+	friend std::ostream & operator << (std::ostream &os, const Position &s);
 	
 private:
 	Color us;
@@ -173,13 +173,13 @@ inline int Position::getGamePhase() const {
 }
 
 inline void Position::setGamePhase() {
-	int phase = totalPhase
+	int p = totalPhase
 		- getPieceCount<PIECETYPE_PAWN>() * pawnPhase
 			- getPieceCount<PIECETYPE_KNIGHT>() * knightPhase
 				- getPieceCount<PIECETYPE_BISHOP>() * bishopPhase
 					- getPieceCount<PIECETYPE_ROOK>() * rookPhase
 						- getPieceCount<PIECETYPE_QUEEN>() * queenPhase;
-	phase = (phase * 256 + (totalPhase / 2)) / totalPhase;
+	phase = (p * 256 + (totalPhase / 2)) / totalPhase;
 }
 
 inline bool Position::isCapture(Move move) const {
@@ -430,7 +430,7 @@ inline bool Position::check(U64 change, Color c) const {
 }
 
 inline U64 Position::getXRayAttacks(Square square) const {
-	return bishopMoves[square] & (getPieceBB<PIECETYPE_BISHOP>() | getPieceBB<PIECETYPE_QUEEN>()) | rookMoves[square] & (getPieceBB<PIECETYPE_ROOK>() | getPieceBB<PIECETYPE_QUEEN>());
+	return (bishopMoves[square] & ((getPieceBB<PIECETYPE_BISHOP>() | getPieceBB<PIECETYPE_QUEEN>()))) | (rookMoves[square] & ((getPieceBB<PIECETYPE_ROOK>() | getPieceBB<PIECETYPE_QUEEN>())));
 }
 
 inline Move Position::getPreviousMove() const {
