@@ -206,7 +206,7 @@ int search(Position& s, SearchInfo& si, GlobalInfo& gi, int depth, int ply, int 
 		// Null move pruning
 		// Make a null move and search to a reduced depth
 		if (!isNull && depth > NULL_MOVE_DEPTH && staticEval + NULL_MOVE_MARGIN >= beta) {
-			Position n(s);
+			Position n;
 			std::memmove(&n, &s, sizeof s);
 			n.makeNull();
 			gi.history.push(std::make_pair(NULL_MOVE, n.getKey()));
