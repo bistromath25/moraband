@@ -240,6 +240,10 @@ void uci() {
 			MoveList moveList(root);
 			std::cout << moveList << std::endl;
 		}
+		else if (token == "tune") {
+			is >> token;
+			Tune::tune(token);
+		}
 		else {
 			std::cout << "unknown command" << std::endl;
 		}

@@ -19,14 +19,14 @@ class History {
 public:
 	History() : killers{}, history{} {
 		game_history.reserve(1024);
-		for (std::array<int, BOARD_SIZE>& arr : butterfly) {
-			arr.fill(1);
+		for (std::array<int, BOARD_SIZE>& b : butterfly) {
+			b.fill(1);
 		}
 	}
 	History(const Position& s) : killers{}, history{} {
 		game_history.reserve(1024);
-		for (std::array<int, BOARD_SIZE>& arr : butterfly) {
-			arr.fill(1);
+		for (std::array<int, BOARD_SIZE>& b : butterfly) {
+			b.fill(1);
 		}
 		push(std::make_pair(NULL_MOVE, s.getKey()));
 	}
@@ -37,15 +37,15 @@ public:
 		killers = {};
 		history = {};
 		game_history.clear();
-		for (std::array<int, BOARD_SIZE>& arr : butterfly) {
-			arr.fill(1);
+		for (std::array<int, BOARD_SIZE>& b : butterfly) {
+			b.fill(1);
 		}
 	}
 	void clear() {
 		killers = {};
 		history = {};
-		for (std::array<int, BOARD_SIZE>& arr : butterfly) {
-			arr.fill(1);
+		for (std::array<int, BOARD_SIZE>& b : butterfly) {
+			b.fill(1);
 		}
 	}
 	void push(const std::pair<Move, U64>& p) {

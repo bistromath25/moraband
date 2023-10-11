@@ -29,7 +29,6 @@ struct Score {
 	Score& operator-=(const Score& s) { mg -= s.mg; eg -= s.eg; return *this; }
 	int score(int phase) const { return (mg * (256 - phase) + eg * phase) / 256; }
 	int score() const { return mg; }
-
 private:
 	int mg;
 	int eg;

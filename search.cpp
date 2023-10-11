@@ -202,7 +202,6 @@ int search(Position& s, SearchInfo& si, GlobalInfo& gi, int depth, int ply, int 
 		if (depth < REVERSE_FUTILITY_DEPTH && staticEval - REVERSE_FUTILITY_MARGIN * depth >= beta) {
 			return staticEval;
 		}
-
 		// Null move pruning
 		// Make a null move and search to a reduced depth
 		if (!isNull && depth > NULL_MOVE_DEPTH && staticEval + NULL_MOVE_MARGIN >= beta) {
@@ -219,8 +218,28 @@ int search(Position& s, SearchInfo& si, GlobalInfo& gi, int depth, int ply, int 
 				return nullScore;
 			}
 		}
+		// Razoring
+		if (depth <= RAZOR_DEPTH && staticEval <= alpha - RAZOR_MARGIN) {
+			if (depth == 1) {
+				return qsearch(s, si, gi, 0, alpha, beta);
+			}
+			int r = alpha - RAZOR_MARGIN;
+			int rScore = qsearch(s, si, gi, 0, r, r + 1);
+			if (rScore <= r) {
+				return rScore;
+			}
+		}
 	}
 
+	// Probcut
+	if (depth >= PROBCUT_DEPTH && beta > -CHECKMATE_BOUND && staticEval >= beta - PROBCUT_MARGIN(depth)) {
+		int p = beta + 300;
+		int probcutScore = search(s, si, gi, depth - 3, ply + 1, p - 1, p, isPv, isNull);
+		if (probcutScore >= p) {
+			return probcutScore;
+		}
+	}
+	
 	// Internal iterative deepening
 	// In case no best move was found, perform a shallower search to determine which move to properly seach first
 	if (!tt_move && !isNull && !s.inCheck() && (isPv || staticEval + 100 >= beta) && depth >= 5) {
@@ -249,7 +268,7 @@ int search(Position& s, SearchInfo& si, GlobalInfo& gi, int depth, int ply, int 
 			}
 			// SEE-based pruning (prune if SEE too low)
 			// Prune if see(move) < -(pawn * 2 ^ (depth - 1))
-			if (depth <= 3 && s.see(m) < -PIECE_VALUE[PIECETYPE_PAWN].score() * (1 << (depth - 1)) /*&& m != tt_move*/) {
+			if (depth <= 3 && s.see(m) < -PIECE_VALUE[PIECETYPE_PAWN].score() * (1 << (depth - 1)) && m != tt_move) {
 				continue;
 			}
 			// Late move reduction

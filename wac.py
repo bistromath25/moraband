@@ -67,7 +67,7 @@ def main():
                 break
         
         engine_best_move = engine_out[-1].split("bestmove ")[1]
-        if engine_best_move != test_position.best_move:
+        if engine_best_move not in test_position.best_move:
             print(f"[-] FAILED: id {test_position.id} fen {test_position.fen}")
             print(f"[-]   {engine_out[-2].split(' pv')[0]}")
             print(f"[-]   found {engine_best_move} expected {test_position.best_move}")
