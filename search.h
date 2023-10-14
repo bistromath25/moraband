@@ -57,11 +57,6 @@ inline int value_from_tt(int value, int ply) {
 	return value;
 }
 
-enum SearchType {
-	qSearch,
-	scoutSearch
-};
-
 struct SearchInfo {
 	SearchInfo() : time{}, inc{}, moves_to_go(0), depth(MAX_PLY), nodes(0), prevNodes(0), totalNodes(0), moveTime(0), quit(false), infinite(false) {}
 	int time[PLAYER_SIZE], inc[PLAYER_SIZE];
