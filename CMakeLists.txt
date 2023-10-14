@@ -9,4 +9,4 @@ set(CMAKE_CXX_FLAGS "-Wall -DNAME=Moraband -march=native")
 set(CMAKE_CXX_FLAGS_DEBUG "-g -fno-omit-frame-pointer -DDEBUG")
 set(CMAKE_CXX_FLAGS_RELEASE "-O3 -DNDEBUG")
 
-add_executable(Moraband main.cpp MagicMoves.cpp eval.cpp movegen.cpp position.cpp tt.cpp variation.cpp board.cpp perft.cpp search.cpp uci.cpp zobrist.cpp)
+add_executable(Moraband main.cpp MagicMoves.cpp eval.cpp movegen.cpp position.cpp variation.cpp board.cpp perft.cpp search.cpp uci.cpp zobrist.cpp)
