@@ -6,13 +6,11 @@
 #include "uci.h"
 #include "perft.h"
 #include "io.h"
-#include "tt.h"
 
 int HASH_SIZE = DEFAULT_HASH_SIZE;
 int NUM_THREADS = 1;
 int MOVE_OVERHEAD = 500;
 int CONTEMPT = 0;
-TranspositionTable tt;
 
 // Validate incoming UCI move
 Move get_uci_move(std::string &token, Position &s) {

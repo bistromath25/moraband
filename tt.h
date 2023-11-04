@@ -29,99 +29,36 @@ const int DEPTH_MASK = 0x7f;
 const int CLUSTER_SIZE = 4;
 
 struct TTEntry {
-	TTEntry() {};
-	U64 getKey() const {
-		return key ^ data;
-	}
-	Move getMove() const {
-		return Move(data & MOVE_MASK);
-	}
-	void set(Move move, U64 flag, U64 depth, U64 score, U64 key) {
-		data = move | (flag << FLAG_SHIFT) | (depth << DEPTH_SHIFT) | (score << SCORE_SHIFT);
-		this->key = key ^ data;
-	}
-	int getFlag() const {
-		return (data >> FLAG_SHIFT) & FLAG_MASK;
-	}
-	int getDepth() const {
-		return (data >> DEPTH_SHIFT) & DEPTH_MASK;
-	}
-	int getScore() const {
-		return int(data >> SCORE_SHIFT);
-	}
-	void clear() {
-		key = data = 0;
-	}
+	TTEntry();
+	U64 getKey() const;
+	Move getMove() const;
+	void set(Move move, U64 flag, U64 depth, U64 score, U64 key);
+	int getFlag() const;
+	int getDepth() const;
+	int getScore() const;
+	void clear();
 private:
 	U64 key;
 	U64 data;
 };
 
 struct TTCluster {
-	TTEntry& getEntry(U64 key) {
-		for (TTEntry& entry : entries) { // Return anything that matches
-			if (entry.getKey() == key) {
-				return entry;
-			}
-		}
-		int min_depth_index = 0;
-		for (int i = 1; i < CLUSTER_SIZE; i++) { // Return minimum depth
-			if (entries[i].getDepth() < entries[min_depth_index].getDepth()) {
-				min_depth_index = i;
-			}
-		}
-		return entries[min_depth_index];
-	}
-	void clear() {
-		for (TTEntry& entry : entries) {
-			entry.clear();
-		}
-	}
+	TTEntry& getEntry(U64 key);
+	void clear();
 private:
 	TTEntry entries[CLUSTER_SIZE];
 };
 
 /* Transposition table to store search information */
 struct TranspositionTable {
-	TranspositionTable() {
-		size = (1 << 20) / sizeof(TTCluster) * DEFAULT_HASH_SIZE;
-		table = new TTCluster[size];
-		clear();
-	}
-	~TranspositionTable() {
-		delete[] table;
-	}
-	TranspositionTable(int mb) {
-		resize(mb); // MB
-	}
-	void resize(int mb) {
-		if (mb < 1) {
-			mb = 1;
-		}
-		if (mb > MAX_HASH_SIZE) {
-			mb = MAX_HASH_SIZE;
-		}
-		size = ((1 << 20) / sizeof(TTCluster)) * mb;
-		delete[] table;
-		table = new TTCluster[size];
-		clear();
-	}
-	TTEntry probe(U64 key) const {
-		int index = hash(key);
-		return table[index].getEntry(key);
-	}
-	void insert(Move move, U64 flag, U64 depth, U64 score, U64 key) {
-		int index = hash(key);
-		table[index].getEntry(key).set(move, flag, depth, score, key);
-	}
-	void clear() {
-		for (int i = 0; i < size; ++i) {
-			table[i].clear();
-		}
-	}
-	int hash(U64 key) const {
-		return key % size;
-	}
+	TranspositionTable();
+	TranspositionTable(int mb);
+	~TranspositionTable();
+	void resize(int mb);
+	TTEntry probe(U64 key) const;
+	void insert(Move move, U64 flag, U64 depth, U64 score, U64 key);
+	void clear();
+	int hash(U64 key) const;
 private:
 	TTCluster* table;
 	int size;
