@@ -23,12 +23,15 @@ void TTEntry::set(Move move, U64 flag, U64 depth, U64 score, U64 key) {
 int TTEntry::getFlag() const {
     return (data >> FLAG_SHIFT) & FLAG_MASK;
 }
+
 int TTEntry::getDepth() const {
     return (data >> DEPTH_SHIFT) & DEPTH_MASK;
 }
+
 int TTEntry::getScore() const {
     return int(data >> SCORE_SHIFT);
 }
+
 void TTEntry::clear() {
     key = data = 0;
 }
@@ -86,15 +89,18 @@ TTEntry TranspositionTable::probe(U64 key) const {
     int index = hash(key);
     return table[index].getEntry(key);
 }
+
 void TranspositionTable::insert(Move move, U64 flag, U64 depth, U64 score, U64 key) {
     int index = hash(key);
     table[index].getEntry(key).set(move, flag, depth, score, key);
 }
+
 void TranspositionTable::clear() {
     for (int i = 0; i < size; ++i) {
         table[i].clear();
     }
 }
+
 int TranspositionTable::hash(U64 key) const {
     return key % size;
 }
