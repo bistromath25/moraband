@@ -23,6 +23,7 @@ inline int triangularIndex(int ply) {
 class Variation {
 public:
 	Variation();
+	int size() const;
 	void pushToPv(Move move, U64 key, int ply, int score);
 	U64 getPvKey(int ply=0) const;
 	Move getPvMove(int ply=0) const;

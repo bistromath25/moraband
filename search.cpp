@@ -483,6 +483,11 @@ Move iterative_deepening(Position& s, SearchInfo& si) {
 
 		score = results[results_index].first;
 		global_info[results_index].variation.checkPv(s);
+		if (global_info[results_index].variation.size() == 0) {
+			global_info[results_index].variation.clearPv();
+			--d;
+			continue;
+		}
 
 		std::cout << "info depth " << d;
 		if (global_info[results_index].variation.isMate()) {
@@ -527,6 +532,5 @@ Move search(Position& s, SearchInfo& si) {
 		results[i].first = 0;
 		results[i].second = false;
 	}
-
 	return iterative_deepening(s, si);
 }

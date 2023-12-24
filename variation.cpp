@@ -8,6 +8,10 @@
 
 Variation::Variation() : isMatingLine(false), sz(0) {}
 
+int Variation::size() const {
+	return sz;
+}
+
 void Variation::pushToPv(Move move, U64 key, int ply, int score) {
 	// Check if this is a mating line.
 	isMatingLine = std::abs(score) >= CHECKMATE_BOUND ? true : false;
