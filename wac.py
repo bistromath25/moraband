@@ -14,10 +14,11 @@ def parse(s):
 def main():
     print("[+] Moraband Win-at-Chess 1.0")
 
-    parser = argparse.ArgumentParser(description='Test Moraband')
-    parser.add_argument("engine", type=str, help='path to Moraband')
-    parser.add_argument("test_positions_file", type=str, help='test positions file')
-    parser.add_argument("move_time", type=str, help='move time in ms')
+    parser = argparse.ArgumentParser(description="Test Moraband")
+    parser.add_argument("engine", type=str, help="path to Moraband")
+    parser.add_argument("test_positions_file", type=str, help="test positions file")
+    parser.add_argument("move_time", type=int, help="move time in ms")
+    parser.add_argument("-threads", type=int, help="search threads", default=1)
 
     args = parser.parse_args()
 
@@ -40,12 +41,17 @@ def main():
             info = parse(line) # Remove '\n'
             test_positions.append(TestPosition(total, info[0], info[1]))
         print(f"[+] Read {total} positions from {args.test_positions_file}")
-        print(f"[+] Searching each position for movetime {move_time}")
 
     # Clear engine output 
     for i in range(9):
         engine_out = engine.stdout.readline().strip()
         engine.stdout.flush()
+
+    # Set threads
+    threads = args.threads
+    engine.stdin.write(f"setoption name Threads value {threads}\n")
+    
+    print(f"[+] Searching each position to depth {depth} using {threads} threads")
 
     failed = 0
     for test_position in test_positions:
