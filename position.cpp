@@ -233,6 +233,7 @@ bool Position::isLegal(Move move) const {
 		if (isAttacked(dst, us, change)) {
 			return false;
 		}
+		return chebyshevDistance(src, dst) == 1;
 	}
 
 	if (dst == getKingSquare(them)) {

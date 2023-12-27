@@ -51,7 +51,7 @@ def main():
     threads = args.threads
     engine.stdin.write(f"setoption name Threads value {threads}\n")
     
-    print(f"[+] Searching each position to depth {depth} using {threads} threads")
+    print(f"[+] Searching each position for movetime {move_time} using {threads} threads")
 
     failed = 0
     for test_position in test_positions:

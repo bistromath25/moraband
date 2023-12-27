@@ -13,18 +13,11 @@ int Variation::size() const {
 }
 
 void Variation::pushToPv(Move move, U64 key, int ply, int score) {
-	// Check if this is a mating line.
 	isMatingLine = std::abs(score) >= CHECKMATE_BOUND ? true : false;
-
-	// Find the indicies using the triangular forumla.
 	int copyTo = triangularIndex(ply);
 	int copyFromStart = triangularIndex(ply + 1);
 	int copyFromEnd = copyFromStart + MAX_PLY - ply - 1;
-
-	// Store the current move.
 	pv[copyTo++] = std::make_pair(move, key);
-
-	// Copy from the previous iteration.
 	std::copy(std::make_move_iterator(pv.begin() + copyFromStart), 
 	std::make_move_iterator(pv.begin() + copyFromEnd), pv.begin() + copyTo);
 }
@@ -54,20 +47,18 @@ void Variation::checkPv(Position& s) {
 	Position c;
 	Move nextMove;
 	std::memmove(&c, &s, sizeof(s));
+	//Position c(s);
+	//Move nextMove;
 	for (int i = 0; i < MAX_PLY; ++i) {
 		nextMove = pv[i].first;
 		if (nextMove == NULL_MOVE) {
 			sz = i;
 			break;
 		}
-		// Push moves to the move list.
 		MoveList moveList(c);
-
-		// If the next pv move is in the move list, make the move.
 		if (moveList.contains(nextMove)) {
 			c.makeMove(nextMove);
 		}
-		// If the next pv move is not found, break the loop.
 		else {
 			sz = i;
 			break;
