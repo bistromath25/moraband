@@ -10,9 +10,7 @@
 #include <vector>
 #include <array>
 #include <iterator>
-
 #include <string>
-
 #include "defs.h"
 
 typedef uint16_t Move;

@@ -21,3 +21,6 @@ r3r1k1/3q1pb1/4p1pp/1pP1P3/pn1PQ3/8/1P1NN1PP/R4RK1 w - - 2 27; a1d1 e2c3
 1r3rk1/3qp1b1/1p3p2/2NP1b1B/p1P4p/P3P3/1PQ3PP/3R1R1K b - - 0 24; f5c2
 r3r1k1/1pqnbp1p/p1p3p1/2Pp1p2/PP1Pn3/4PN2/2QBNPPP/1R3RK1 b - - 4 15; b7b6 a8c8 a6a5
 n1N3br/2p1Bpkr/1pP2R1b/pP3Pp1/P5P1/1P1p4/p2P4/K7 w - - 0 1; e7a3
+r1b1k2r/ppp1bppp/8/8/1n1Pq3/5N2/PP3PPP/RNBQ1RK1 w kq - 0 11; f1e1
+r1b1k2r/ppp1bppp/8/8/1n1Pq3/5N2/PP3PPP/RNBQR1K1 b kq - 1 11; e4c2
+r1b1k2r/ppp1bppp/8/8/1n1P4/5N2/PPq2PPP/RNBQR1K1 w kq - 2 12; e1e7

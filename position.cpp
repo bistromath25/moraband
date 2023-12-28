@@ -9,6 +9,8 @@
 #include <utility>
 
 /* Board position and related functions */
+Position::Position() {}
+
 Position::Position(const Position &s)
 	: us(s.us)
 	, them(s.them)

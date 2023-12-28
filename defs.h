@@ -9,7 +9,6 @@
 #include <string>
 #include <assert.h>
 #include <stdint.h>
-
 #include <sys/time.h>
 
 #ifndef DEBUG

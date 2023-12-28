@@ -3,8 +3,6 @@
  * Outer Rim planet that was home to the ancient Sith 
  **/
 
-#pragma once
-
 #ifndef EVAL_H
 #define EVAL_H
 

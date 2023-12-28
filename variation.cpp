@@ -14,8 +14,8 @@ int Variation::size() const {
 
 void Variation::pushToPv(Move move, U64 key, int ply, int score) {
 	isMatingLine = std::abs(score) >= CHECKMATE_BOUND ? true : false;
-	int copyTo = triangularIndex(ply);
-	int copyFromStart = triangularIndex(ply + 1);
+	int copyTo = getIndex(ply);
+	int copyFromStart = getIndex(ply + 1);
 	int copyFromEnd = copyFromStart + MAX_PLY - ply - 1;
 	pv[copyTo++] = std::make_pair(move, key);
 	std::copy(std::make_move_iterator(pv.begin() + copyFromStart), 
@@ -47,8 +47,6 @@ void Variation::checkPv(Position& s) {
 	Position c;
 	Move nextMove;
 	std::memmove(&c, &s, sizeof(s));
-	//Position c(s);
-	//Move nextMove;
 	for (int i = 0; i < MAX_PLY; ++i) {
 		nextMove = pv[i].first;
 		if (nextMove == NULL_MOVE) {
@@ -71,4 +69,8 @@ void Variation::printPv() {
 	for (auto it = pv.begin(); it != pv.begin() + sz; ++it) {
 		std::cout << to_string(it->first) << " ";
 	}
+}
+
+int Variation::getIndex(int ply) {
+	return ply * (2 * MAX_PLY + 1 - ply) / 2;
 }
