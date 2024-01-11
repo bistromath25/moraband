@@ -31,7 +31,7 @@ enum Phase {
 /* Board position and related functions */
 class Position {
 public:
-	Position() {};
+	Position();
 	Position(const std::string &fen);
 	Position(const Position &s);
 	void operator=(const Position &s);

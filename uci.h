@@ -18,7 +18,7 @@
 #include "timeman.h"
 
 #define ENGINE_NAME "Moraband"
-#define ENGINE_VERSION "1.1.1"
+#define ENGINE_VERSION "1.1.2"
 #define ENGINE_AUTHOR "Brighten Zhang"
 
 extern int HASH_SIZE;
@@ -26,6 +26,7 @@ extern int NUM_THREADS;
 extern int MOVE_OVERHEAD;
 extern int CONTEMPT;
 
+void bench(int depth=16);
 void uci();
 
 #endif

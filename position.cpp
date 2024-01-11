@@ -9,6 +9,8 @@
 #include <utility>
 
 /* Board position and related functions */
+Position::Position() {}
+
 Position::Position(const Position &s)
 	: us(s.us)
 	, them(s.them)
@@ -233,6 +235,7 @@ bool Position::isLegal(Move move) const {
 		if (isAttacked(dst, us, change)) {
 			return false;
 		}
+		return chebyshevDistance(src, dst) == 1;
 	}
 
 	if (dst == getKingSquare(them)) {

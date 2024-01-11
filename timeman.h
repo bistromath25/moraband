@@ -21,14 +21,14 @@ extern int MOVE_OVERHEAD;
 class Clock {
 public:
 	void set() {
-		mTime = std::chrono::high_resolution_clock::now();
+		time = std::chrono::high_resolution_clock::now();
 	}
 	template<typename T> int64_t elapsed() {
 		std::chrono::high_resolution_clock::time_point now = std::chrono::high_resolution_clock::now();
-		return std::chrono::duration_cast<T>(now - mTime).count();
+		return std::chrono::duration_cast<T>(now - time).count();
 	}
 private:
-	std::chrono::high_resolution_clock::time_point mTime;
+	std::chrono::high_resolution_clock::time_point time;
 };
 
 /* Returns the time assigned for the search */

@@ -52,11 +52,10 @@ U64 MTperft(Position& s, int depth) {
 
 void perftTest(Position& s, int depth, bool mt) {
 	U64 nodes = 0;
-	double time;
 	Clock clock;
 	clock.set();
 	nodes = mt ? MTperft(s, depth) : perft(s, depth);
-	time = clock.elapsed<std::chrono::microseconds>() / static_cast<double>(1000000);
+	double time = clock.elapsed<std::chrono::microseconds>() / static_cast<double>(1000000);
 	std::cout << s << std::endl;
 	std::cout << s.getFen() << std::endl;
 	std::cout << "Time:  " << time << std::endl;
