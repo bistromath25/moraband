@@ -26,6 +26,7 @@ extern int NUM_THREADS;
 extern int MOVE_OVERHEAD;
 extern int CONTEMPT;
 
+void bench(int depth=16);
 void uci();
 
 #endif

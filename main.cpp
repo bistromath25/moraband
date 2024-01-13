@@ -11,7 +11,7 @@
 #include "eval.h"
 #include "uci.h"
 
-int main() {
+int main(int argc, char *argv[]) {
 	std::cout << " ___  ___                _                     _ \n \
 |  \\/  |               | |                   | | \n\
  |      | ___  _ __ __ _| |__   __ _ _ __   __| | \n\
@@ -25,6 +25,19 @@ int main() {
 	Zobrist::init();
 	bb_init();
 	initKingRing();
-	uci();
-    return 0;
+	
+	if (argc > 1) {
+		if (std::string(argv[1]) == "bench") {
+			if (argc > 2) {
+				bench(std::stoi(argv[2]));
+			}
+			else {
+				bench();
+			}
+		}
+	}
+	else {
+		uci();
+	}
+	return 0;
 }
