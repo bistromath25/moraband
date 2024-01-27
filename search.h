@@ -36,7 +36,7 @@ constexpr int RAZOR_DEPTH = 2;
 constexpr int RAZOR_MARGIN = 300;
 constexpr int PROBCUT_DEPTH = 6;
 constexpr int PROBCUT_MARGIN(int depth) { return 100 + 20 * depth; }
-constexpr int LATE_MOVE_REDUCTION = 3;
+constexpr int LATE_MOVE_REDUCTION_DEPTH = 3;
 
 struct SearchInfo {
 	SearchInfo() : time{}, inc{}, moves_to_go(0), depth(MAX_PLY), nodes(0), prevNodes(0), totalNodes(0), moveTime(0), quit(false), infinite(false) {}
