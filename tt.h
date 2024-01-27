@@ -42,7 +42,7 @@ private:
 	U64 data;
 };
 
-struct TTCluster {
+struct alignas(32) TTCluster {
 	TTEntry& getEntry(U64 key);
 	void clear();
 private:
