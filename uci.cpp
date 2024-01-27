@@ -87,9 +87,7 @@ void position(std::istringstream &is, Position &s) {
 
 	s = Position(START_FEN);
 	for (int i = 0; i < NUM_THREADS; ++i) {
-		global_info[i].history.init();
 		global_info[i].history.push(std::make_pair(NULL_MOVE, s.getKey()));
-		global_info[i].variation.clearPv();
 	}
 
 	is >> token;
@@ -125,40 +123,22 @@ void position(std::istringstream &is, Position &s) {
 // UCI setoption command
 void set_option(std::string &name, std::string &value) {
 	if (name == "Hash") {
-		HASH_SIZE = std::stoi(value);
+		HASH_SIZE = clamp(std::stoi(value), 1, MAX_HASH_SIZE);
 		tt.resize(HASH_SIZE);
 	}
 	else if (name == "ClearHash") {
 		tt.clear();
 	}
 	else if (name == "Threads") {
-		NUM_THREADS = std::stoi(value);
-		if (NUM_THREADS < 1) {
-			NUM_THREADS = 1;
-		}
-		else if (NUM_THREADS > MAX_THREADS) {
-			NUM_THREADS = MAX_THREADS;
-		}
+		NUM_THREADS = clamp(std::stoi(value), 1, MAX_THREADS);
 		D(std::cout << "Threads set to value " << NUM_THREADS << std::endl;);
 	}
 	else if (name == "Move Overhead") {
-		MOVE_OVERHEAD = std::stoi(value);
-		if (MOVE_OVERHEAD < 0) {
-			MOVE_OVERHEAD = 0;
-		}
-		else if (MOVE_OVERHEAD > 10000) {
-			MOVE_OVERHEAD = 10000;
-		}
+		MOVE_OVERHEAD = clamp(std::stoi(value), 0, 10000);
 		D(std::cout << "Move Overhead set to value " << MOVE_OVERHEAD << std::endl;);
 	}
 	else if (name == "Contempt") {
- 		CONTEMPT = std::stoi(value);
- 		if (CONTEMPT < -100) {
- 			CONTEMPT = -100;
- 		}
- 		else if (CONTEMPT > 100) {
- 			CONTEMPT = 100;
- 		}
+ 		CONTEMPT = clamp(std::stoi(value), -100, 100);
  		D(std::cout << "Contempt set to value " << CONTEMPT << std::endl;);
  	}
 	return;
@@ -260,8 +240,8 @@ void uci() {
 			tt.clear();
 			ptable.clear();
 			for (int i = 0; i < NUM_THREADS; ++i) {
+				global_info[i].clear();
 				global_info[i].history.init();
-				global_info[i].variation.clearPv();
 			}
 			//tt.setAncient();
 		}

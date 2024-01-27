@@ -14,6 +14,34 @@ std::thread threads[MAX_THREADS];
 GlobalInfo global_info[MAX_THREADS];
 std::pair<int, bool> results[MAX_THREADS];
 
+inline int value_to_tt(int value, int ply) {
+	if (value >= CHECKMATE_BOUND) {
+		value += ply;
+	}
+	else if (value <= -CHECKMATE_BOUND) {
+		value -= ply;
+	}
+	return value;
+}
+
+inline int value_from_tt(int value, int ply) {
+	if (value >= CHECKMATE_BOUND) {
+		value -= ply;
+	}
+	else if (value <= -CHECKMATE_BOUND) {
+		value += ply;
+	}
+	return value;
+}
+
+inline int null_move_pruning_reduction(int depth, int eval, int beta) {
+	return std::max(4, 3 + depth / 3) + clamp((eval - beta) / 256, 0, 2);
+}
+
+inline int reverse_futility_pruning_margin(int depth, int eval, bool improving) {
+	return 100 * depth / (improving + 1);
+}
+
 /* Check if search should be stopped */
 bool stop_search(SearchInfo& si) {
 	// Not enough time left for search
@@ -191,6 +219,12 @@ int search(Position& s, SearchInfo& si, GlobalInfo& gi, int depth, int ply, int 
 		}
 	}
 
+	gi.evalHistory[ply] = staticEval;
+	//bool improving = ply >= 2 && !s.inCheck() && staticEval > gi.evalHistory[ply - 2];
+	bool improving = ply >= 2 && gi.evalHistory[ply - 2] != NEG_INF ? gi.evalHistory[ply] > gi.evalHistory[ply - 2]
+						: ply >= 4 && gi.evalHistory[ply - 4] != NEG_INF ? gi.evalHistory[ply] > gi.evalHistory[ply - 4] 
+							: true;
+
 	Move best_move = tt_move;
 	if (gi.variation.getPvKey() == s.getKey()) {
 		best_move = gi.variation.getPvMove(ply);
@@ -199,17 +233,17 @@ int search(Position& s, SearchInfo& si, GlobalInfo& gi, int depth, int ply, int 
 	// Pruning
 	if (!isPv && !s.inCheck() && s.getNonPawnPieceCount() && beta > -CHECKMATE_BOUND) {
 		// Reverse futility pruning
-		if (depth < REVERSE_FUTILITY_DEPTH && staticEval - REVERSE_FUTILITY_MARGIN * depth >= beta) {
-			return staticEval;
+		if (depth <= REVERSE_FUTILITY_DEPTH && staticEval - reverse_futility_pruning_margin(depth, staticEval, improving) >= beta) {
+			return beta;
 		}
 		// Null move pruning
 		// Make a null move and search to a reduced depth
-		if (!isNull && depth > NULL_MOVE_DEPTH && staticEval + NULL_MOVE_MARGIN >= beta) {
+		if (!isNull && depth >= NULL_MOVE_DEPTH && staticEval + NULL_MOVE_MARGIN >= beta) {
 			Position n;
 			std::memmove(&n, &s, sizeof(s));
 			n.makeNull();
 			gi.history.push(std::make_pair(NULL_MOVE, n.getKey()));
-			int nullScore = -search(n, si, gi, depth - 3, ply + 1, -beta, -beta + 1, false, true);
+			int nullScore = -search(n, si, gi, std::max(1, depth - null_move_pruning_reduction(depth, staticEval, beta)), ply + 1, -beta, -beta + 1, false, true);
 			gi.history.pop();
 			if (nullScore >= beta) {
 				if (nullScore >= CHECKMATE_BOUND) {
@@ -272,7 +306,7 @@ int search(Position& s, SearchInfo& si, GlobalInfo& gi, int depth, int ply, int 
 				continue;
 			}
 			// Late move reduction
-			if (depth > 2 && legalMoves > (isPv ? 5 : 3) && !s.isCapture(m)) {
+			if (depth >= LATE_MOVE_REDUCTION_DEPTH && legalMoves > (isPv ? 5 : 3) + !improving && !s.isCapture(m)) {
 				d -= 1 + !isPv + (legalMoves > 8);
 				d = std::max(1, d);
 			}
@@ -522,9 +556,7 @@ Move iterative_deepening(Position& s, SearchInfo& si) {
 /* Search driver */
 Move search(Position& s, SearchInfo& si) {
 	for (int i = 0; i < NUM_THREADS; ++i) {
-		global_info[i].variation.clearPv();
-		global_info[i].history.clear();
-		global_info[i].nodes = 0;
+		global_info[i].clear();
 		results[i].first = 0;
 		results[i].second = false;
 	}

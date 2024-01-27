@@ -73,12 +73,6 @@ TranspositionTable::~TranspositionTable() {
 }
 
 void TranspositionTable::resize(int mb) {
-    if (mb < 1) {
-        mb = 1;
-    }
-    if (mb > MAX_HASH_SIZE) {
-        mb = MAX_HASH_SIZE;
-    }
     size = ((1 << 20) / sizeof(TTCluster)) * mb;
     delete[] table;
     table = new TTCluster[size];
