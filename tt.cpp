@@ -8,16 +8,16 @@
 TTEntry::TTEntry() {}
 
 U64 TTEntry::getKey() const {
-	return key ^ data;
+    return key ^ data;
 }
 
 Move TTEntry::getMove() const {
-	return Move(data & MOVE_MASK);
+    return Move(data & MOVE_MASK);
 }
 
 void TTEntry::set(Move move, U64 flag, U64 depth, U64 score, U64 key) {
-	data = move | (flag << FLAG_SHIFT) | (depth << DEPTH_SHIFT) | (score << SCORE_SHIFT);
-	this->key = key ^ data;
+    data = move | (flag << FLAG_SHIFT) | (depth << DEPTH_SHIFT) | (score << SCORE_SHIFT);
+    this->key = key ^ data;
 }
 
 int TTEntry::getFlag() const {
@@ -36,8 +36,8 @@ void TTEntry::clear() {
     key = data = 0;
 }
 
-TTEntry& TTCluster::getEntry(U64 key) {
-    for (TTEntry& entry : entries) { // Return anything that matches
+TTEntry &TTCluster::getEntry(U64 key) {
+    for (TTEntry &entry : entries) { // Return anything that matches
         if (entry.getKey() == key) {
             return entry;
         }
@@ -52,7 +52,7 @@ TTEntry& TTCluster::getEntry(U64 key) {
 }
 
 void TTCluster::clear() {
-    for (TTEntry& entry : entries) {
+    for (TTEntry &entry : entries) {
         entry.clear();
     }
 }
@@ -65,11 +65,11 @@ TranspositionTable::TranspositionTable() {
 }
 
 TranspositionTable::TranspositionTable(int mb) {
-	resize(mb);
+    resize(mb);
 }
 
 TranspositionTable::~TranspositionTable() {
-	delete[] table;
+    delete[] table;
 }
 
 void TranspositionTable::resize(int mb) {
