@@ -102,6 +102,7 @@ extern Score KNIGHT_OUTPOST;
 extern Score BISHOP_OUTPOST;
 
 const int CHECKMATE = 32767;
+const int PSEUDO_CHECKMATE = 5000;
 const int CHECKMATE_BOUND = CHECKMATE - MAX_PLY;
 const int STALEMATE = 0;
 const int DRAW = 0;
