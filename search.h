@@ -8,20 +8,20 @@
 
 #include <thread>
 
-#include <algorithm>
-#include <stack>
-#include <sstream>
-#include <string>
-#include <vector>
+#include "defs.h"
 #include "eval.h"
+#include "history.h"
+#include "move.h"
 #include "movegen.h"
 #include "position.h"
-#include "defs.h"
-#include "tt.h"
 #include "timeman.h"
+#include "tt.h"
 #include "variation.h"
-#include "move.h"
-#include "history.h"
+#include <algorithm>
+#include <sstream>
+#include <stack>
+#include <string>
+#include <vector>
 //#include "book.h"
 
 constexpr int LMR_COUNT = 3;
@@ -29,54 +29,45 @@ constexpr int LMR_DEPTH = 2;
 constexpr int NULL_MOVE_COUNT = 3;
 constexpr int NULL_MOVE_DEPTH = 4;
 constexpr int NULL_MOVE_MARGIN = 100; // NMP pruning margin
-constexpr int REVERSE_FUTILITY_DEPTH = 3;
+constexpr int REVERSE_FUTILITY_DEPTH = 2;
 constexpr int REVERSE_FUTILITY_MARGIN = 200;
-constexpr int FUTILITY_DEPTH = 8;
-
-inline int value_to_tt(int value, int ply) {
-	if (value >= CHECKMATE_BOUND) {
-		value += ply;
-	}
-	else if (value <= -CHECKMATE_BOUND) {
-		value -= ply;
-	}
-	return value;
-}
-
-inline int value_from_tt(int value, int ply) {
-	if (value >= CHECKMATE_BOUND) {
-		value -= ply;
-	}
-	else if (value <= -CHECKMATE_BOUND) {
-		value += ply;
-	}
-	return value;
-}
-
-enum SearchType {
-	qSearch,
-	scoutSearch
-};
+constexpr int FUTILITY_DEPTH = 7;
+constexpr int RAZOR_DEPTH = 2;
+constexpr int RAZOR_MARGIN = 300;
+constexpr int PROBCUT_DEPTH = 6;
+constexpr int PROBCUT_MARGIN(int depth) { return 100 + 20 * depth; }
+constexpr int LATE_MOVE_REDUCTION_DEPTH = 3;
 
 struct SearchInfo {
-	SearchInfo() : time{}, inc{}, moves_to_go(0), depth(MAX_PLY), nodes(0), prevNodes(0), totalNodes(0), moveTime(0), quit(false), infinite(false) {}
-	int time[PLAYER_SIZE], inc[PLAYER_SIZE];
-	int moves_to_go, depth, max_nodes, nodes, prevNodes;
-	U64 totalNodes;
-	U64 moveTime;
-	Clock clock;
-	bool quit, infinite;
+    SearchInfo() : time{}, inc{}, moves_to_go(0), depth(MAX_PLY), nodes(0), prevNodes(0), totalNodes(0), moveTime(0), quit(false), infinite(false) {}
+    int time[PLAYER_SIZE], inc[PLAYER_SIZE];
+    int moves_to_go, depth, max_nodes, nodes, prevNodes;
+    U64 totalNodes;
+    U64 moveTime;
+    Clock clock;
+    bool quit, infinite;
 };
 
 struct GlobalInfo {
-	GlobalInfo() {
-		nodes = 0;
-		history.clear();
-		variation.clearPv();
-	}
-	U64 nodes;
-	History history;
-	Variation variation;
+    GlobalInfo() {
+        nodes = 0;
+        history.clear();
+        variation.clearPv();
+        std::fill(evalHistory.begin(), evalHistory.end(), 0);
+    }
+    void init() {
+        clear();
+        std::fill(evalHistory.begin(), evalHistory.end(), 0);
+    }
+    void clear() {
+        nodes = 0;
+        history.clear();
+        variation.clearPv();
+    }
+    U64 nodes;
+    History history;
+    Variation variation;
+    std::array<U64, 64> evalHistory;
 };
 
 const int MAX_THREADS = 16;
@@ -86,10 +77,10 @@ extern std::thread threads[MAX_THREADS];
 extern GlobalInfo global_info[MAX_THREADS];
 extern std::pair<int, bool> results[MAX_THREADS];
 
-int qsearch(Position& s, SearchInfo& si, GlobalInfo& gi, int ply, int alpha, int beta);
-int search(Position& s, SearchInfo& si, GlobalInfo& gi, int depth, int ply, int alpha, int beta, bool isPv, bool isNull);
-int search_root(Position& s, SearchInfo& si, GlobalInfo& gi, int depth, int ply, int alpha, int beta);
-Move iterative_deepening(Position& s, SearchInfo& si);
-Move search(Position& s, SearchInfo& si);
+int qsearch(Position &s, SearchInfo &si, GlobalInfo &gi, int ply, int alpha, int beta);
+int search(Position &s, SearchInfo &si, GlobalInfo &gi, int depth, int ply, int alpha, int beta, bool isPv, bool isNull);
+int search_root(Position &s, SearchInfo &si, GlobalInfo &gi, int depth, int ply, int alpha, int beta);
+Move iterative_deepening(Position &s, SearchInfo &si);
+Move search(Position &s, SearchInfo &si);
 
 #endif
