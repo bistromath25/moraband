@@ -264,15 +264,6 @@ int search(Position &s, SearchInfo &si, GlobalInfo &gi, int depth, int ply, int 
         }
     }
 
-    // Probcut
-    if (depth >= PROBCUT_DEPTH && beta > -CHECKMATE_BOUND && staticEval >= beta - PROBCUT_MARGIN(depth)) {
-        int p = beta + 300;
-        int probcutScore = search(s, si, gi, depth - 3, ply + 1, p - 1, p, isPv, isNull);
-        if (probcutScore >= p) {
-            return probcutScore;
-        }
-    }
-
     // Internal iterative deepening
     // In case no best move was found, perform a shallower search to determine which move to properly seach first
     if (!tt_move && !isNull && !s.inCheck() && (isPv || staticEval + 100 >= beta) && depth >= 5) {
