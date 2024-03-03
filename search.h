@@ -34,8 +34,6 @@ constexpr int REVERSE_FUTILITY_MARGIN = 200;
 constexpr int FUTILITY_DEPTH = 7;
 constexpr int RAZOR_DEPTH = 2;
 constexpr int RAZOR_MARGIN = 300;
-constexpr int PROBCUT_DEPTH = 6;
-constexpr int PROBCUT_MARGIN(int depth) { return 100 + 20 * depth; }
 constexpr int LATE_MOVE_REDUCTION_DEPTH = 3;
 
 struct SearchInfo {
