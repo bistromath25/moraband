@@ -46,14 +46,18 @@ Score QUEEN_MOBILITY[28] = {
 
 // Passed pawn eval
 Score PAWN_PASSED[4][7] = {
-    {// Cannot advance
-     S(0, 0), S(4, 4), S(8, 8), S(15, 20), S(30, 35), S(60, 65), S(70, 80)},
-    {// Unsafe advance
-     S(0, 0), S(5, 5), S(46, 46), S(53, 55), S(62, 70), S(64, 75), S(89, 99)},
-    {// Protected advance
-     S(0, 0), S(7, 7), S(12, 12), S(17, 22), S(30, 45), S(80, 100), S(115, 200)},
-    {// Safe advance
-     S(0, 0), S(8, 8), S(15, 15), S(20, 24), S(40, 60), S(100, 190), S(150, 290)}};
+    // Cannot advance
+    {
+        S(0, 0), S(4, 4), S(8, 8), S(15, 20), S(30, 35), S(60, 65), S(70, 80)},
+    // Unsafe advance
+    {
+        S(0, 0), S(5, 5), S(46, 46), S(53, 55), S(62, 70), S(64, 75), S(89, 99)},
+    // Protected advance
+    {
+        S(0, 0), S(7, 7), S(12, 12), S(17, 22), S(30, 45), S(80, 100), S(115, 200)},
+    // Safe advance
+    {
+        S(0, 0), S(8, 8), S(15, 15), S(20, 24), S(40, 60), S(100, 190), S(150, 290)}};
 Score PAWN_PASSED_CANDIDATE = S(-4, 49);
 Score PAWN_CONNECTED = S(14, 22);
 Score PAWN_ISOLATED = S(-12, -5);

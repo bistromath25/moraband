@@ -222,12 +222,6 @@ const int POS_INF = 50000;
 const int MAX_PLY = 50;
 const int MAX_GAME_MOVES = 1024;
 
-enum NodeType {
-    pv,
-    cut,
-    all
-};
-
 inline Square &operator++(Square &s) { return s = static_cast<Square>(static_cast<int>(s) + 1); }
 inline PieceType &operator++(PieceType &p) { return p = static_cast<PieceType>(static_cast<int>(p) + 1); }
 inline File &operator++(File &f) { return f = static_cast<File>(static_cast<int>(f) + 1); }
