@@ -40,6 +40,9 @@ jobs:
         CC: gcc-10
         CXX: g++-10
 
+    - name: Bench
+      run: ./Moraband bench
+
 #   - name: Test
 #     working-directory: ${{github.workspace}}/build
 #     # Execute tests defined by the CMake configuration.
