@@ -7,6 +7,7 @@
 #include "movegen.h"
 #include "position.h"
 #include "timeman.h"
+#include "search.h"
 #include <ctime>
 #include <iomanip>
 #include <string>
