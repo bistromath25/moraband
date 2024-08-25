@@ -8,6 +8,7 @@
 #include <fstream>
 #include <string>
 #include <vector>
+#include <thread>
 #include "defs.h"
 #include "search.h"
 #include "tune.h"
@@ -22,7 +23,16 @@ void set_parameter(Parameter *p) {
 }
 
 void set_material(std::vector<Parameter> & parameters) {
-
+    parameters.push_back({&PAWN_WEIGHT.mg, PAWN_WEIGHT.mg, "PAWN_WEIGHT.mg", true, 1});
+    parameters.push_back({&PAWN_WEIGHT.eg, PAWN_WEIGHT.eg, "PAWN_WEIGHT.eg", true, 1});
+    parameters.push_back({&KNIGHT_WEIGHT.mg, KNIGHT_WEIGHT.mg, "KNIGHT_WEIGHT.mg", true, 1});
+    parameters.push_back({&KNIGHT_WEIGHT.eg, KNIGHT_WEIGHT.eg, "KNIGHT_WEIGHT.eg", true, 1});
+    parameters.push_back({&BISHOP_WEIGHT.mg, BISHOP_WEIGHT.mg, "BISHOP_WEIGHT.mg", true, 1});
+    parameters.push_back({&BISHOP_WEIGHT.eg, BISHOP_WEIGHT.eg, "BISHOP_WEIGHT.eg", true, 1});
+    parameters.push_back({&ROOK_WEIGHT.mg, ROOK_WEIGHT.mg, "ROOK_WEIGHT.mg", true, 1});
+    parameters.push_back({&ROOK_WEIGHT.eg, ROOK_WEIGHT.eg, "ROOK_WEIGHT.eg", true, 1});
+    parameters.push_back({&QUEEN_WEIGHT.mg, QUEEN_WEIGHT.mg, "QUEEN_WEIGHT.mg", true, 1});
+    parameters.push_back({&QUEEN_WEIGHT.eg, QUEEN_WEIGHT.eg, "QUEEN_WEIGHT.eg", true, 1});
 }
 
 void get_fen_info(std::string &s, std::vector<std::string> &v) {
@@ -30,10 +40,10 @@ void get_fen_info(std::string &s, std::vector<std::string> &v) {
     for (int j = 0; j < s.length(); ++j) {
         if (s[j] == ';') {
             v.push_back(s.substr(i, j - i));
-            i = j + 1;
+            i = j + 2;
         }
         if (j == s.length() - 1) {
-            v.push_back(s.substr(j));
+            v.push_back(s.substr(i));
         } 
     }
 }
@@ -77,6 +87,7 @@ void get_single_error(int thread_id) {
         }
         else {
             result = -1.0L;
+            std::cout << "invalid fen result " << info[0] << " " << info[1] << std::endl;
             exit(1);
         }
 
@@ -96,19 +107,16 @@ long double get_error(std::vector<Parameter> &parameters) {
         Parameter *p = &parameters[i];
         set_parameter(p);
     }
-    
     std::vector<std::thread> threads;
     for (int i = 0; i < NUM_THREADS; ++i) {
         diffs[i].clear();
         threads.push_back(std::thread(get_single_error, i));
     }
-
-    unsigned long long t = 0;
+    U64 t = 0;
     for (int i = 0; i < NUM_THREADS; ++i) {
         threads[i].join();
         t += diffs[i].size();
     }
-
     return kahan_sum() / ((long double) t);
 }
 
