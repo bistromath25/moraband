@@ -6,9 +6,9 @@
 #ifndef TUNE_H
 #define TUNE_H
 
+#include "defs.h"
 #include <string>
 #include <vector>
-#include "defs.h"
 
 extern std::vector<long double> diffs[MAX_THREADS];
 extern std::vector<std::string> input;

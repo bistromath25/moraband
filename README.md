@@ -46,7 +46,7 @@ uciok
     - [Basic King safety using King safety table](https://www.chessprogramming.org/King_Safety)
     - [Tapered evaluation](https://www.chessprogramming.org/Tapered_Eval)
 
-## Compile Moraband
+## Compile
 Compile via `cmake` or `clang++ -Wall -mcpu=apple-m1 -std=c++17 -O3 *.cpp -o Moraband`.
 
 ## Tune
@@ -63,6 +63,6 @@ and tune via `tune fens`.
 ## Credit and Resources
 - [Vice chess engine tutorial](https://www.chessprogramming.org/Vice)
 - [Chess programming wiki](https://www.chessprogramming.org/Main_Page)
-- Pradyumna Kannan's MagicMoves.cpp and MagicMoves.hpp
+- Pradyumna Kannan's `MagicMoves.cpp`, `MagicMoves.hpp`
 - PST and piece evaluation values taken from [Rofchade](http://www.talkchess.com/forum3/viewtopic.php?f=2&t=68311&sid=b2b59fa572501777ceb19d49fa17614f&start=10)
-- Strong, open-source chess engines such as [Stockfish](https://www.chessprogramming.org/Stockfish)
+- Strong, open-source chess engines such as [Stockfish](https://www.chessprogramming.org/Stockfish), [Laser](https://github.com/jeffreyan11/laser-chess-engine), [Bit-Genie](https://github.com/Aryan1508/Bit-Genie), [Clover](https://github.com/lucametehau/CloverEngine/tree/master), [Pawn](https://github.com/ruicoelhopedro/pawn)
