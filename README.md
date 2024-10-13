@@ -24,6 +24,8 @@ option name Contempt type spin default 0 min -100 max 100
 uciok
 ```
 
+[Challenge Moraband on Lichess!](https://lichess.org/@/morabandbot) 
+
 ## Details 
 - Move Generation
     - [(Magic) Bitboards](https://www.chessprogramming.org/Bitboards)
@@ -44,19 +46,23 @@ uciok
     - [Basic King safety using King safety table](https://www.chessprogramming.org/King_Safety)
     - [Tapered evaluation](https://www.chessprogramming.org/Tapered_Eval)
 
-## Compile Moraband
-Compile via `cmake` or simply `clang++ -Wall -mcpu=apple-m1 -std=c++17 -O3 *.cpp -o Moraband`.
+## Compile
+Compile via `cmake` or `clang++ -Wall -mcpu=apple-m1 -std=c++17 -O3 *.cpp -o Moraband`.
 
-## Background
-Like everyone else, I found myself playing a great deal of chess online during the past few years, encouraged by the advent of Netflix's *Queen's Gambit* and a general lack of things to do during the pandemic lockdowns. It was also during this time that I developed an interest in algorithmic contest problem solving, and it wasn't soon before I decided to try my hand at writing my own chess-playing program, a suitable sparring partner, following along closely to BlueFeverSoft's video tutorials. Eventually I lost interest in my endeavor, weighed down by my final years of high school and the (somewhat?) easing Covid restrictions.
-
-I "restarted" this project during the current winter break, having just completed my Fall 2022 1A term at the University of Waterloo. As was the case a few years ago, writing my own chess program is an excellent way to combine passion of chess with my love of computer programming, and no doubt bolster my rather experience-less resume. Morever, it would be an excellent opportunity to practice developing and testing "professional" software in anticipation of my first coop. 
-
-[Challenge Moraband on Lichess!](https://lichess.org/@/morabandbot) 
+## Tune
+Tune material values using [Texel's method](https://www.chessprogramming.org/Texel%27s_Tuning_Method). Provide a `fens` file containing one FEN per line like below
+```
+// FEN; result
+r1bqk2r/2p2ppp/2p5/p3pn2/1bB5/2NP2P1/PPP1NP1P/R1B1K2R w KQkq -; 0-1
+8/8/4kp2/8/5K2/6p1/6P1/8 b - -; 1/2-1/2
+r4rk1/3p2pp/p7/1pq2p2/2n2P2/P2Q3P/2P1NRP1/R5K1 w - -; 1/2-1/2
+2rqk1n1/p6p/1p1pp3/8/4P3/P1b5/R2N1PPP/3QR1K1 w - -; 1-0
+```
+and tune via `tune fens`.
 
 ## Credit and Resources
 - [Vice chess engine tutorial](https://www.chessprogramming.org/Vice)
 - [Chess programming wiki](https://www.chessprogramming.org/Main_Page)
-- Pradyumna Kannan's MagicMoves.cpp and MagicMoves.hpp
+- Pradyumna Kannan's `MagicMoves.cpp`, `MagicMoves.hpp`
 - PST and piece evaluation values taken from [Rofchade](http://www.talkchess.com/forum3/viewtopic.php?f=2&t=68311&sid=b2b59fa572501777ceb19d49fa17614f&start=10)
-- Strong, open-source chess engines such as [Stockfish](https://www.chessprogramming.org/Stockfish)
+- Strong, open-source chess engines such as [Stockfish](https://www.chessprogramming.org/Stockfish), [Laser](https://github.com/jeffreyan11/laser-chess-engine), [Bit-Genie](https://github.com/Aryan1508/Bit-Genie), [Clover](https://github.com/lucametehau/CloverEngine/tree/master), [Pawn](https://github.com/ruicoelhopedro/pawn) 
