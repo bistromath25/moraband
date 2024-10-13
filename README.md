@@ -65,4 +65,4 @@ and tune via `tune fens`.
 - [Chess programming wiki](https://www.chessprogramming.org/Main_Page)
 - Pradyumna Kannan's `MagicMoves.cpp`, `MagicMoves.hpp`
 - PST and piece evaluation values taken from [Rofchade](http://www.talkchess.com/forum3/viewtopic.php?f=2&t=68311&sid=b2b59fa572501777ceb19d49fa17614f&start=10)
-- Strong, open-source chess engines such as [Stockfish](https://www.chessprogramming.org/Stockfish), [Laser](https://github.com/jeffreyan11/laser-chess-engine), [Bit-Genie](https://github.com/Aryan1508/Bit-Genie), [Clover](https://github.com/lucametehau/CloverEngine/tree/master), [Pawn](https://github.com/ruicoelhopedro/pawn)
+- Strong, open-source chess engines such as [Stockfish](https://www.chessprogramming.org/Stockfish), [Laser](https://github.com/jeffreyan11/laser-chess-engine), [Bit-Genie](https://github.com/Aryan1508/Bit-Genie), [Clover](https://github.com/lucametehau/CloverEngine/tree/master), [Pawn](https://github.com/ruicoelhopedro/pawn) 

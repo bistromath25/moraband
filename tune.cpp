@@ -283,7 +283,7 @@ void tune(std::string fens_file) {
     fens.close();
 
     std::vector<Parameter> best;
-    // set_material(best);
+    set_material(best);
     set_mobility(best);
 
     get_best_k(best);
