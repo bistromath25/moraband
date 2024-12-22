@@ -96,6 +96,7 @@ int qsearch(Position &s, SearchInfo &si, GlobalInfo &gi, int ply, int alpha, int
     int tt_score = NEG_INF;
     int tt_flag = -1;
     Move tt_move = 0;
+#ifndef TUNE_H
     TTEntry tt_entry = tt.probe(s.getKey());
     if (tt_entry.getKey() == s.getKey()) {
         tt_move = tt_entry.getMove();
@@ -105,6 +106,7 @@ int qsearch(Position &s, SearchInfo &si, GlobalInfo &gi, int ply, int alpha, int
             return tt_score;
         }
     }
+#endif
 
     // Generate moves and create the movelist.
     MoveList moveList(s, tt_move, &gi.history, ply, true);

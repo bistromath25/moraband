@@ -39,11 +39,10 @@ void test(Position s, MoveList *moveList, int depth, int id) {
 
 /* Multi-threaded Perft test */
 U64 MTperft(Position &s, int depth) {
-    unsigned int nThreads = std::thread::hardware_concurrency();
     std::vector<std::thread> threads;
     nodeCount.clear();
     MoveList moveList(s);
-    for (unsigned int i = 0; i < nThreads; ++i) {
+    for (unsigned int i = 0; i < NUM_THREADS; ++i) {
         threads.push_back(std::thread(test, s, &moveList, depth, i));
     }
     for (std::thread &thread : threads) thread.join();

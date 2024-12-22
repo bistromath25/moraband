@@ -1,12 +1,17 @@
+/**
+ * Moraband, known in antiquity as Korriban, was an 
+ * Outer Rim planet that was home to the ancient Sith 
+ **/
+
 #ifndef PERFT_H
 #define PERFT_H
-
 
 #include "defs.h"
 #include "move.h"
 #include "movegen.h"
 #include "position.h"
 #include "timeman.h"
+#include "search.h"
 #include <ctime>
 #include <iomanip>
 #include <string>
