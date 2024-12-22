@@ -75,7 +75,6 @@ Score ROOK_PAWN_BONUS = S(-7, 15);
 
 Score BISHOP_PAIR = S(82, 73);
 Score BAD_BISHOP = S(-3, -5);
-Score TRAPPED_ROOK = S(-25, -50);
 Score ROOK_OPEN_FILE = S(33, 20);
 Score ROOK_ON_SEVENTH_RANK = S(40, 20);
 Score KNIGHT_OUTPOST = S(61, 20);

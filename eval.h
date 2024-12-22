@@ -43,8 +43,6 @@ struct Score {
     }
     int score(int phase) const { return (mg * (256 - phase) + eg * phase) / 256; }
     int score() const { return mg; }
-
-private:
     int mg;
     int eg;
 };
@@ -95,7 +93,6 @@ extern Score ROOK_PAWN_BONUS;
 
 extern Score BISHOP_PAIR;
 extern Score BAD_BISHOP;
-extern Score TRAPPED_ROOK;
 extern Score ROOK_OPEN_FILE;
 extern Score ROOK_ON_SEVENTH_RANK;
 extern Score KNIGHT_OUTPOST;

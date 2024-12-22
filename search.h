@@ -22,7 +22,6 @@
 #include <stack>
 #include <string>
 #include <vector>
-//#include "book.h"
 
 constexpr int LMR_COUNT = 3;
 constexpr int LMR_DEPTH = 2;
