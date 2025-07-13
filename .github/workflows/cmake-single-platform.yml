@@ -30,3 +30,27 @@ jobs:
           cd build
           cmake .. -DCMAKE_BUILD_TYPE=Release
           make -j$(nproc)
+      
+      - name: Bench
+        working-directory: build
+        run: ./Moraband bench | tee ../bench.txt
+      
+      - name: Upload bench output
+        uses: actions/upload-artifact@v3
+        with:
+          name: bench
+          path: bench.txt
+
+      - name: Post results
+        if: github.event_name == 'pull_request'
+        run: |
+          tail -n 3 bench.txt > results.txt
+          if grep -q "^Time:" results.txt && grep -q "^Nodes:" results.txt && grep -q "^NPS:" results.txt; then
+            echo "Benchmark summary format verified, posting comment"
+            gh pr comment "$PR_URL" --body-file results.txt
+          else
+            echo "Bench results invalid or missing, skipping comment"
+          fi
+        env:
+          GH_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+          PR_URL: ${{ github.event.pull_request.html_url }}
