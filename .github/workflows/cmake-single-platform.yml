@@ -36,7 +36,7 @@ jobs:
         run: ./Moraband bench | tee ../bench.txt
       
       - name: Upload bench output
-        uses: actions/upload-artifact@v3
+        uses: actions/upload-artifact@v4
         with:
           name: bench
           path: bench.txt
