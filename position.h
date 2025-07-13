@@ -34,7 +34,7 @@ public:
     Position();
     Position(const std::string &fen);
     Position(const Position &s);
-    Position& operator=(const Position &s);
+    Position &operator=(const Position &s);
     void init();
 
     Color getOurColor() const;
