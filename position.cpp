@@ -14,26 +14,29 @@ Position::Position() {}
 Position::Position(const Position &s)
     : us(s.us), them(s.them), fiftyMoveRule(s.fiftyMoveRule), castleRights(s.castleRights), phase(s.phase), key(s.key), pawnKey(s.pawnKey), checkers(s.checkers), enPassant(s.enPassant), previousMove(s.previousMove), checkSquares(s.checkSquares), pinned(s.pinned), occupancy(s.occupancy), pieceIndex(s.pieceIndex), board(s.board), pieces(s.pieces), pieceCounts(s.pieceCounts), pstScore(s.pstScore), pieceList(s.pieceList) {}
 
-void Position::operator=(const Position &s) {
-    us = s.us;
-    them = s.them;
-    fiftyMoveRule = s.fiftyMoveRule;
-    castleRights = s.castleRights;
-    phase = s.phase;
-    key = s.key;
-    pawnKey = s.pawnKey;
-    checkers = s.checkers;
-    enPassant = s.enPassant;
-    previousMove = s.previousMove;
-    checkSquares = s.checkSquares;
-    pinned = s.pinned;
-    occupancy = s.occupancy;
-    pieceIndex = s.pieceIndex;
-    board = s.board;
-    pieces = s.pieces;
-    pieceCounts = s.pieceCounts;
-    pstScore = s.pstScore;
-    pieceList = s.pieceList;
+Position& Position::operator=(const Position &s) {
+    if (this != &s) {
+        us = s.us;
+        them = s.them;
+        fiftyMoveRule = s.fiftyMoveRule;
+        castleRights = s.castleRights;
+        phase = s.phase;
+        key = s.key;
+        pawnKey = s.pawnKey;
+        checkers = s.checkers;
+        enPassant = s.enPassant;
+        previousMove = s.previousMove;
+        checkSquares = s.checkSquares;
+        pinned = s.pinned;
+        occupancy = s.occupancy;
+        pieceIndex = s.pieceIndex;
+        board = s.board;
+        pieces = s.pieces;
+        pieceCounts = s.pieceCounts;
+        pstScore = s.pstScore;
+        pieceList = s.pieceList;
+    }
+    return *this;
 }
 
 Position::Position(const std::string &fen) {

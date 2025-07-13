@@ -6,7 +6,9 @@
 #include "uci.h"
 #include "io.h"
 #include "perft.h"
+#ifdef TUNE
 #include "tune.h"
+#endif
 
 int HASH_SIZE = DEFAULT_HASH_SIZE;
 int NUM_THREADS = 1;
@@ -302,10 +304,12 @@ void uci() {
             is >> token;
             bench(std::stoi(token));
         }
+#ifdef TUNE
         else if (token == "tune") {
             is >> token;
             tune(token);
         }
+#endif
         else {
             std::cout << "unknown command" << std::endl;
         }

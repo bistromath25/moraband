@@ -5,6 +5,7 @@
 
 #include "eval.h"
 #include "search.h"
+#include "tune.h"
 #include "uci.h"
 #include "zobrist.h"
 #include <iostream>
@@ -37,6 +38,13 @@ int main(int argc, char *argv[]) {
                 bench();
             }
         }
+#ifdef TUNE
+        else if (std::string(argv[1]) == "tune") {
+            if (argc > 2) {
+                tune(argv[2]);
+            }
+        }
+#endif
     }
     else {
         uci();
