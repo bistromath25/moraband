@@ -43,6 +43,10 @@ struct Score {
     }
     int score(int phase) const { return (mg * (256 - phase) + eg * phase) / 256; }
     int score() const { return mg; }
+
+#ifndef TUNE
+private:
+#endif
     int mg;
     int eg;
 };

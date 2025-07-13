@@ -7,6 +7,7 @@
 #define TUNE_H
 
 #include "defs.h"
+#include "search.h"
 #include <string>
 #include <vector>
 

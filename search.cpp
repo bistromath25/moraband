@@ -5,11 +5,12 @@
 
 #include "search.h"
 #include "io.h"
+#include <atomic>
 #include <fstream>
 #include <string>
 #include <thread>
 
-bool THREAD_STOP = false;
+std::atomic<bool> THREAD_STOP{false};
 std::thread threads[MAX_THREADS];
 GlobalInfo global_info[MAX_THREADS];
 std::pair<int, bool> results[MAX_THREADS];
@@ -240,8 +241,7 @@ int search(Position &s, SearchInfo &si, GlobalInfo &gi, int depth, int ply, int 
         // Null move pruning
         // Make a null move and search to a reduced depth
         if (!isNull && depth >= NULL_MOVE_DEPTH && staticEval + NULL_MOVE_MARGIN >= beta) {
-            Position n;
-            std::memmove(&n, &s, sizeof(s));
+            Position n(s);
             n.makeNull();
             gi.history.push(std::make_pair(NULL_MOVE, n.getKey()));
             int nullScore = -search(n, si, gi, std::max(1, depth - null_move_pruning_reduction(depth, staticEval, beta)), ply + 1, -beta, -beta + 1, false, true);

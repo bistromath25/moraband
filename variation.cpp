@@ -44,9 +44,8 @@ void Variation::clearPv() {
 }
 
 void Variation::checkPv(Position &s) {
-    Position c;
+    Position c(s);
     Move nextMove;
-    std::memmove(&c, &s, sizeof(s));
     for (int i = 0; i < MAX_PLY; ++i) {
         nextMove = pv[i].first;
         if (nextMove == NULL_MOVE) {

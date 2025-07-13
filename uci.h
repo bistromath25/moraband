@@ -18,7 +18,11 @@
 #include <utility>
 
 #define ENGINE_NAME "Moraband"
+#ifdef TUNE
+#define ENGINE_VERSION "1.2-tune"
+#else
 #define ENGINE_VERSION "1.2"
+#endif
 #define ENGINE_AUTHOR "Brighten Zhang"
 
 extern int HASH_SIZE;
