@@ -291,8 +291,13 @@ void tune(std::string fens_file) {
     long double best_error = get_error(best);
     std::cerr << "best error " << best_error << "\n";
 
+    NUM_THREADS = std::thread::hardware_concurrency();
+    if (NUM_THREADS == 0) {
+        NUM_THREADS = 1;
+    }
     std::cerr << "Tuning with " << NUM_THREADS << " threads"
               << "\n";
+
     for (int i = 0; i < 2; ++i) {
         for (int j = 0; j < best.size(); ++j) {
             best[j].stability = 1;
@@ -324,7 +329,7 @@ void tune(std::string fens_file) {
                 }
 
                 cur[b].value -= best[b].increasing ? 2 : -2;
-                cur_error = get_error(best);
+                cur_error = get_error(cur);
                 if (cur_error < best_error) {
                     best = cur;
                     best_error = cur_error;

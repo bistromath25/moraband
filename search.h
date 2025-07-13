@@ -18,8 +18,8 @@
 #include "tt.h"
 #include "variation.h"
 #include <algorithm>
+#include <atomic>
 #include <sstream>
-#include <stack>
 #include <string>
 #include <vector>
 
@@ -69,7 +69,7 @@ struct GlobalInfo {
 
 const int MAX_THREADS = 16;
 extern int NUM_THREADS;
-extern bool THREAD_STOP;
+extern std::atomic<bool> THREAD_STOP;
 extern std::thread threads[MAX_THREADS];
 extern GlobalInfo global_info[MAX_THREADS];
 extern std::pair<int, bool> results[MAX_THREADS];
