@@ -46,7 +46,7 @@ jobs:
         run: |
           tail -n 3 bench.txt > results.txt
           if grep -q "^Time:" results.txt && grep -q "^Nodes:" results.txt && grep -q "^NPS:" results.txt; then
-            echo "Benchmark results valid, posting comment"
+            echo "Bench results valid, posting comment"
             gh pr comment "$PR_URL" --body-file results.txt
           else
             echo "Bench results invalid or missing, skipping comment"

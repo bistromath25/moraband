@@ -5,7 +5,9 @@
 
 #include "eval.h"
 #include "search.h"
+#ifdef TUNE
 #include "tune.h"
+#endif
 #include "uci.h"
 #include "zobrist.h"
 #include <iostream>
@@ -13,8 +15,8 @@
 #include <string>
 
 int main(int argc, char *argv[]) {
-    std::cout << " ___  ___                _                     _ \n \
-|  \\/  |               | |                   | | \n\
+    std::cout << " ___  ___                _                     _ \n\
+ |  \\/  |               | |                   | | \n\
  |      | ___  _ __ __ _| |__   __ _ _ __   __| | \n\
  | |\\/| |/ _ \\| '__/ _` | '_ \\ / _` | '_ \\ / _` | \n\
  | |  | | (_) | | | (_| | |_) | (_| | | | | (_| | \n\
