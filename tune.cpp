@@ -90,11 +90,11 @@ void set_mobility(std::vector<Parameter> &parameters) {
         parameters.push_back({&BISHOP_MOBILITY[i].mg, BISHOP_MOBILITY[i].mg, "BISHOP_MOBILITY[" + std::to_string(i) + "].mg", true, 1});
         parameters.push_back({&BISHOP_MOBILITY[i].eg, BISHOP_MOBILITY[i].eg, "BISHOP_MOBILITY[" + std::to_string(i) + "].eg", true, 1});
     }
-    for (int i = 0; i < 14; ++i) {
+    for (int i = 0; i < 15; ++i) {
         parameters.push_back({&ROOK_MOBILITY[i].mg, ROOK_MOBILITY[i].mg, "ROOK_MOBILITY[" + std::to_string(i) + "].mg", true, 1});
         parameters.push_back({&ROOK_MOBILITY[i].eg, ROOK_MOBILITY[i].eg, "ROOK_MOBILITY[" + std::to_string(i) + "].eg", true, 1});
     }
-    for (int i = 0; i < 14; ++i) {
+    for (int i = 0; i < 28; ++i) {
         parameters.push_back({&QUEEN_MOBILITY[i].mg, QUEEN_MOBILITY[i].mg, "QUEEN_MOBILITY[" + std::to_string(i) + "].mg", true, 1});
         parameters.push_back({&QUEEN_MOBILITY[i].eg, QUEEN_MOBILITY[i].eg, "QUEEN_MOBILITY[" + std::to_string(i) + "].eg", true, 1});
     }
