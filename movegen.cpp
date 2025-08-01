@@ -312,7 +312,7 @@ Move MoveList::getBestMove() {
         case BestMove:
             // Best move
             // If the move given by the pv or tt is valid, return it.
-            stage++;
+            ++stage;
             if (position.isValid(best, FULL) && position.isLegal(best)) {
                 return best;
             }
@@ -334,7 +334,7 @@ Move MoveList::getBestMove() {
                     pop();
                 }
             }
-            stage++;
+            ++stage;
 
         case Attacks:
             // Captures
@@ -348,13 +348,13 @@ Move MoveList::getBestMove() {
                     return move;
                 }
             }
-            stage++;
+            ++stage;
 
         case Killer1:
             // First killer move
             // Ensure that the killer stored at this ply is a valid move and is not
             // the same as the best move. Return it before generating any quiets.
-            stage++;
+            ++stage;
             if ((position.isValid(killer1, FULL) && position.isLegal(killer1) && position.isQuiet(killer1)) && killer1 != best) {
                 return killer1;
             }
@@ -364,7 +364,7 @@ Move MoveList::getBestMove() {
             // Ensure that the killer stored at this ply is a valid move and is not
             // the same as the best move or the first killer move. Return it before
             // generating any quiets.
-            stage++;
+            ++stage;
             if ((position.isValid(killer2, FULL)) && position.isLegal(killer2) && position.isQuiet(killer2) && killer2 != best && killer2 != killer1) {
                 return killer2;
             }
@@ -389,7 +389,7 @@ Move MoveList::getBestMove() {
                     it1->score = PieceSquareTable::getTaperedScore(toMove, position.getOurColor(), dst, position.getGamePhase()) - PieceSquareTable::getTaperedScore(toMove, position.getOurColor(), src, position.getGamePhase());
                 }
                 std::stable_sort(moveList.begin(), it2);
-                stage++;
+                ++stage;
             }
 
         case Quiets:
@@ -413,7 +413,7 @@ Move MoveList::getBestMove() {
         case QBestMove:
             // Qsearch best move
             // If the move given by the pv or tt is valid, return it.
-            stage++;
+            ++stage;
             if (position.isValid(best, FULL) && position.isLegal(best)) {
                 return best;
             }
@@ -425,7 +425,7 @@ Move MoveList::getBestMove() {
             for (int i = 0; i < int(sz); ++i) {
                 moveList[i].score = position.onSquare(getDst(moveList[i].move)) - position.onSquare(getSrc(moveList[i].move));
             }
-            stage++;
+            ++stage;
 
         case QAttacks:
             // Qsearch captures
@@ -440,7 +440,7 @@ Move MoveList::getBestMove() {
                     return move;
                 }
             }
-            stage++;
+            ++stage;
 
         case QQuietChecksGen:
             // Qsearch quiet generation
@@ -448,7 +448,7 @@ Move MoveList::getBestMove() {
             for (int i = 0; i < int(sz); ++i) {
                 moveList[i].score = history->getHistoryScore(moveList[i].move);
             }
-            stage++;
+            ++stage;
 
         case QQuietChecks:
             // Qsearch quiet checks
@@ -465,7 +465,7 @@ Move MoveList::getBestMove() {
         case EvadeBestMove:
             // Evade best move
             // If the move given by the pv or tt is valid, return it.
-            stage++;
+            ++stage;
             if (position.isValid(best, valid) && position.isLegal(best) && !position.inDoubleCheck()) {
                 return best;
             }
@@ -502,7 +502,7 @@ Move MoveList::getBestMove() {
                     }
                 }
                 std::stable_sort(moveList.begin(), moveList.begin() + sz);
-                stage++;
+                ++stage;
             }
 
         case Evade:

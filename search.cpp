@@ -64,7 +64,7 @@ bool stop_search(SearchInfo &si) {
 
 /** Quiescence search */
 int qsearch(Position &s, SearchInfo &si, GlobalInfo &gi, int ply, int alpha, int beta) {
-    si.nodes++;
+    ++si.nodes;
     assert(ply <= MAX_PLY);
 
     if (gi.history.isThreefoldRepetition(s) || s.insufficientMaterial() || s.getFiftyMoveRule() > 99) {
@@ -120,7 +120,7 @@ int qsearch(Position &s, SearchInfo &si, GlobalInfo &gi, int ply, int alpha, int
             continue;
         }
 
-        legalMoves++;
+        ++legalMoves;
 
         // Avoid pruning tactical positions
         if (!s.inCheck() && !s.givesCheck(m) && !s.isEnPassant(m) && !isPromotion(m)) {
@@ -166,8 +166,8 @@ int search(Position &s, SearchInfo &si, GlobalInfo &gi, int depth, int ply, int 
         return qsearch(s, si, gi, ply, alpha, beta);
     }
 
-    si.nodes++;
-    si.totalNodes++;
+    ++si.nodes;
+    ++si.totalNodes;
 
     if (gi.history.isThreefoldRepetition(s) || s.insufficientMaterial() || s.getFiftyMoveRule() > 99) {
         return DRAW;
@@ -285,7 +285,7 @@ int search(Position &s, SearchInfo &si, GlobalInfo &gi, int depth, int ply, int 
     int d;
     while ((m = moveList.getBestMove())) {
         d = depth - 1; // Early pruning
-        legalMoves++;
+        ++legalMoves;
 
         if (bestScore > -CHECKMATE_BOUND && legalMoves > 1 && !s.inCheck() && !s.givesCheck(m) && !isPromotion(m) && s.getNonPawnPieceCount()) {
             // Futility pruning
@@ -309,7 +309,7 @@ int search(Position &s, SearchInfo &si, GlobalInfo &gi, int depth, int ply, int 
         gi.history.push(std::make_pair(m, c.getKey())); // Add move to history
 
         if (c.inCheck() && depth == 1) {
-            d++;
+            ++d;
         }
 
         // Search PV move
@@ -373,8 +373,8 @@ int search(Position &s, SearchInfo &si, GlobalInfo &gi, int depth, int ply, int 
 int search_root(Position &s, SearchInfo &si, GlobalInfo &gi, int depth, int ply, int alpha, int beta) {
     assert(depth >= 0);
 
-    si.nodes++;
-    si.totalNodes++;
+    ++si.nodes;
+    ++si.totalNodes;
 
     if (!(si.nodes & 2047) && (si.quit || stop_search(si) || THREAD_STOP)) {
         return 0;
@@ -399,14 +399,14 @@ int search_root(Position &s, SearchInfo &si, GlobalInfo &gi, int depth, int ply,
     int d;
     while ((m = moveList.getBestMove())) {
         d = depth - 1;
-        legalMoves++;
+        ++legalMoves;
 
         Position c(s);
         c.makeMove(m);
         gi.history.push(std::make_pair(m, c.getKey()));
 
         if (c.inCheck() && depth == 1) {
-            d++;
+            ++d;
         }
 
         if (legalMoves == 1) {

@@ -68,7 +68,7 @@ Position::Position(const std::string &fen) {
             if (p == PIECETYPE_PAWN) {
                 pawnKey ^= Zobrist::key(c, PIECETYPE_PAWN, s);
             }
-            position++;
+            ++position;
         }
         else if (*it == ' ') {
             ++it;
@@ -361,7 +361,7 @@ int Position::see(Move move) const {
     while (from) {
         src = get_lsb(from);
         target = onSquare(src);
-        d++;
+        ++d;
         gain[d] = PIECE_VALUE[target].score() - gain[d - 1];
         if (std::max(-gain[d - 1], gain[d]) < 0) {
             break;
@@ -433,7 +433,7 @@ void Position::makeMove(Move move) {
     assert(moved != PIECETYPE_NONE);
     captured = onSquare(dst);
     assert(captured != PIECETYPE_KING);
-    fiftyMoveRule++;
+    ++fiftyMoveRule;
 
     if (enPassant) {
         key ^= Zobrist::key(get_file(enPassant));
