@@ -368,8 +368,6 @@ int Position::see(Move move) const {
         }
         attackers ^= from;
         occupancy ^= from;
-        attackers ^= from;
-        occupancy ^= from;
 
         if (target != PIECETYPE_KNIGHT) {
             xRay &= occupancy;
