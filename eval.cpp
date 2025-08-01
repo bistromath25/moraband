@@ -187,44 +187,34 @@ void Evaluate::evalPawns(const Color c) {
         int r = c == WHITE ? rank(p) : 7 - rank(p);
 
         material[c] += PAWN_WEIGHT;
+        Square f = p + dir;
 
         if (!((file_bb[p] | adj_files[p]) & in_front[c][p] & position.getPieceBB<PIECETYPE_PAWN>(!c))) {
-            if ((p + dir) & position.getOccupancyBB()) {
+            if (position.getOccupancyBB() & f) {
                 pawn_structure[c] += PAWN_PASSED[CANNOT_ADVANCE][r];
             }
+            else if (!position.attacked(f)) {
+                pawn_structure[c] += PAWN_PASSED[SAFE_ADVANCE][r];
+            }
+            else if (position.defended(f, c)) {
+                pawn_structure[c] += PAWN_PASSED[PROTECTED_ADVANCE][r];
+            }
             else {
-                if (!position.attacked(p + dir)) {
-                    pawn_structure[c] += PAWN_PASSED[SAFE_ADVANCE][r];
-                }
-                else {
-                    if (position.defended(p + dir, c)) {
-                        pawn_structure[c] += PAWN_PASSED[PROTECTED_ADVANCE][r];
-                    }
-                    else {
-                        pawn_structure[c] += PAWN_PASSED[UNSAFE_ADVANCE][r];
-                    }
-                }
+                pawn_structure[c] += PAWN_PASSED[UNSAFE_ADVANCE][r];
             }
         }
         else if (!(file_bb[p] & in_front[c][p] & position.getPieceBB<PIECETYPE_PAWN>(!c))) {
-            int sentries, helpers;
+            int sentries;
             assert(p < 56 && p > 7);
 
-            sentries = pop_count(pawn_attacks[c][p + dir] & position.getPieceBB<PIECETYPE_PAWN>(!c));
+            sentries = pop_count(pawn_attacks[c][f] & position.getPieceBB<PIECETYPE_PAWN>(!c));
             if (sentries > 0) {
-                helpers = pop_count(pawn_attacks[!c][p + dir] & position.getPieceBB<PIECETYPE_PAWN>(c));
+                int helpers = pop_count(pawn_attacks[!c][f] & position.getPieceBB<PIECETYPE_PAWN>(c));
                 if (helpers >= sentries) {
                     pawn_structure[c] += PAWN_PASSED_CANDIDATE;
                 }
-                else if (!(~in_front[c][p] & adj_files[p] & position.getPieceBB<PIECETYPE_PAWN>(c))) {
-                    if (pawn_attacks[c][p] & position.getPieceBB<PIECETYPE_PAWN>(c)) {
-                        if (sentries == 2) {
-                            pawn_structure[c] += PAWN_FULL_BACKWARDS;
-                        }
-                        else {
-                            pawn_structure[c] += PAWN_BACKWARDS;
-                        }
-                    }
+                else if (!(~in_front[c][p] & adj_files[p] & position.getPieceBB<PIECETYPE_PAWN>(c)) && pawn_attacks[c][p] & position.getPieceBB<PIECETYPE_PAWN>(c)) {
+                    pawn_structure[c] += (sentries == 2) ? PAWN_FULL_BACKWARDS : PAWN_BACKWARDS;
                 }
             }
         }
