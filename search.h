@@ -35,6 +35,7 @@ constexpr int RAZOR_DEPTH = 2;
 constexpr int RAZOR_MARGIN = 300;
 constexpr int LATE_MOVE_REDUCTION_DEPTH = 3;
 
+/** Search information */
 struct SearchInfo {
     SearchInfo() : time{}, inc{}, moves_to_go(0), depth(MAX_PLY), nodes(0), prevNodes(0), totalNodes(0), moveTime(0), quit(false), infinite(false) {}
     int time[PLAYER_SIZE], inc[PLAYER_SIZE];
@@ -45,6 +46,7 @@ struct SearchInfo {
     bool quit, infinite;
 };
 
+/** Global search information */
 struct GlobalInfo {
     GlobalInfo() {
         nodes = 0;

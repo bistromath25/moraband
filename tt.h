@@ -51,7 +51,7 @@ private:
     TTEntry entries[CLUSTER_SIZE];
 };
 
-/* Transposition table to store search information */
+/** Transposition table to store search information */
 struct TranspositionTable {
     TranspositionTable();
     TranspositionTable(int mb);

@@ -11,6 +11,7 @@
 #include <string>
 #include <sys/time.h>
 
+/** Debugging and assertion macros */
 #ifndef DEBUG
 #define ASSERT(x)
 #define D(x)
@@ -27,15 +28,18 @@
 #define D(x) x
 #endif
 
+/** Bitboard type definition and constants */
 typedef unsigned long long U64;
 #define C64(u) u##ULL;
 
+/** Game constants */
 constexpr int BOARD_SIZE = 64;
 constexpr int PIECE_TYPES_SIZE = 6;
 constexpr int PLAYER_SIZE = 2;
 constexpr int PIECE_MAX = 10;
 const std::string START_FEN = "rnbqkbnr/pppppppp/8/8/8/8/PPPPPPPP/RNBQKBNR w KQkq";
 
+/** Castling rights lookup table */
 constexpr int CASTLE_RIGHTS[BOARD_SIZE] = {
     14, 15, 15, 12, 15, 15, 15, 13,
     15, 15, 15, 15, 15, 15, 15, 15,
@@ -46,18 +50,22 @@ constexpr int CASTLE_RIGHTS[BOARD_SIZE] = {
     15, 15, 15, 15, 15, 15, 15, 15,
     11, 15, 15, 3, 15, 15, 15, 7};
 
+/** Game stage definitions */
 constexpr int GAMESTAGE_SIZE = 2;
 
+/** Game stage enumeration */
 enum GameStage {
     MIDDLEGAME,
     ENDGAME
 };
 
+/** Color enumeration */
 enum Color {
     WHITE,
     BLACK
 };
 
+/** Piece type enumeration */
 enum PieceType {
     PIECETYPE_PAWN,
     PIECETYPE_KNIGHT,
@@ -68,6 +76,7 @@ enum PieceType {
     PIECETYPE_NONE
 };
 
+/** Square enumeration and related functions */
 enum Square : uint32_t {
     H1,
     G1,
@@ -138,6 +147,7 @@ enum Square : uint32_t {
     last_sq = 63
 };
 
+/** File enumeration and helper functions */
 enum File {
     file_a,
     file_b,
@@ -153,6 +163,7 @@ inline File file(Square s) {
     return File(s & 0x7);
 }
 
+/** Rank enumeration and helper functions */
 enum Rank {
     rank_1,
     rank_2,
@@ -168,6 +179,7 @@ inline Rank rank(Square s) {
     return Rank(s >> 3);
 }
 
+/** Castling rights bitmask */
 enum CASTLINGRIGHTS {
     WHITE_KINGSIDE_CASTLE = 1,
     WHITE_QUEENSIDE_CASTLE = 2,
@@ -175,6 +187,7 @@ enum CASTLINGRIGHTS {
     BLACK_QUEENSIDE_CASTLE = 8
 };
 
+/** Piece square table ordering */
 constexpr int SCORE[PIECE_TYPES_SIZE][PIECE_TYPES_SIZE] = {
     {26, 30, 31, 33, 36, 0},
     {20, 25, 27, 29, 35, 0},
@@ -183,6 +196,7 @@ constexpr int SCORE[PIECE_TYPES_SIZE][PIECE_TYPES_SIZE] = {
     {12, 13, 14, 15, 22, 0},
     {7, 8, 9, 10, 11, 0}};
 
+/** Direction enumeration for piece movement */
 enum Dir {
     N = 8,
     S = -8,
@@ -194,6 +208,7 @@ enum Dir {
     SW = -7
 };
 
+/** Square to string conversion */
 const std::string SQUARE_TO_STRING[64] = {
     "h1", "g1", "f1", "e1", "d1", "c1", "b1", "a1",
     "h2", "g2", "f2", "e2", "d2", "c2", "b2", "a2",
@@ -204,6 +219,7 @@ const std::string SQUARE_TO_STRING[64] = {
     "h7", "g7", "f7", "e7", "d7", "c7", "b7", "a7",
     "h8", "g8", "f8", "e8", "d8", "c8", "b8", "a8"};
 
+/** Move property flags */
 enum Prop : uint32_t {
     PROP_QUIET,
     PROP_ATTACK,
@@ -217,11 +233,13 @@ enum Prop : uint32_t {
     PROP_EN_PASSANT
 };
 
+/** Game constants */
 const int NEG_INF = -50000;
 const int POS_INF = 50000;
 const int MAX_PLY = 50;
 const int MAX_GAME_MOVES = 1024;
 
+/** Operator overloads for chess-related types */
 inline Square &operator++(Square &s) { return s = static_cast<Square>(static_cast<int>(s) + 1); }
 inline PieceType &operator++(PieceType &p) { return p = static_cast<PieceType>(static_cast<int>(p) + 1); }
 inline File &operator++(File &f) { return f = static_cast<File>(static_cast<int>(f) + 1); }
@@ -230,6 +248,7 @@ inline Square operator+(const Square s, const int i) { return static_cast<Square
 inline Square operator-(const Square s, const int i) { return static_cast<Square>(static_cast<int>(s) - i); }
 inline Square operator-(const Square s1, const Square s2) { return static_cast<Square>(static_cast<int>(s1) - static_cast<int>(s2)); }
 
+/** Utility functions for chess operations */
 inline int abs(int x) { return x >= 0 ? x : -x; }
 inline int clamp(int x, int a, int b) { return std::max(a, std::min(x, b)); }
 inline int manhattanDistance(const Square sq1, const Square sq2) { return abs(file(sq1) - file(sq2)) + abs(rank(sq1) - rank(sq2)); }

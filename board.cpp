@@ -1,5 +1,11 @@
+/**
+ * Moraband, known in antiquity as Korriban, was an 
+ * Outer Rim planet that was home to the ancient Sith 
+ **/
+
 #include "board.h"
 
+/** Bitboard representations for the chess board */
 U64 square_bb[BOARD_SIZE];
 U64 file_bb[BOARD_SIZE];
 U64 rank_bb[BOARD_SIZE];
@@ -16,6 +22,7 @@ U64 in_front[PLAYER_SIZE][BOARD_SIZE];
 U64 king_net_bb[PLAYER_SIZE][BOARD_SIZE];
 U64 outpost_area[PLAYER_SIZE];
 
+/** Precomputed knight move bitboards for each square */
 const U64 KNIGHT_MOVES[BOARD_SIZE] = {
     U64(0x0000000000020400), U64(0x0000000000050800), U64(0x00000000000A1100), U64(0x0000000000142200),
     U64(0x0000000000284400), U64(0x0000000000508800), U64(0x0000000000A01000), U64(0x0000000000402000),
@@ -34,6 +41,7 @@ const U64 KNIGHT_MOVES[BOARD_SIZE] = {
     U64(0x0004020000000000), U64(0x0008050000000000), U64(0x00110A0000000000), U64(0x0022140000000000),
     U64(0x0044280000000000), U64(0x0088500000000000), U64(0x0010A00000000000), U64(0x0020400000000000)};
 
+/** Precomputed king move bitboards for each square */
 const U64 KING_MOVES[BOARD_SIZE] = {
     U64(0x0000000000000302), U64(0x0000000000000705), U64(0x0000000000000E0A), U64(0x0000000000001C14),
     U64(0x0000000000003828), U64(0x0000000000007050), U64(0x000000000000E0A0), U64(0x000000000000C040),
@@ -52,10 +60,15 @@ const U64 KING_MOVES[BOARD_SIZE] = {
     U64(0x0203000000000000), U64(0x0507000000000000), U64(0x0A0E000000000000), U64(0x141C000000000000),
     U64(0x2838000000000000), U64(0x5070000000000000), U64(0xA0E0000000000000), U64(0x40C0000000000000)};
 
+/** Magic bitboard attack tables for bishops and rooks */
 U64 bishopMoves[BOARD_SIZE];
 U64 rookMoves[BOARD_SIZE];
 
-/* Initialize bitboards */
+/**
+ * Initialize all bitboard lookup tables
+ * This function precomputes all necessary bitboard patterns for efficient move generation
+ * and evaluation during the chess game.
+ */
 void bb_init() {
     for (Square sq_src = first_sq; sq_src <= last_sq; ++sq_src) {
         U64 bit = 1ULL << sq_src;
@@ -135,7 +148,7 @@ void bb_init() {
     outpost_area[BLACK] = RANK_3 | RANK_4 | RANK_5;
 }
 
-/* Print a bitboard */
+/** Print a bitboard */
 void print_bb(U64 bb) {
     const U64 MSB = 0x8000000000000000ULL;
     std::string res;

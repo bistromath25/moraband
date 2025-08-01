@@ -13,6 +13,10 @@
 #include <iomanip>
 #include <iostream>
 
+/**
+ * Score structure for tapered evaluation
+ * Maintains separate scores for middle game (mg) and endgame (eg)
+ */
 struct Score {
     Score() : mg(0), eg(0) {}
     Score(int m, int e) : mg(m), eg(e) {}
@@ -51,14 +55,17 @@ private:
     int eg;
 };
 
+/** Evaluation parameters and weights */
 extern Score TEMPO_BONUS; // Side-to-move bonus
 extern int CONTEMPT;
 
+/** Piece threat values for king safety */
 extern int KNIGHT_THREAT; // Threats on enemy King
 extern int BISHOP_THREAT;
 extern int ROOK_THREAT;
 extern int QUEEN_THREAT;
 
+/** Piece material values (middle game and endgame) */
 extern Score PAWN_WEIGHT;
 extern Score KNIGHT_WEIGHT;
 extern Score BISHOP_WEIGHT;
@@ -67,12 +74,13 @@ extern Score QUEEN_WEIGHT;
 
 extern const Score PIECE_VALUE[7];
 
+/** Piece mobility tables */
 extern Score KNIGHT_MOBILITY[9];
 extern Score BISHOP_MOBILITY[14];
 extern Score ROOK_MOBILITY[15];
 extern Score QUEEN_MOBILITY[28];
 
-// Pawn eval
+/** Pawn evaluation parameters */
 enum PAWN_PASSED_TYPES {
     CANNOT_ADVANCE,
     UNSAFE_ADVANCE,
@@ -95,6 +103,7 @@ extern Score HANGING;
 extern Score KNIGHT_PAWN_PENALTY;
 extern Score ROOK_PAWN_BONUS;
 
+/** Piece-specific evaluation terms */
 extern Score BISHOP_PAIR;
 extern Score BAD_BISHOP;
 extern Score ROOK_OPEN_FILE;
@@ -102,12 +111,14 @@ extern Score ROOK_ON_SEVENTH_RANK;
 extern Score KNIGHT_OUTPOST;
 extern Score BISHOP_OUTPOST;
 
+/** Evaluation constants */
 const int CHECKMATE = 32767;
 const int PSEUDO_CHECKMATE = 5000;
 const int CHECKMATE_BOUND = CHECKMATE - MAX_PLY;
 const int STALEMATE = 0;
 const int DRAW = 0;
 
+/** King safety table for attack evaluation */
 const int SAFETY_TABLE[100] = {
     0, 0, 0, 1, 1, 2, 3, 4, 5, 6,
     8, 10, 13, 16, 20, 25, 30, 36, 42, 48,
@@ -123,9 +134,13 @@ const int SAFETY_TABLE[100] = {
 extern int KING_RING[2][64];
 extern Score KING_RING_ATTACK[2][5];
 
+/** Pawn hash table configuration */
 const int PAWN_HASH_SIZE = 2;
 
-/* Pawn hash table entry */
+/**
+ * Pawn hash table entry
+ * Caches pawn structure evaluation to avoid redundant calculations
+ */
 struct PawnEntry {
     PawnEntry() : key(0), structure{} {}
     U64 getKey() const {
@@ -147,7 +162,10 @@ struct PawnEntry {
     std::array<Score, PLAYER_SIZE> material;
 };
 
-/* Pawn hash table for pawn evaluation */
+/**
+ * Pawn hash table
+ * Implements a fixed-size cache for pawn structure evaluations
+ */
 struct PawnHashTable {
     PawnHashTable() {
         size = (1 << 20) / sizeof(PawnEntry) * PAWN_HASH_SIZE;
@@ -176,10 +194,15 @@ struct PawnHashTable {
 
 extern PawnHashTable ptable;
 
-/* Evaluation and related functions */
+/**
+ * Evaluation class
+ * Handles the static evaluation of a chess position
+ */
 class Evaluate {
 public:
     Evaluate(const Position &s);
+
+    /** Evaluation components */
     void evalPawns(const Color c);
     void evalPieces(const Color c);
     void evalAttacks(const Color c);
@@ -202,6 +225,7 @@ private:
     std::array<U64, PLAYER_SIZE> all_attacks_bb;
 };
 
+/** Initialize king safety tables */
 void initKingRing();
 
 #endif

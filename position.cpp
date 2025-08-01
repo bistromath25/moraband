@@ -8,7 +8,7 @@
 #include "zobrist.h"
 #include <utility>
 
-/* Board position and related functions */
+/** Board position and related functions */
 Position::Position() {}
 
 Position::Position(const Position &s)
@@ -113,15 +113,9 @@ Position::Position(const std::string &fen) {
     }
 
     previousMove = NULL_MOVE;
-
-    // Initialize pins
     setPins(WHITE);
     setPins(BLACK);
-
-    // Initialize checkers
     setCheckers();
-
-    // Initialize game phase
     setGamePhase();
 }
 
@@ -312,12 +306,10 @@ bool Position::givesCheck(Move move) const {
     Square dst = getDst(move);
     PieceType piece = onSquare(src);
 
-    // Direct check
+    // Detect direct check
     if (getCheckSquaresBB(piece) & square_bb[dst]) {
         return true;
     }
-
-    // Discovered check
     if ((getDiscoveredChecks(us) & square_bb[src]) && !(coplanar[src][dst] & getPieceBB<PIECETYPE_KING>(them))) {
         return true;
     }
@@ -339,6 +331,7 @@ bool Position::givesCheck(Move move) const {
     return false;
 }
 
+/** Static exchange evaluation */
 int Position::see(Move move) const {
     Color color;
     Square src, dst, mayAttack;
@@ -351,7 +344,6 @@ int Position::see(Move move) const {
     src = getSrc(move);
     dst = getDst(move);
     from = square_bb[src];
-    // Check if the move is en passant
     if (onSquare(src) == PIECETYPE_PAWN && square_bb[dst] & enPassant) {
         gain[d] = PIECE_VALUE[PIECETYPE_PAWN].score();
     }
@@ -364,26 +356,18 @@ int Position::see(Move move) const {
 
     occupancy = getOccupancyBB();
     attackers = allAttackers(dst);
-    // Get X ray attacks and add in pawns from attackers
     xRay = getXRayAttacks(dst);
 
     while (from) {
-        // Update the target piece and the square it came from
         src = get_lsb(from);
         target = onSquare(src);
-
-        // Update the depth and color
         d++;
-
-        // Storing the potential gain, if defended
         gain[d] = PIECE_VALUE[target].score() - gain[d - 1];
-
-        // Prune if the gain cannot be improved
         if (std::max(-gain[d - 1], gain[d]) < 0) {
             break;
         }
-
-        // Remove the from bit to simulate making the move
+        attackers ^= from;
+        occupancy ^= from;
         attackers ^= from;
         occupancy ^= from;
 
@@ -399,7 +383,6 @@ int Position::see(Move move) const {
             }
         }
 
-        // Get the next piece for the opposing player
         color = !color;
         if (!(attackers & getOccupancyBB(color))) {
             break;
@@ -428,7 +411,6 @@ int Position::see(Move move) const {
         }
     }
 
-    // Negamax the gain array to determine the final SEE value.
     while (--d > 0) {
         gain[d - 1] = -std::max(-gain[d - 1], gain[d]);
     }
@@ -451,11 +433,8 @@ void Position::makeMove(Move move) {
     assert(moved != PIECETYPE_NONE);
     captured = onSquare(dst);
     assert(captured != PIECETYPE_KING);
-
-    // Update the Fifty Move Rule
     fiftyMoveRule++;
 
-    // Remove the ep file and castle rights from the zobrist key.
     if (enPassant) {
         key ^= Zobrist::key(get_file(enPassant));
     }
@@ -471,12 +450,10 @@ void Position::makeMove(Move move) {
     }
 
     if (isCastle(move)) {
-        // Short castle
         if (dst < src) {
             movePiece(us, PIECETYPE_ROOK, src - 3, dst + 1);
             movePiece(us, PIECETYPE_KING, src, dst);
         }
-        // Long castle
         else {
             movePiece(us, PIECETYPE_ROOK, src + 4, dst - 1);
             movePiece(us, PIECETYPE_KING, src, dst);
@@ -490,7 +467,6 @@ void Position::makeMove(Move move) {
         fiftyMoveRule = 0;
         pawnKey ^= Zobrist::key(us, PIECETYPE_PAWN, src, dst);
 
-        // Check for double PIECETYPE_PAWN push
         if (int(std::max(src, dst)) - int(std::min(src, dst)) == 16) {
             enPassant = us == WHITE ? square_bb[dst - 8] : square_bb[dst + 8];
 
@@ -517,10 +493,9 @@ void Position::makeMove(Move move) {
     if (gamePhase) {
         setGamePhase();
     }
-    // Update castle rights
+
     castleRights &= CASTLE_RIGHTS[src];
     castleRights &= CASTLE_RIGHTS[dst];
-
     key ^= Zobrist::key(castleRights);
 
     assert(!check());
@@ -535,17 +510,12 @@ void Position::makeMove(Move move) {
 
 void Position::makeNull() {
     assert(checkers == 0);
-    // Remove the ep file and castle rights from the zobrist key
     if (enPassant) {
         key ^= Zobrist::key(get_file(enPassant));
     }
-    // Reset the en-passant square
     enPassant = 0;
-
-    // Swap the turn
     swapTurn();
 
-    // Set check squares
     checkSquares[PIECETYPE_PAWN] = getAttackBB<PIECETYPE_PAWN>(getKingSquare(them), them);
     checkSquares[PIECETYPE_KNIGHT] = getAttackBB<PIECETYPE_KNIGHT>(getKingSquare(them));
     checkSquares[PIECETYPE_BISHOP] = getAttackBB<PIECETYPE_BISHOP>(getKingSquare(them));
@@ -657,7 +627,6 @@ std::string Position::getFen() { // Current FEN
     }
     fen += ' ';
 
-    // Check move could result in enpassant
     bool enpass = false;
     if (moved == PIECETYPE_PAWN && int(std::max(src, dst)) - int(std::min(src, dst)) == 16) {
         for (Square p : getPieceList<PIECETYPE_PAWN>(us)) {
@@ -675,7 +644,6 @@ std::string Position::getFen() { // Current FEN
     return fen;
 }
 
-// Print board
 std::ostream &operator<<(std::ostream &os, const Position &s) {
     std::string W_pawn = "\u2659";
     std::string W_knight = "\u2658";

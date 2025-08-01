@@ -43,7 +43,7 @@ inline int reverse_futility_pruning_margin(int depth, int eval, bool improving) 
     return 100 * depth / (improving + 1);
 }
 
-/* Check if search should be stopped */
+/** Check if search should be stopped */
 bool stop_search(SearchInfo &si) {
     // Not enough time left for search
     if (U64(si.clock.elapsed<std::chrono::milliseconds>()) >= si.moveTime) {
@@ -62,13 +62,13 @@ bool stop_search(SearchInfo &si) {
     return false;
 }
 
-/* Quiescence search */
+/** Quiescence search */
 int qsearch(Position &s, SearchInfo &si, GlobalInfo &gi, int ply, int alpha, int beta) {
     si.nodes++;
     assert(ply <= MAX_PLY);
 
     if (gi.history.isThreefoldRepetition(s) || s.insufficientMaterial() || s.getFiftyMoveRule() > 99) {
-        return DRAW; // Game ust be a draw, return
+        return DRAW; // Game must be a draw, return
     }
 
     if (!(si.nodes & 2047) && (si.quit || stop_search(si) || THREAD_STOP)) {
@@ -158,7 +158,7 @@ int qsearch(Position &s, SearchInfo &si, GlobalInfo &gi, int ply, int alpha, int
     return alpha;
 }
 
-/* Main search */
+/** Main search */
 int search(Position &s, SearchInfo &si, GlobalInfo &gi, int depth, int ply, int alpha, int beta, bool isPv, bool isNull) {
     assert(depth >= 0);
 
@@ -369,7 +369,7 @@ int search(Position &s, SearchInfo &si, GlobalInfo &gi, int depth, int ply, int 
     return alpha;
 }
 
-/* Root search */
+/** Root search */
 int search_root(Position &s, SearchInfo &si, GlobalInfo &gi, int depth, int ply, int alpha, int beta) {
     assert(depth >= 0);
 
@@ -465,7 +465,7 @@ int search_root(Position &s, SearchInfo &si, GlobalInfo &gi, int depth, int ply,
     return alpha;
 }
 
-/* Multi-threaded search driver */
+/** Multi-threaded search driver */
 void parallel_search(Position s, SearchInfo si, int depth, int alpha, int beta, int t) {
     auto &[value, valid] = results[t];
     auto &gi = global_info[t];
@@ -477,7 +477,7 @@ void parallel_search(Position s, SearchInfo si, int depth, int alpha, int beta, 
     }
 }
 
-/* Iterative deepening routine */
+/** Iterative deepening routine */
 Move iterative_deepening(Position &s, SearchInfo &si) {
     Move best_move = NULL_MOVE;
     //int alpha = NEG_INF;
@@ -545,7 +545,7 @@ Move iterative_deepening(Position &s, SearchInfo &si) {
     return best_move;
 }
 
-/* Search driver */
+/** Search driver */
 Move search(Position &s, SearchInfo &si) {
     for (int i = 0; i < NUM_THREADS; ++i) {
         global_info[i].clear();

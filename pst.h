@@ -12,7 +12,7 @@ namespace PieceSquareTable {
 
 #define FLIP(sq) ((sq) ^ 56)
 
-    /* PST values from Rofchade */
+    /** PST values from Rofchade */
     const int PST[PIECE_TYPES_SIZE][GAMESTAGE_SIZE][BOARD_SIZE] = {
         // Pawns
         {
@@ -150,7 +150,7 @@ namespace PieceSquareTable {
         return c == WHITE ? PST[p][g][FLIP(int(sq))] : PST[p][g][sq];
     }
 
-    /* Tapered static score with 256 phases */
+    /** Tapered static score with 256 phases */
     inline int getTaperedScore(PieceType p, Color c, Square sq, int phase) {
         return c == WHITE ? ((PST[p][MIDDLEGAME][FLIP(int(sq))] * (256 - phase)) + PST[p][ENDGAME][FLIP(int(sq))] * phase) / 256
                           : ((PST[p][MIDDLEGAME][sq] * (256 - phase)) + PST[p][ENDGAME][sq] * phase) / 256;

@@ -245,7 +245,6 @@ void uci() {
                 global_info[i].clear();
                 global_info[i].history.init();
             }
-            //tt.setAncient();
         }
         else if (token == "isready") {
             std::cout << "readyok" << std::endl;

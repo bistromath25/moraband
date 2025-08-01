@@ -13,7 +13,7 @@
 #include <iostream>
 #include <vector>
 
-/* History heuristic */
+/** History heuristic for move ordering */
 class History {
 public:
     History() : killers{}, history{} {

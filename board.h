@@ -12,6 +12,7 @@
 #include <iostream>
 #include <string>
 
+/** Bitboard representations of various chess board elements */
 extern U64 square_bb[BOARD_SIZE];
 extern U64 file_bb[BOARD_SIZE];
 extern U64 rank_bb[BOARD_SIZE];
@@ -33,6 +34,7 @@ extern const U64 KING_MOVES[BOARD_SIZE];
 extern U64 bishopMoves[BOARD_SIZE];
 extern U64 rookMoves[BOARD_SIZE];
 
+/** Bitboard constants for board geometry and piece movement */
 constexpr U64 DARK_SQUARES = 0xAA55AA55AA55AA55ULL;
 constexpr U64 LIGHT_SQUARES = 0x55AA55AA55AA55AAULL;
 
@@ -62,8 +64,10 @@ constexpr U64 CENTER_FILES = NOT_A_FILE & NOT_H_FILE;
 constexpr U64 RIGHTSIDE = 0x0F0F0F0F0F0F0F0F;
 constexpr U64 LEFTSIDE = 0xF0F0F0F0F0F0F0F0;
 
+/** Initialize bitboard lookup tables */
 void bb_init();
 
+/** Bitboard operations for chess squares */
 inline U64 operator&(Square s, U64 u) {
     return square_bb[s] & u;
 }
@@ -76,7 +80,7 @@ inline U64 operator^(Square s, U64 u) {
     return square_bb[s] & u;
 }
 
-// Returns the number of 1-bits.
+/** Bit manipulation utilities */
 inline int pop_count(U64 bb) {
 #if defined(_MSC_VER) && defined(_WIN64)
     return _mm_popcnt_u64(bb);
@@ -94,7 +98,6 @@ inline int pop_count(U64 bb) {
 #endif
 }
 
-// Returns the index of the LSB.
 inline Square get_lsb(U64 bb) {
     assert(bb);
 #if defined(_MSC_VER)
@@ -131,14 +134,12 @@ inline U64 get_lsb_bb(U64 bb) {
     return 1ULL << get_lsb(bb);
 }
 
-// Clears the LSB and returns the index.
 inline Square pop_lsb(U64 &bb) {
     U64 t = bb;
     bb &= (bb - 1);
     return get_lsb(t);
 }
 
-// Clears the LSB and returns as a bitboard.
 inline U64 pop_lsb_bb(U64 &bb) {
     assert(bb);
     U64 t = bb;
@@ -146,7 +147,6 @@ inline U64 pop_lsb_bb(U64 &bb) {
     return t ^ bb;
 }
 
-// Returns the file of the LSB
 inline File get_file(U64 bb) {
     assert(bb);
     return File(get_lsb(bb) % 8);
@@ -157,6 +157,7 @@ inline Rank get_rank(U64 bb) {
     return Rank(get_lsb(bb) / 8);
 }
 
+/** Directional shift operations for piece movement */
 inline U64 shift_up(U64 bb, const Dir D) {
     return D == N    ? bb << 8
            : D == NE ? (bb & NOT_H_FILE) << 9
@@ -164,7 +165,6 @@ inline U64 shift_up(U64 bb, const Dir D) {
                      : 0;
 }
 
-// Return bitboard of same color squares.
 inline U64 squares_of_color(Square s) {
     return s & LIGHT_SQUARES ? LIGHT_SQUARES : DARK_SQUARES;
 }
@@ -185,6 +185,7 @@ inline U64 shift_ep(U64 bb, const Dir D) {
     return D == E ? (bb & NOT_H_FILE) >> 1 : (bb & NOT_A_FILE) << 1;
 }
 
+/** Bit manipulation helpers */
 inline void clear_bit(U64 &bb, int dst) {
     bb &= ~(square_bb[dst]);
 }
@@ -197,6 +198,7 @@ inline void move_bit(U64 &bb, int src, int dst) {
     bb ^= square_bb[src] | square_bb[dst];
 }
 
+/** Bitboard fill algorithms for sliding piece attacks */
 void print_bb(U64);
 
 inline U64 north_fill(U64 gen) {

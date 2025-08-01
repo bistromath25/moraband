@@ -5,7 +5,7 @@
 
 #include "movegen.h"
 
-/* Initialize magic moves */
+/** Initialize magic moves */
 void mg_init() {
     initmagicmoves();
 }
@@ -301,7 +301,10 @@ void MoveList::generateMoves<MoveType::All>() {
     pushMoves<MoveType::All, PIECETYPE_KING>();
 }
 
-/* Get the best move from the MoveList based on the generation stage */
+/**
+ * Get the best move based on move ordering heuristics
+ * Implements staged move generation for efficiency
+ */
 Move MoveList::getBestMove() {
     Move move;
 
@@ -530,7 +533,10 @@ Move MoveList::getBestMove() {
     return NULL_MOVE; // No move found?!?
 }
 
-/* List of moves and related functions */
+/**
+ * Initialize move list with position, best move, and history
+ * Sets up move generation for search with move ordering
+ */
 MoveList::MoveList(const Position &s, Move bestMove, History *history, int ply, bool qsearch)
     : isQSearch(qsearch), valid(FULL), position(s), history(history), ply(ply), sz(0), best(bestMove), killer1(NULL_MOVE), killer2(NULL_MOVE) {
     if (history) {
@@ -555,7 +561,10 @@ MoveList::MoveList(const Position &s, Move bestMove, History *history, int ply, 
     }
 }
 
-/* List of moves and related functions */
+/**
+ * Initialize move list with position only
+ * Used for generating all legal moves without search information
+ */
 MoveList::MoveList(const Position &s) : isQSearch(false), valid(FULL), position(s), history(nullptr), ply(0), sz(0), best(NULL_MOVE) {
     generateMoves<MoveType::All>();
     checkLegal();

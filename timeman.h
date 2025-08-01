@@ -17,7 +17,7 @@ const int ONE_MINUTE = 60000;    // 1000 * 60
 const int ONE_HOUR = 3600000;    // ONE_MINUTE * 60
 extern int MOVE_OVERHEAD;
 
-/* Clock class for time management */
+/** Clock class for time management */
 class Clock {
 public:
     void set() {
@@ -33,7 +33,7 @@ private:
     std::chrono::high_resolution_clock::time_point time;
 };
 
-/* Returns the time assigned for the search */
+/** Returns the time assigned for the search */
 inline U64 get_search_time(int time_left, int inc, int moves, int moves_to_go, int time_diff) {
     U64 search_time = MIN_SEARCH_TIME;
     if (moves_to_go) {

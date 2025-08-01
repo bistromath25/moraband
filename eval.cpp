@@ -5,15 +5,19 @@
 
 #include "eval.h"
 
+/** Helper macro for creating Score objects with middle game and endgame values */
 #define S(mg, eg) Score(mg, eg)
 
-Score TEMPO_BONUS = S(16, 16); // Side-to-move bonus
+/** Evaluation parameters initialization */
+Score TEMPO_BONUS = S(16, 16);
 
-int KNIGHT_THREAT = 3; // Threats on enemy King
+/** Piece threat values for king safety evaluation */
+int KNIGHT_THREAT = 3;
 int BISHOP_THREAT = 3;
 int ROOK_THREAT = 4;
 int QUEEN_THREAT = 5;
 
+/** Material values for each piece type (middle game and endgame) */
 Score PAWN_WEIGHT = S(82, 104);
 Score KNIGHT_WEIGHT = S(405, 250);
 Score BISHOP_WEIGHT = S(400, 330);
@@ -22,6 +26,7 @@ Score QUEEN_WEIGHT = S(1288, 1097);
 
 const Score KING_WEIGHT = S(32767, 32767);
 
+/** Piece values array for easy indexing */
 const Score PIECE_VALUE[7] = {
     PAWN_WEIGHT,
     KNIGHT_WEIGHT,
@@ -29,9 +34,9 @@ const Score PIECE_VALUE[7] = {
     ROOK_WEIGHT,
     QUEEN_WEIGHT,
     KING_WEIGHT,
-    S(0, 0) // none
-};
+    S(0, 0)};
 
+/** Mobility tables for each piece type */
 Score KNIGHT_MOBILITY[9] = {
     S(-50, -60), S(-30, -30), S(-10, -10), S(0, 0), S(10, 10), S(20, 20), S(25, 25), S(30, 30), S(35, 35)};
 
@@ -44,7 +49,14 @@ Score ROOK_MOBILITY[15] = {
 Score QUEEN_MOBILITY[28] = {
     S(-30, -40), S(-20, -20), S(-10, -10), S(0, 0), S(5, 5), S(10, 10), S(15, 15), S(20, 20), S(25, 25), S(30, 30), S(35, 35), S(40, 40), S(45, 45), S(50, 50), S(50, 55), S(50, 60), S(50, 65), S(50, 70), S(50, 75), S(50, 80), S(50, 85), S(50, 90), S(50, 90), S(50, 90), S(50, 90), S(50, 90), S(50, 90), S(50, 90)};
 
-// Passed pawn eval
+/**
+ * Passed pawn evaluation tables
+ * Indexed by [can_advance][rank] where can_advance is one of:
+ * 0: Cannot advance
+ * 1: Unsafe advance
+ * 2: Protected advance
+ * 3: Safe advance
+ */
 Score PAWN_PASSED[4][7] = {
     // Cannot advance
     {
@@ -73,6 +85,7 @@ Score HANGING = S(-6, -15);
 Score KNIGHT_PAWN_PENALTY = S(-1, 13);
 Score ROOK_PAWN_BONUS = S(-7, 15);
 
+/** Piece-specific evaluation terms */
 Score BISHOP_PAIR = S(82, 73);
 Score BAD_BISHOP = S(-3, -5);
 Score ROOK_OPEN_FILE = S(33, 20);
@@ -80,14 +93,19 @@ Score ROOK_ON_SEVENTH_RANK = S(40, 20);
 Score KNIGHT_OUTPOST = S(61, 20);
 Score BISHOP_OUTPOST = S(50, 24);
 
+/** King safety tables */
 int KING_RING[2][64];
 Score KING_RING_ATTACK[2][5] = {
     {S(40, -15), S(30, -10), S(45, -5), S(40, -10), S(35, 5)},
     {S(25, -8), S(25, -1), S(25, -3), S(20, -3), S(20, 8)}};
 
+/** Global pawn hash table */
 PawnHashTable ptable;
 
-/* Evaluation and related functions */
+/**
+ * Evaluate constructor
+ * Initializes the evaluation of the current position
+ */
 Evaluate::Evaluate(const Position &s) : position(s), mobility{}, king_safety{}, pawn_structure{}, material{}, attacks{}, piece_attacks_bb{}, all_attacks_bb{} {
     // Tapered-evaluation with 256 phases, 0 (Opening/Middlegame) and 255 (Endgame)
     gamePhase = position.getGamePhase();
@@ -125,10 +143,12 @@ Evaluate::Evaluate(const Position &s) : position(s), mobility{}, king_safety{}, 
     score += TEMPO_BONUS;
 }
 
+/** Get the final evaluation score */
 int Evaluate::getScore() const {
     return score.score(gamePhase) + CONTEMPT;
 }
 
+/** Evaluate outpost squares for knights and bishops */
 void Evaluate::evalOutposts(const Color c) {
     for (Square p : position.getPieceList<PIECETYPE_KNIGHT>(c)) {
         if (p == no_sq) {
@@ -156,7 +176,7 @@ void Evaluate::evalOutposts(const Color c) {
     }
 }
 
-/* Evaluate pawn structure */
+/** Evaluate pawn structure */
 void Evaluate::evalPawns(const Color c) {
     const int dir = c == WHITE ? 8 : -8;
 
@@ -222,6 +242,7 @@ void Evaluate::evalPawns(const Color c) {
     }
 }
 
+/** Evaluate all pieces for a given color */
 void Evaluate::evalPieces(const Color c) {
     U64 moves, pins;
     U64 mobilityNet;
@@ -328,6 +349,7 @@ void Evaluate::evalPieces(const Color c) {
     }
 }
 
+/** Evaluate the pawn shield for the king */
 void Evaluate::evalPawnShield(const Color c) {
     Square kingSq = position.getKingSquare(c);
     int r = c == WHITE ? rank(kingSq) : 7 - rank(kingSq);
@@ -351,6 +373,7 @@ void Evaluate::evalPawnShield(const Color c) {
     }
 }
 
+/** Evaluate a specific pawn shield configuration */
 void Evaluate::evalPawnShield(const Color c, U64 pawnShieldCloseMask) {
     U64 pawnShieldFarMask = shift(pawnShieldCloseMask, c == WHITE ? N : S);
     U64 pawnsBB = position.getPieceBB<PIECETYPE_PAWN>(c);
@@ -373,6 +396,7 @@ void Evaluate::evalPawnShield(const Color c, U64 pawnShieldCloseMask) {
     }
 }
 
+/** Evaluate tactical aspects of the position */
 void Evaluate::evalAttacks(const Color c) {
     U64 attackedByPawn, hanging;
     attackedByPawn = piece_attacks_bb[!c][PIECETYPE_PAWN] & (position.getOccupancyBB(c) ^ position.getPieceBB<PIECETYPE_PAWN>(c));
@@ -392,6 +416,7 @@ void Evaluate::evalAttacks(const Color c) {
     attacks[c] += HANGING * pop_count(hanging);
 }
 
+/** Output operator for evaluation details */
 std::ostream &operator<<(std::ostream &os, const Evaluate &e) {
     Color c = e.position.getOurColor();
     std::string us = c == WHITE ? "White" : "Black";
@@ -441,6 +466,7 @@ std::ostream &operator<<(std::ostream &os, const Evaluate &e) {
     return os;
 }
 
+/** Initialize king safety tables */
 void initKingRing() {
     for (int ring = 1; ring <= 2; ++ring) {
         for (int i = 0; i < 8; ++i) {
