@@ -7,10 +7,6 @@
 #define IO_H
 
 #include "defs.h"
-#include <fstream>
-#include <ios>
-#include <sstream>
-#include <string>
 
 /** Detect input by Oliver Brausch (OliThink) */
 inline int input_waiting() {

@@ -8,10 +8,8 @@
 
 #include "position.h"
 #include "pst.h"
-#include <algorithm>
 #include <array>
 #include <iomanip>
-#include <iostream>
 
 /**
  * Score structure for tapered evaluation

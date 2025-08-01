@@ -9,18 +9,12 @@
 #include <thread>
 
 #include "defs.h"
-#include "eval.h"
 #include "history.h"
 #include "move.h"
-#include "movegen.h"
 #include "position.h"
 #include "timeman.h"
-#include "tt.h"
 #include "variation.h"
-#include <algorithm>
 #include <atomic>
-#include <sstream>
-#include <string>
 #include <vector>
 
 constexpr int LMR_COUNT = 3;

@@ -9,7 +9,6 @@
 #include "board.h"
 #include "defs.h"
 #include <cstdlib>
-#include <iostream>
 
 /** Zobrist hashing for position key generation */
 namespace Zobrist {

@@ -6,11 +6,7 @@
 #ifndef TT_H
 #define TT_H
 
-#include "defs.h"
 #include "move.h"
-
-#include <cinttypes>
-#include <memory>
 
 constexpr int DEFAULT_HASH_SIZE = 256;
 constexpr int MIN_HASH_SIZE = 1;

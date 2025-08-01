@@ -9,8 +9,6 @@
 #include "defs.h"
 #include "move.h"
 #include "position.h"
-#include <algorithm>
-#include <iostream>
 #include <vector>
 
 /** History heuristic for move ordering */

@@ -6,9 +6,8 @@
 #ifndef BOARD_H
 #define BOARD_H
 
-#include "MagicMoves.hpp"
 #include "defs.h"
-#include <cmath>
+#include "MagicMoves.hpp"
 #include <iostream>
 #include <string>
 

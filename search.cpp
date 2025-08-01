@@ -3,8 +3,10 @@
  * Outer Rim planet that was home to the ancient Sith 
  **/
 
-#include "search.h"
+#include "eval.h"
 #include "io.h"
+#include "search.h"
+#include "tt.h"
 #include <atomic>
 #include <fstream>
 #include <string>

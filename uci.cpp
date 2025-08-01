@@ -3,9 +3,11 @@
  * Outer Rim planet that was home to the ancient Sith 
  **/
 
-#include "uci.h"
+#include "eval.h"
 #include "io.h"
 #include "perft.h"
+#include "tt.h"
+#include "uci.h"
 #ifdef TUNE
 #include "tune.h"
 #endif

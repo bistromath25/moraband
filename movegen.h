@@ -6,15 +6,12 @@
 #ifndef MOVE_GENERATOR_H
 #define MOVE_GENERATOR_H
 
-#include "MagicMoves.hpp"
-#include "board.h"
 #include "defs.h"
 #include "history.h"
+#include "MagicMoves.hpp"
 #include "move.h"
 #include "position.h"
-#include <algorithm>
 #include <array>
-#include <cmath>
 #include <vector>
 
 constexpr U64 FULL = 0xFFFFFFFFFFFFFFFF;

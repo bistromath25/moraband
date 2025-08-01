@@ -10,9 +10,7 @@
 #include "move.h"
 #include "movegen.h"
 #include "position.h"
-#include <algorithm>
 #include <array>
-#include <iterator>
 
 constexpr int MAX_PV_SIZE = ((MAX_PLY * MAX_PLY) + MAX_PLY) / 2;
 
