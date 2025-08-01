@@ -6,6 +6,7 @@
 #include "uci.h"
 #include "eval.h"
 #include "io.h"
+#include "nnue.h"
 #include "perft.h"
 #include "tt.h"
 #ifdef TUNE
@@ -146,7 +147,6 @@ void set_option(std::string &name, std::string &value) {
         CONTEMPT = clamp(std::stoi(value), -100, 100);
         D(std::cout << "Contempt set to value " << CONTEMPT << std::endl;);
     }
-    return;
 }
 
 // Benchmark
@@ -266,11 +266,13 @@ void uci() {
 
             while (is >> token && token != "value") {
                 name += token;
+                name += " ";
             }
             while (is >> token) {
                 value += token;
             }
 
+            name.pop_back();
             set_option(name, value);
         }
         else if (token == "position") {
@@ -286,8 +288,13 @@ void uci() {
             std::cout << root.getFen() << std::endl;
         }
         else if (token == "eval") {
+#ifdef USE_NNUE
+            NNUE::NNUE nnue(root);
+            std::cout << nnue.evaluate(root.getOurColor()) << std::endl;
+#else
             Evaluate evaluate(root);
-            std::cout << evaluate;
+            std::cout << evaluate << std::endl;
+#endif
         }
         else if (token == "perft") {
             is >> token;

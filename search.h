@@ -11,6 +11,7 @@
 #include "defs.h"
 #include "history.h"
 #include "move.h"
+#include "nnue.h"
 #include "position.h"
 #include "timeman.h"
 #include "variation.h"
