@@ -10,7 +10,7 @@ set(CMAKE_CXX_COMPILER clang++)
 set(CMAKE_CXX_STANDARD 17)
 set(CMAKE_CXX_FLAGS "-Wall -DNAME=Moraband -march=native")
 set(CMAKE_CXX_FLAGS_DEBUG "-g -fno-omit-frame-pointer -DDEBUG")
-set(CMAKE_CXX_FLAGS_RELEASE "-O3 -DNDEBUG")
+set(CMAKE_CXX_FLAGS_RELEASE "-O3 -march=armv8-a+simd -mfpu=neon -DNDEBUG")
 
 set(MAIN_SOURCES
     main.cpp
@@ -26,6 +26,13 @@ set(MAIN_SOURCES
     uci.cpp
     zobrist.cpp
 )
+
+option(USE_NNUE "NNUE build" OFF)
+if(USE_NNUE)
+    message(STATUS "NNUE build")
+    add_definitions(-DUSE_NNUE)
+    list(APPEND MAIN_SOURCES nnue.cpp)
+endif()
 
 option(TUNE "Tuning build" OFF)
 if(TUNE)

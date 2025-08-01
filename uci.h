@@ -12,18 +12,16 @@
 #include "search.h"
 #include "timeman.h"
 #include "tt.h"
-#include <iostream>
-#include <sstream>
-#include <string>
-#include <utility>
 
 #define ENGINE_NAME "Moraband"
-#ifdef TUNE
+#define ENGINE_AUTHOR "Brighten Zhang"
+#if defined(TUNE)
 #define ENGINE_VERSION "1.2-tune"
+#elif defined(USE_NNUE)
+#define ENGINE_VERSION "1.2-nnue"
 #else
 #define ENGINE_VERSION "1.2"
 #endif
-#define ENGINE_AUTHOR "Brighten Zhang"
 
 extern int HASH_SIZE;
 extern int NUM_THREADS;
