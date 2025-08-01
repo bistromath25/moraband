@@ -216,9 +216,9 @@ inline U64 south_fill(U64 gen) {
 }
 
 inline U64 east_fill(U64 gen) {
-    const U64 pr0 = NOT_H_FILE;
-    const U64 pr1 = pr0 & (pr0 << 1);
-    const U64 pr2 = pr1 & (pr1 << 2);
+    constexpr U64 pr0 = NOT_H_FILE;
+    constexpr U64 pr1 = pr0 & (pr0 << 1);
+    constexpr U64 pr2 = pr1 & (pr1 << 2);
     gen |= pr0 & (gen << 1);
     gen |= pr1 & (gen << 2);
     gen |= pr2 & (gen << 4);
@@ -226,9 +226,9 @@ inline U64 east_fill(U64 gen) {
 }
 
 inline U64 north_east_fill(U64 gen) {
-    const U64 pr0 = NOT_H_FILE;
-    const U64 pr1 = pr0 & (pr0 << 9);
-    const U64 pr2 = pr1 & (pr1 << 18);
+    constexpr U64 pr0 = NOT_H_FILE;
+    constexpr U64 pr1 = pr0 & (pr0 << 9);
+    constexpr U64 pr2 = pr1 & (pr1 << 18);
     gen |= pr0 & (gen << 9);
     gen |= pr1 & (gen << 18);
     gen |= pr2 & (gen << 36);
@@ -236,9 +236,9 @@ inline U64 north_east_fill(U64 gen) {
 }
 
 inline U64 south_east_fill(U64 gen) {
-    const U64 pr0 = NOT_H_FILE;
-    const U64 pr1 = pr0 & (pr0 >> 7);
-    const U64 pr2 = pr1 & (pr1 >> 14);
+    constexpr U64 pr0 = NOT_H_FILE;
+    constexpr U64 pr1 = pr0 & (pr0 >> 7);
+    constexpr U64 pr2 = pr1 & (pr1 >> 14);
     gen |= pr0 & (gen >> 7);
     gen |= pr1 & (gen >> 14);
     gen |= pr2 & (gen >> 28);
@@ -246,9 +246,9 @@ inline U64 south_east_fill(U64 gen) {
 }
 
 inline U64 west_fill(U64 gen) {
-    const U64 pr0 = NOT_A_FILE;
-    const U64 pr1 = pr0 & (pr0 >> 1);
-    const U64 pr2 = pr1 & (pr1 >> 2);
+    constexpr U64 pr0 = NOT_A_FILE;
+    constexpr U64 pr1 = pr0 & (pr0 >> 1);
+    constexpr U64 pr2 = pr1 & (pr1 >> 2);
     gen |= pr0 & (gen >> 1);
     gen |= pr1 & (gen >> 2);
     gen |= pr2 & (gen >> 4);
@@ -256,9 +256,9 @@ inline U64 west_fill(U64 gen) {
 }
 
 inline U64 south_west_fill(U64 gen) {
-    const U64 pr0 = NOT_A_FILE;
-    const U64 pr1 = pr0 & (pr0 >> 9);
-    const U64 pr2 = pr1 & (pr1 >> 18);
+    constexpr U64 pr0 = NOT_A_FILE;
+    constexpr U64 pr1 = pr0 & (pr0 >> 9);
+    constexpr U64 pr2 = pr1 & (pr1 >> 18);
     gen |= pr0 & (gen >> 9);
     gen |= pr1 & (gen >> 18);
     gen |= pr2 & (gen >> 36);
@@ -266,9 +266,9 @@ inline U64 south_west_fill(U64 gen) {
 }
 
 inline U64 north_west_fill(U64 gen) {
-    const U64 pr0 = NOT_A_FILE;
-    const U64 pr1 = pr0 & (pr0 << 7);
-    const U64 pr2 = pr1 & (pr1 << 14);
+    constexpr U64 pr0 = NOT_A_FILE;
+    constexpr U64 pr1 = pr0 & (pr0 << 7);
+    constexpr U64 pr2 = pr1 & (pr1 << 14);
     gen |= pr0 & (gen << 7);
     gen |= pr1 & (gen << 14);
     gen |= pr2 & (gen << 28);

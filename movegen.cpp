@@ -474,8 +474,8 @@ Move MoveList::getBestMove() {
             // Evade move generation
             // Generate King captures.
             {
-                const int CaptureFlag = 0x40000000;
-                const int HistoryFlag = 0x20000000;
+                constexpr int CaptureFlag = 0x40000000;
+                constexpr int HistoryFlag = 0x20000000;
                 generateMoves<MoveType::Evasions>();
                 for (int i = 0; i < int(sz); ++i) {
                     if (position.isCapture(moveList[i].move)) {

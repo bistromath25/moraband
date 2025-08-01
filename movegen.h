@@ -17,8 +17,8 @@
 #include <cmath>
 #include <vector>
 
-const U64 FULL = 0xFFFFFFFFFFFFFFFF;
-const int MOVELIST_MAX_SIZE = 256;
+constexpr U64 FULL = 0xFFFFFFFFFFFFFFFF;
+constexpr int MOVELIST_MAX_SIZE = 256;
 
 /**
  * Move generation stages for staged move generation

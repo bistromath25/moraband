@@ -234,10 +234,10 @@ enum Prop : uint32_t {
 };
 
 /** Game constants */
-const int NEG_INF = -50000;
-const int POS_INF = 50000;
-const int MAX_PLY = 50;
-const int MAX_GAME_MOVES = 1024;
+constexpr int NEG_INF = -50000;
+constexpr int POS_INF = 50000;
+constexpr int MAX_PLY = 50;
+constexpr int MAX_GAME_MOVES = 1024;
 
 /** Operator overloads for chess-related types */
 inline Square &operator++(Square &s) { return s = static_cast<Square>(static_cast<int>(s) + 1); }

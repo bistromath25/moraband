@@ -112,14 +112,14 @@ extern Score KNIGHT_OUTPOST;
 extern Score BISHOP_OUTPOST;
 
 /** Evaluation constants */
-const int CHECKMATE = 32767;
-const int PSEUDO_CHECKMATE = 5000;
-const int CHECKMATE_BOUND = CHECKMATE - MAX_PLY;
-const int STALEMATE = 0;
-const int DRAW = 0;
+constexpr int CHECKMATE = 32767;
+constexpr int PSEUDO_CHECKMATE = 5000;
+constexpr int CHECKMATE_BOUND = CHECKMATE - MAX_PLY;
+constexpr int STALEMATE = 0;
+constexpr int DRAW = 0;
 
 /** King safety table for attack evaluation */
-const int SAFETY_TABLE[100] = {
+constexpr int SAFETY_TABLE[100] = {
     0, 0, 0, 1, 1, 2, 3, 4, 5, 6,
     8, 10, 13, 16, 20, 25, 30, 36, 42, 48,
     55, 62, 70, 80, 90, 100, 110, 120, 130, 140,
@@ -134,8 +134,7 @@ const int SAFETY_TABLE[100] = {
 extern int KING_RING[2][64];
 extern Score KING_RING_ATTACK[2][5];
 
-/** Pawn hash table configuration */
-const int PAWN_HASH_SIZE = 2;
+constexpr int PAWN_HASH_SIZE = 2;
 
 /**
  * Pawn hash table entry

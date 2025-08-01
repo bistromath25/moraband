@@ -13,7 +13,7 @@ namespace PieceSquareTable {
 #define FLIP(sq) ((sq) ^ 56)
 
     /** PST values from Rofchade */
-    const int PST[PIECE_TYPES_SIZE][GAMESTAGE_SIZE][BOARD_SIZE] = {
+    constexpr int PST[PIECE_TYPES_SIZE][GAMESTAGE_SIZE][BOARD_SIZE] = {
         // Pawns
         {
             // Middlegame

@@ -69,7 +69,7 @@ struct GlobalInfo {
     std::array<U64, 64> evalHistory;
 };
 
-const int MAX_THREADS = 16;
+constexpr int MAX_THREADS = 16;
 extern int NUM_THREADS;
 extern std::atomic<bool> THREAD_STOP;
 extern std::thread threads[MAX_THREADS];
