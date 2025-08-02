@@ -16,43 +16,29 @@ namespace NNUE {
     static float fc2_weight[HIDDEN_SIZE];
     static float fc2_bias;
 
-    std::vector<float> load_weights_file(const std::string &path) {
+    void load_weights(const std::string &path) {
         std::ifstream in(path, std::ios::binary);
         if (!in) {
             throw std::runtime_error("Failed to open file: " + path);
         }
 
-        in.seekg(0, std::ios::end);
-        size_t size = in.tellg() / sizeof(float);
-        in.seekg(0);
+        const size_t size = FEATURE_SIZE * HIDDEN_SIZE + HIDDEN_SIZE + HIDDEN_SIZE + 1;
+        std::vector<float> buffer(size);
+        in.read(reinterpret_cast<char*>(buffer.data()), size * sizeof(float));
+        if (in.gcount() != static_cast<std::streamsize>(size * sizeof(float))) {
+            throw std::runtime_error("Unexpected end of file: " + path);
+        }
 
-        std::vector<float> weights(size);
-        in.read(reinterpret_cast<char *>(weights.data()), size * sizeof(float));
-        return weights;
-    }
-
-    void load_weights(const std::string &path) {
-        std::vector<float> weights = load_weights_file(path);
         size_t offset = 0;
+        std::memcpy(fc1_weight, &buffer[offset], FEATURE_SIZE * HIDDEN_SIZE * sizeof(float));
+        offset += FEATURE_SIZE * HIDDEN_SIZE;
+        std::memcpy(fc1_bias, &buffer[offset], HIDDEN_SIZE * sizeof(float));
+        offset += HIDDEN_SIZE;
+        std::memcpy(fc2_weight, &buffer[offset], HIDDEN_SIZE * sizeof(float));
+        offset += HIDDEN_SIZE;
+        fc2_bias = buffer[offset];
 
-        // fc1_weight
-        for (int i = 0; i < FEATURE_SIZE; ++i) {
-            for (int j = 0; j < HIDDEN_SIZE; ++j) {
-                fc1_weight[i][j] = weights[offset++];
-            }
-        }
-        // fc1_bias
-        for (int j = 0; j < HIDDEN_SIZE; ++j) {
-            fc1_bias[j] = weights[offset++];
-        }
-        // fc2_weight
-        for (int j = 0; j < HIDDEN_SIZE; ++j) {
-            fc2_weight[j] = weights[offset++];
-        }
-        // fc2_bias
-        fc2_bias = weights[offset++];
-
-        std::cout << "Loaded network " << NNUE_PATH << "\n"
+        std::cout << "Loaded network from " << NNUE_PATH << "\n"
                   << std::endl;
     }
 
