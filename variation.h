@@ -10,11 +10,9 @@
 #include "move.h"
 #include "movegen.h"
 #include "position.h"
-#include <algorithm>
 #include <array>
-#include <iterator>
 
-const int MAX_PV_SIZE = ((MAX_PLY * MAX_PLY) + MAX_PLY) / 2;
+constexpr int MAX_PV_SIZE = ((MAX_PLY * MAX_PLY) + MAX_PLY) / 2;
 
 class Variation {
 public:

@@ -9,11 +9,9 @@
 #include "defs.h"
 #include "move.h"
 #include "position.h"
-#include <algorithm>
-#include <iostream>
 #include <vector>
 
-/* History heuristic */
+/** History heuristic for move ordering */
 class History {
 public:
     History() : killers{}, history{} {
@@ -87,7 +85,7 @@ public:
         int cnt = 0;
         for (int i = game_history.size() - 1; i >= 0; i -= 4) {
             if (game_history[i].second == s.getKey()) {
-                cnt++;
+                ++cnt;
             }
         }
         return cnt;

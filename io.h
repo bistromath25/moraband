@@ -7,12 +7,8 @@
 #define IO_H
 
 #include "defs.h"
-#include <fstream>
-#include <ios>
-#include <sstream>
-#include <string>
 
-/* Detect input by Oliver Brausch (OliThink) */
+/** Detect input by Oliver Brausch (OliThink) */
 inline int input_waiting() {
 #if defined(WIN32) || defined(_WIN32) || defined(__WIN32) && !defined(__CYGWIN__)
     static int init = 0, pipe;

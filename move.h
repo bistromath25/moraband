@@ -7,7 +7,6 @@
 #define MOVE_H
 
 #include "defs.h"
-#include <algorithm>
 #include <array>
 #include <iterator>
 #include <string>

@@ -3,14 +3,17 @@ import subprocess
 import sys
 import time
 
+
 class TestPosition:
     def __init__(self, id="", fen="", best_move=""):
-        self.id = id;
+        self.id = id
         self.fen = fen
-        self.best_move = best_move;
+        self.best_move = best_move
+
 
 def parse(s):
     return s.split("; ")
+
 
 def main():
     print("[+] Moraband Time-to-Depth 1.0")
@@ -23,11 +26,13 @@ def main():
 
     args = parser.parse_args()
 
-    engine = subprocess.Popen(args.engine, 
-                    stderr=subprocess.PIPE,
-                    stdout=subprocess.PIPE,
-                    stdin=subprocess.PIPE,
-                    universal_newlines=True)
+    engine = subprocess.Popen(
+        args.engine,
+        stderr=subprocess.PIPE,
+        stdout=subprocess.PIPE,
+        stdin=subprocess.PIPE,
+        universal_newlines=True,
+    )
 
     depth = args.depth
 
@@ -39,11 +44,11 @@ def main():
             total += 1
             if line[-1] == "\n":
                 line = line[:-1]
-            info = parse(line) # Remove '\n'
+            info = parse(line)  # Remove '\n'
             test_positions.append(TestPosition(total, info[0], info[1]))
         print(f"[+] Read {total} positions from {args.test_positions_file}")
 
-    # Clear engine output 
+    # Clear engine output
     for i in range(9):
         engine_out = engine.stdout.readline().strip()
         engine.stdout.flush()
@@ -51,11 +56,11 @@ def main():
     # Set threads
     threads = args.threads
     engine.stdin.write(f"setoption name Threads value {threads}\n")
-    
+
     print(f"[+] Searching each position to depth {depth} using {threads} threads")
 
     failed = 0
-    total_time = 0;
+    total_time = 0
     for test_position in test_positions:
         engine.stdin.write("ucinewgame\n")
         engine.stdout.flush()
@@ -75,7 +80,7 @@ def main():
             if "bestmove" in engine_out[-1]:
                 total_time += time.time() - start_time
                 break
-        
+
         engine_best_move = engine_out[-1].split("bestmove ")[1]
         if engine_best_move not in test_position.best_move:
             print(f"[-] FAILED: id {test_position.id} fen {test_position.fen}")
@@ -89,6 +94,7 @@ def main():
 
     engine.stdin.write("quit")
     engine.stdin.flush()
+
 
 if __name__ == "__main__":
     main()

@@ -18,7 +18,7 @@
 #include <iostream>
 #include <string>
 
-/* Game phase calculation piece values */
+/** Game phase calculation piece values */
 enum Phase {
     pawnPhase = 0,
     knightPhase = 1,
@@ -28,7 +28,7 @@ enum Phase {
     totalPhase = 24
 };
 
-/* Board position and related functions */
+/** Board position and related functions */
 class Position {
 public:
     Position();
@@ -51,9 +51,8 @@ public:
     int getGamePhase() const;
     void setGamePhase();
     std::string getFen();
-    Move getPreviousMove() const; // Previous move made
+    Move getPreviousMove() const;
 
-    // Access piece bitboards
     template<PieceType P>
     const std::array<Square, PIECE_MAX> &getPieceList(Color c) const;
     template<PieceType P>
@@ -67,12 +66,11 @@ public:
     int getNonPawnPieceCount(Color c) const;
     int getNonPawnPieceCount() const;
 
-    // Board occupancy
+    // Get board occupancy
     U64 getOccupancyBB() const;
     U64 getOccupancyBB(Color c) const;
     U64 getEmptyBB() const;
 
-    // Castle rights
     bool canCastleKingside() const;
     bool canCastleKingside(Color c) const;
     bool canCastleQueenside() const;
@@ -83,7 +81,6 @@ public:
     bool isValid(Move move, U64 validMoves) const;
     bool givesCheck(Move move) const;
 
-    // Make move functions
     void makeMove(Move m);
     void makeNull();
     void addPiece(Color c, PieceType p, Square sq);
@@ -91,14 +88,14 @@ public:
     void removePiece(Color c, PieceType p, Square sq);
     void swapTurn();
 
-    // Valid King moves and pins
+    // Validate king moves and pins
     U64 getCheckSquaresBB(PieceType p) const;
     void setCheckers();
     void setPins(Color c);
     U64 getPinsBB(Color c) const;
     U64 getDiscoveredChecks(Color c) const;
 
-    // Check and attack information
+    // Get checks and attacks
     bool isLegal(Move move) const;
     bool isAttacked(Square sq, Color c, U64 change) const;
     bool attacked(Square sq) const;
@@ -117,7 +114,6 @@ public:
     int see(Move m) const;
     U64 getXRayAttacks(Square sq) const;
 
-    // Print
     friend std::ostream &operator<<(std::ostream &os, const Position &s);
 
 private:

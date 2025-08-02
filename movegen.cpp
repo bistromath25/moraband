@@ -5,7 +5,7 @@
 
 #include "movegen.h"
 
-/* Initialize magic moves */
+/** Initialize magic moves */
 void mg_init() {
     initmagicmoves();
 }
@@ -301,7 +301,10 @@ void MoveList::generateMoves<MoveType::All>() {
     pushMoves<MoveType::All, PIECETYPE_KING>();
 }
 
-/* Get the best move from the MoveList based on the generation stage */
+/**
+ * Get the best move based on move ordering heuristics
+ * Implements staged move generation for efficiency
+ */
 Move MoveList::getBestMove() {
     Move move;
 
@@ -309,7 +312,7 @@ Move MoveList::getBestMove() {
         case BestMove:
             // Best move
             // If the move given by the pv or tt is valid, return it.
-            stage++;
+            ++stage;
             if (position.isValid(best, FULL) && position.isLegal(best)) {
                 return best;
             }
@@ -331,7 +334,7 @@ Move MoveList::getBestMove() {
                     pop();
                 }
             }
-            stage++;
+            ++stage;
 
         case Attacks:
             // Captures
@@ -345,13 +348,13 @@ Move MoveList::getBestMove() {
                     return move;
                 }
             }
-            stage++;
+            ++stage;
 
         case Killer1:
             // First killer move
             // Ensure that the killer stored at this ply is a valid move and is not
             // the same as the best move. Return it before generating any quiets.
-            stage++;
+            ++stage;
             if ((position.isValid(killer1, FULL) && position.isLegal(killer1) && position.isQuiet(killer1)) && killer1 != best) {
                 return killer1;
             }
@@ -361,7 +364,7 @@ Move MoveList::getBestMove() {
             // Ensure that the killer stored at this ply is a valid move and is not
             // the same as the best move or the first killer move. Return it before
             // generating any quiets.
-            stage++;
+            ++stage;
             if ((position.isValid(killer2, FULL)) && position.isLegal(killer2) && position.isQuiet(killer2) && killer2 != best && killer2 != killer1) {
                 return killer2;
             }
@@ -386,7 +389,7 @@ Move MoveList::getBestMove() {
                     it1->score = PieceSquareTable::getTaperedScore(toMove, position.getOurColor(), dst, position.getGamePhase()) - PieceSquareTable::getTaperedScore(toMove, position.getOurColor(), src, position.getGamePhase());
                 }
                 std::stable_sort(moveList.begin(), it2);
-                stage++;
+                ++stage;
             }
 
         case Quiets:
@@ -410,7 +413,7 @@ Move MoveList::getBestMove() {
         case QBestMove:
             // Qsearch best move
             // If the move given by the pv or tt is valid, return it.
-            stage++;
+            ++stage;
             if (position.isValid(best, FULL) && position.isLegal(best)) {
                 return best;
             }
@@ -422,7 +425,7 @@ Move MoveList::getBestMove() {
             for (int i = 0; i < int(sz); ++i) {
                 moveList[i].score = position.onSquare(getDst(moveList[i].move)) - position.onSquare(getSrc(moveList[i].move));
             }
-            stage++;
+            ++stage;
 
         case QAttacks:
             // Qsearch captures
@@ -437,7 +440,7 @@ Move MoveList::getBestMove() {
                     return move;
                 }
             }
-            stage++;
+            ++stage;
 
         case QQuietChecksGen:
             // Qsearch quiet generation
@@ -445,7 +448,7 @@ Move MoveList::getBestMove() {
             for (int i = 0; i < int(sz); ++i) {
                 moveList[i].score = history->getHistoryScore(moveList[i].move);
             }
-            stage++;
+            ++stage;
 
         case QQuietChecks:
             // Qsearch quiet checks
@@ -462,7 +465,7 @@ Move MoveList::getBestMove() {
         case EvadeBestMove:
             // Evade best move
             // If the move given by the pv or tt is valid, return it.
-            stage++;
+            ++stage;
             if (position.isValid(best, valid) && position.isLegal(best) && !position.inDoubleCheck()) {
                 return best;
             }
@@ -471,8 +474,8 @@ Move MoveList::getBestMove() {
             // Evade move generation
             // Generate King captures.
             {
-                const int CaptureFlag = 0x40000000;
-                const int HistoryFlag = 0x20000000;
+                constexpr int CaptureFlag = 0x40000000;
+                constexpr int HistoryFlag = 0x20000000;
                 generateMoves<MoveType::Evasions>();
                 for (int i = 0; i < int(sz); ++i) {
                     if (position.isCapture(moveList[i].move)) {
@@ -499,7 +502,7 @@ Move MoveList::getBestMove() {
                     }
                 }
                 std::stable_sort(moveList.begin(), moveList.begin() + sz);
-                stage++;
+                ++stage;
             }
 
         case Evade:
@@ -530,7 +533,10 @@ Move MoveList::getBestMove() {
     return NULL_MOVE; // No move found?!?
 }
 
-/* List of moves and related functions */
+/**
+ * Initialize move list with position, best move, and history
+ * Sets up move generation for search with move ordering
+ */
 MoveList::MoveList(const Position &s, Move bestMove, History *history, int ply, bool qsearch)
     : isQSearch(qsearch), valid(FULL), position(s), history(history), ply(ply), sz(0), best(bestMove), killer1(NULL_MOVE), killer2(NULL_MOVE) {
     if (history) {
@@ -555,7 +561,10 @@ MoveList::MoveList(const Position &s, Move bestMove, History *history, int ply, 
     }
 }
 
-/* List of moves and related functions */
+/**
+ * Initialize move list with position only
+ * Used for generating all legal moves without search information
+ */
 MoveList::MoveList(const Position &s) : isQSearch(false), valid(FULL), position(s), history(nullptr), ply(0), sz(0), best(NULL_MOVE) {
     generateMoves<MoveType::All>();
     checkLegal();

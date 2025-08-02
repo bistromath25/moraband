@@ -6,17 +6,6 @@
 #ifndef UCI_H
 #define UCI_H
 
-#include "defs.h"
-#include "movegen.h"
-#include "position.h"
-#include "search.h"
-#include "timeman.h"
-#include "tt.h"
-#include <iostream>
-#include <sstream>
-#include <string>
-#include <utility>
-
 #define ENGINE_NAME "Moraband"
 #ifdef TUNE
 #define ENGINE_VERSION "1.2-tune"

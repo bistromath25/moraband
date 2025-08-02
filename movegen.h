@@ -7,20 +7,20 @@
 #define MOVE_GENERATOR_H
 
 #include "MagicMoves.hpp"
-#include "board.h"
 #include "defs.h"
 #include "history.h"
 #include "move.h"
 #include "position.h"
-#include <algorithm>
 #include <array>
-#include <cmath>
 #include <vector>
 
-const U64 FULL = 0xFFFFFFFFFFFFFFFF;
-const int MOVELIST_MAX_SIZE = 256;
+constexpr U64 FULL = 0xFFFFFFFFFFFFFFFF;
+constexpr int MOVELIST_MAX_SIZE = 256;
 
-/* Staged move generation */
+/**
+ * Move generation stages for staged move generation
+ * Used to prioritize move ordering and generation
+ */
 enum MoveStage {
     BestMove,
     AttacksGen,
@@ -40,7 +40,7 @@ enum MoveStage {
     AllLegal
 };
 
-/* Types of moves */
+/** Types of moves for move generation */
 enum class MoveType {
     Attacks,
     Quiets,
@@ -49,7 +49,10 @@ enum class MoveType {
     All
 };
 
-/* List of moves and related functions */
+/**
+ * MoveList class for generating and managing moves
+ * Implements staged move generation for efficient move ordering
+ */
 class MoveList {
 public:
     MoveList(const Position &s, Move bestMove, History *history, int ply, bool qsearch = false);
@@ -90,6 +93,7 @@ private:
     Move killer2;
 };
 
+/** Initialize magic bitboard move generation */
 void mg_init();
 
 #endif
