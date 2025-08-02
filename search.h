@@ -11,9 +11,11 @@
 #include "defs.h"
 #include "history.h"
 #include "move.h"
-#include "nnue.h"
 #include "position.h"
 #include "timeman.h"
+#ifdef USE_NNUE
+#include "nnue.h"
+#endif
 #include "variation.h"
 #include <atomic>
 #include <vector>

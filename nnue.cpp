@@ -11,10 +11,6 @@
 
 namespace NNUE {
 
-    inline Square flip(Square sq) {
-        return static_cast<Square>(static_cast<int>(sq) ^ 56);
-    }
-
     static float fc1_weight[FEATURE_SIZE][HIDDEN_SIZE];
     static float fc1_bias[HIDDEN_SIZE];
     static float fc2_weight[HIDDEN_SIZE];
