@@ -9,6 +9,11 @@
 #include <cmath>
 #include <fstream>
 
+#if defined(__APPLE__) && defined(__aarch64__)
+#include <arm_neon.h>
+#define USE_NEON
+#endif
+
 namespace NNUE {
 
     static float fc1_weight[FEATURE_SIZE][HIDDEN_SIZE];
@@ -86,20 +91,46 @@ namespace NNUE {
         black = n.black;
     }
 
+    void add_feature_simd(float *acc, const float *w) {
+#ifdef USE_NEON
+        for (int i = 0; i < HIDDEN_SIZE; i += 4) {
+            float32x4_t acc_vec = vld1q_f32(&acc[i]);
+            float32x4_t w_vec = vld1q_f32(&w[i]);
+            acc_vec = vaddq_f32(acc_vec, w_vec);
+            vst1q_f32(&acc[i], acc_vec);
+        }
+#else
+        for (int i = 0; i < HIDDEN_SIZE; ++i) {
+            acc[i] += w[i];
+        }
+#endif
+    }
+
+    void remove_feature_simd(float *acc, const float *w) {
+#ifdef USE_NEON
+        for (int i = 0; i < HIDDEN_SIZE; i += 4) {
+            float32x4_t acc_vec = vld1q_f32(&acc[i]);
+            float32x4_t w_vec = vld1q_f32(&w[i]);
+            acc_vec = vsubq_f32(acc_vec, w_vec);
+            vst1q_f32(&acc[i], acc_vec);
+        }
+#else
+        for (int i = 0; i < HIDDEN_SIZE; ++i) {
+            acc[i] -= w[i];
+        }
+#endif
+    }
+
     void NNUE::add_feature(Color pov, int idx) {
         Accumulator &acc = (pov == WHITE) ? white : black;
         const float *w = fc1_weight[idx];
-        for (int i = 0; i < HIDDEN_SIZE; ++i) {
-            acc.values[i] += w[i];
-        }
+        add_feature_simd(acc.values.data(), w);
     }
 
     void NNUE::remove_feature(Color pov, int idx) {
         Accumulator &acc = (pov == WHITE) ? white : black;
         const float *w = fc1_weight[idx];
-        for (int i = 0; i < HIDDEN_SIZE; ++i) {
-            acc.values[i] -= w[i];
-        }
+        remove_feature_simd(acc.values.data(), w);
     }
 
     void NNUE::addPiece(Color c, PieceType p, Square sq) {
