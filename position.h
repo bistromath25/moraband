@@ -9,11 +9,11 @@
 #include "board.h"
 #include "defs.h"
 #include "move.h"
+#include "pst.h"
+#include "zobrist.h"
 #ifdef USE_NNUE
 #include "nnue.h"
 #endif
-#include "pst.h"
-#include "zobrist.h"
 #include <algorithm>
 #include <array>
 #include <cmath>

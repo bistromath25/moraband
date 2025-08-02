@@ -5,7 +5,9 @@
 
 #include "search.h"
 #include "io.h"
+#ifdef USE_NNUE
 #include "nnue.h"
+#endif
 #include <atomic>
 #include <fstream>
 #include <string>

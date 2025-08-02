@@ -13,10 +13,12 @@
 #include "history.h"
 #include "move.h"
 #include "movegen.h"
-#include "nnue.h"
 #include "position.h"
 #include "timeman.h"
 #include "tt.h"
+#ifdef USE_NNUE
+#include "nnue.h"
+#endif
 #include "variation.h"
 #include <algorithm>
 #include <atomic>

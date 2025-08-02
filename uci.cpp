@@ -5,9 +5,10 @@
 
 #include "uci.h"
 #include "io.h"
-#include "nnue.h"
 #include "perft.h"
-
+#ifdef USE_NNUE
+#include "nnue.h"
+#endif
 #ifdef TUNE
 #include "tune.h"
 #endif
