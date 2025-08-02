@@ -24,7 +24,7 @@ namespace NNUE {
 
         const size_t size = FEATURE_SIZE * HIDDEN_SIZE + HIDDEN_SIZE + HIDDEN_SIZE + 1;
         std::vector<float> buffer(size);
-        in.read(reinterpret_cast<char*>(buffer.data()), size * sizeof(float));
+        in.read(reinterpret_cast<char *>(buffer.data()), size * sizeof(float));
         if (in.gcount() != static_cast<std::streamsize>(size * sizeof(float))) {
             throw std::runtime_error("Unexpected end of file: " + path);
         }
