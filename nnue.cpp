@@ -21,6 +21,15 @@ namespace NNUE {
     static float fc2_weight[HIDDEN_SIZE];
     static float fc2_bias;
 
+    inline Square flip(Square sq) {
+        return static_cast<Square>(static_cast<int>(sq) ^ 56);
+    }
+
+    int getPieceFeatureIndex(Color c, PieceType p, Square sq, Color pov) {
+        int base = (c == WHITE) ? 0 : 6;
+        return (pov == WHITE ? sq : flip(sq)) * NUM_PIECE_TYPES + base + p;
+    }
+
     void load_weights(const std::string &path) {
         std::ifstream in(path, std::ios::binary);
         if (!in) {
@@ -45,11 +54,6 @@ namespace NNUE {
 
         std::cout << "Loaded network from " << NNUE_PATH << "\n"
                   << std::endl;
-    }
-
-    int getPieceFeatureIndex(Color c, PieceType p, Square sq, Color pov) {
-        int base = (c == WHITE) ? 0 : 6;
-        return (pov == WHITE ? sq : flip(sq)) * NUM_PIECE_TYPES + base + p;
     }
 
     Accumulator::Accumulator() {
