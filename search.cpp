@@ -6,10 +6,10 @@
 #include "search.h"
 #include "eval.h"
 #include "io.h"
+#include "tt.h"
 #ifdef USE_NNUE
 #include "nnue.h"
 #endif
-#include "tt.h"
 #include <atomic>
 #include <fstream>
 #include <string>

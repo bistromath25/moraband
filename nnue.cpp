@@ -21,10 +21,6 @@ namespace NNUE {
     static float fc2_weight[HIDDEN_SIZE];
     static float fc2_bias;
 
-    inline Square flip(Square sq) {
-        return static_cast<Square>(static_cast<int>(sq) ^ 56);
-    }
-
     int getPieceFeatureIndex(Color c, PieceType p, Square sq, Color pov) {
         int base = (c == WHITE) ? 0 : 6;
         return (pov == WHITE ? sq : flip(sq)) * NUM_PIECE_TYPES + base + p;

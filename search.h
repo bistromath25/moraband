@@ -13,9 +13,6 @@
 #include "move.h"
 #include "position.h"
 #include "timeman.h"
-#ifdef USE_NNUE
-#include "nnue.h"
-#endif
 #include "variation.h"
 #include <atomic>
 #include <vector>
