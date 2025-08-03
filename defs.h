@@ -160,7 +160,7 @@ enum File {
 };
 
 inline File file(Square s) {
-    return File(s & 0x7);
+    return File(static_cast<int>(s) & 0x7);
 }
 
 /** Rank enumeration and helper functions */
@@ -251,8 +251,9 @@ inline Square operator-(const Square s1, const Square s2) { return static_cast<S
 /** Utility functions for chess operations */
 inline int abs(int x) { return x >= 0 ? x : -x; }
 inline int clamp(int x, int a, int b) { return std::max(a, std::min(x, b)); }
-inline int manhattanDistance(const Square sq1, const Square sq2) { return abs(file(sq1) - file(sq2)) + abs(rank(sq1) - rank(sq2)); }
-inline int chebyshevDistance(const Square sq1, const Square sq2) { return std::max(abs(file(sq1) - file(sq2)), abs(rank(sq1) - rank(sq2))); }
+inline int manhattanDistance(const Square s1, const Square s2) { return abs(file(s1) - file(s2)) + abs(rank(s1) - rank(s2)); }
+inline int chebyshevDistance(const Square s1, const Square s2) { return std::max(abs(file(s1) - file(s2)), abs(rank(s1) - rank(s2))); }
+inline Square flip(Square s) { return static_cast<Square>(static_cast<int>(s) ^ 56); }
 
 inline std::string to_string(File f) {
     return std::string(1, char('h' - f));
