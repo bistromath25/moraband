@@ -9,18 +9,12 @@
 #include <thread>
 
 #include "defs.h"
-#include "eval.h"
 #include "history.h"
 #include "move.h"
-#include "movegen.h"
 #include "position.h"
 #include "timeman.h"
-#include "tt.h"
 #include "variation.h"
-#include <algorithm>
 #include <atomic>
-#include <sstream>
-#include <string>
 #include <vector>
 
 constexpr int LMR_COUNT = 3;
@@ -35,6 +29,7 @@ constexpr int RAZOR_DEPTH = 2;
 constexpr int RAZOR_MARGIN = 300;
 constexpr int LATE_MOVE_REDUCTION_DEPTH = 3;
 
+/** Search information */
 struct SearchInfo {
     SearchInfo() : time{}, inc{}, moves_to_go(0), depth(MAX_PLY), nodes(0), prevNodes(0), totalNodes(0), moveTime(0), quit(false), infinite(false) {}
     int time[PLAYER_SIZE], inc[PLAYER_SIZE];
@@ -45,6 +40,7 @@ struct SearchInfo {
     bool quit, infinite;
 };
 
+/** Global search information */
 struct GlobalInfo {
     GlobalInfo() {
         nodes = 0;
@@ -67,7 +63,7 @@ struct GlobalInfo {
     std::array<U64, 64> evalHistory;
 };
 
-const int MAX_THREADS = 16;
+constexpr int MAX_THREADS = 16;
 extern int NUM_THREADS;
 extern std::atomic<bool> THREAD_STOP;
 extern std::thread threads[MAX_THREADS];

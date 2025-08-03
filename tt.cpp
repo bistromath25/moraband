@@ -57,7 +57,7 @@ void TTCluster::clear() {
     }
 }
 
-/* Transposition table to store search information */
+/** Transposition table to store search information */
 TranspositionTable::TranspositionTable() {
     size = (1 << 20) / sizeof(TTCluster) * DEFAULT_HASH_SIZE;
     table = new TTCluster[size];

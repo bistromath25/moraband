@@ -6,27 +6,23 @@
 #ifndef TT_H
 #define TT_H
 
-#include "defs.h"
 #include "move.h"
 
-#include <cinttypes>
-#include <memory>
-
-const int DEFAULT_HASH_SIZE = 256;
-const int MIN_HASH_SIZE = 1;
-const int MAX_HASH_SIZE = 65536;
+constexpr int DEFAULT_HASH_SIZE = 256;
+constexpr int MIN_HASH_SIZE = 1;
+constexpr int MAX_HASH_SIZE = 65536;
 extern int HASH_SIZE;
 
-const int FLAG_EXACT = 1;
-const int FLAG_UPPER = 2;
-const int FLAG_LOWER = 3;
-const int FLAG_SHIFT = 21;
-const int DEPTH_SHIFT = 23;
-const int SCORE_SHIFT = 32;
-const int MOVE_MASK = 0x1fffff;
-const int FLAG_MASK = 0x3;
-const int DEPTH_MASK = 0x7f;
-const int CLUSTER_SIZE = 4;
+constexpr int FLAG_EXACT = 1;
+constexpr int FLAG_UPPER = 2;
+constexpr int FLAG_LOWER = 3;
+constexpr int FLAG_SHIFT = 21;
+constexpr int DEPTH_SHIFT = 23;
+constexpr int SCORE_SHIFT = 32;
+constexpr int MOVE_MASK = 0x1fffff;
+constexpr int FLAG_MASK = 0x3;
+constexpr int DEPTH_MASK = 0x7f;
+constexpr int CLUSTER_SIZE = 4;
 
 struct TTEntry {
     TTEntry();
@@ -51,7 +47,7 @@ private:
     TTEntry entries[CLUSTER_SIZE];
 };
 
-/* Transposition table to store search information */
+/** Transposition table to store search information */
 struct TranspositionTable {
     TranspositionTable();
     TranspositionTable(int mb);

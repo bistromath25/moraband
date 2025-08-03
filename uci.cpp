@@ -4,8 +4,10 @@
  **/
 
 #include "uci.h"
+#include "eval.h"
 #include "io.h"
 #include "perft.h"
+#include "tt.h"
 #ifdef TUNE
 #include "tune.h"
 #endif
@@ -245,7 +247,6 @@ void uci() {
                 global_info[i].clear();
                 global_info[i].history.init();
             }
-            //tt.setAncient();
         }
         else if (token == "isready") {
             std::cout << "readyok" << std::endl;
