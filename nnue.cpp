@@ -157,13 +157,34 @@ namespace NNUE {
     }
 
     int NNUE::evaluate(Color pov) {
-        Accumulator &acc = (pov == WHITE) ? white : black;
-        float sum = fc2_bias;
+        const Accumulator &acc = (pov == WHITE) ? white : black;
+#ifdef USE_NEON
+        float32x4_t sum_vec = vdupq_n_f32(0.0f);
+        float32x4_t zero = vdupq_n_f32(0.0f);
+        float32x4_t one = vdupq_n_f32(1.0f);
+
+        for (int i = 0; i < HIDDEN_SIZE; i += 4) {
+            float32x4_t x = vld1q_f32(&acc.values[i]);
+            float32x4_t w = vld1q_f32(&fc2_weight[i]);
+            x = vmaxq_f32(x, zero);
+            x = vminq_f32(x, one);
+            float32x4_t product = vmulq_f32(x, w);
+            sum_vec = vaddq_f32(sum_vec, product);
+        }
+
+        float32x2_t lo = vget_low_f32(sum_vec);
+        float32x2_t hi = vget_high_f32(sum_vec);
+        float32x2_t sum2 = vpadd_f32(lo, hi);
+        float sum = vget_lane_f32(sum2, 0) + vget_lane_f32(sum2, 1);
+#else
+        float sum = 0.0f;
         for (int i = 0; i < HIDDEN_SIZE; ++i) {
             float activated = std::min(1.0f, std::max(0.0f, acc.values[i]));
             sum += fc2_weight[i] * activated;
         }
+#endif
+        sum += fc2_bias;
         return static_cast<int>(std::round(sum * SCALE));
     }
 
-}; // namespace NNUE
+} // namespace NNUE
