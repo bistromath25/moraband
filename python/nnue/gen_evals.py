@@ -124,7 +124,7 @@ def generate_fen_evals_slice(
     return result_buffer
 
 
-if __name__ == "__main__":
+def main():
     parser = argparse.ArgumentParser(description="Evaluate chess FENs using Stockfish")
     parser.add_argument("--fens", type=str, default=FEN_PATH)
     parser.add_argument("--start", type=int, default=0, help="Start index (inclusive)")
@@ -150,3 +150,7 @@ if __name__ == "__main__":
         limit=args.limit,
         max_fens=args.max_fens,
     )
+
+
+if __name__ == "__main__":
+    main()

@@ -142,7 +142,7 @@ def train_nnue(
     save_nnue_weights(model, model_save_path)
 
 
-if __name__ == "__main__":
+def main():
     if not torch.backends.mps.is_available():
         raise RuntimeError("MPS backend not available")
 
@@ -155,7 +155,7 @@ if __name__ == "__main__":
     parser.add_argument(
         "--model", type=str, default="nnue.bin", help="Where to save NNUE weights"
     )
-    parser.add_argument("--batch_size", type=int, default=64)
+    parser.add_argument("--batch-size", type=int, default=64)
     parser.add_argument("--epochs", type=int, default=10)
     parser.add_argument("--learning-rate", type=float, default=1e-3)
     parser.add_argument("--decay", type=float, default=1e-6)
@@ -167,6 +167,10 @@ if __name__ == "__main__":
         model_save_path=args.model,
         batch_size=args.batch_size,
         epochs=args.epochs,
-        learning_rate=args.lr,
+        learning_rate=args.learning_rate,
         weight_decay=args.decay,
     )
+
+
+if __name__ == "__main__":
+    main()
