@@ -88,7 +88,7 @@ int qsearch(Position &s, SearchInfo &si, GlobalInfo &gi, int ply, int alpha, int
     }
 
 #ifdef USE_NNUE
-    int staticEval = s.evaluateNNUE();
+    int staticEval = s.evaluate();
 #else
     Evaluate evaluate(s);
     int staticEval = evaluate.getScore();
@@ -183,7 +183,7 @@ int search(Position &s, SearchInfo &si, GlobalInfo &gi, int depth, int ply, int 
     }
 
 #ifdef USE_NNUE
-    int staticEval = s.evaluateNNUE();
+    int staticEval = s.evaluate();
 #else
     Evaluate evaluate(s);
     int staticEval = evaluate.getScore();

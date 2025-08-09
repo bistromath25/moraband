@@ -676,7 +676,7 @@ std::string Position::getFen() { // Current FEN
 }
 
 #ifdef USE_NNUE
-int Position::evaluateNNUE() {
+int Position::evaluate() {
     return nnue.evaluate(getOurColor());
 }
 #endif

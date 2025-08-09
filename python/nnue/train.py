@@ -97,7 +97,9 @@ def train_nnue(
     epochs=10,
     learning_rate=1e-3,
     weight_decay=1e-6,
+    resume=False,
 ):
+    start_epoch = 1
     model = NNUE().to(DEVICE)
     criterion = nn.MSELoss()
     optimizer = optim.AdamW(
@@ -110,6 +112,13 @@ def train_nnue(
     logging.info(f"Learning rate:      {learning_rate}")
     logging.info(f"Weight decay:       {weight_decay}")
 
+    if resume and os.path.exists("checkpoint.pth"):
+        checkpoint = torch.load("checkpoint.pth", map_location=DEVICE)
+        model.load_state_dict(checkpoint["model_state"])
+        optimizer.load_state_dict(checkpoint["optimizer_state"])
+        start_epoch = checkpoint["epoch"] + 1
+        logging.info(f"Resuming from epoch {start_epoch}")
+
     dataset = FenEvalDataset(fen_eval_path)
     dataloader = DataLoader(
         dataset,
@@ -117,7 +126,7 @@ def train_nnue(
         num_workers=0,
     )
 
-    for epoch in range(1, epochs + 1):
+    for epoch in range(start_epoch, epochs + 1):
         logging.info(f"=== Epoch {epoch}/{epochs} ===")
         total_loss = 0.0
         total_samples = 0
@@ -137,6 +146,15 @@ def train_nnue(
 
         avg_loss = total_loss / total_samples if total_samples > 0 else float("nan")
         logging.info(f"Epoch {epoch} - Avg Loss: {avg_loss:.6f}")
+        torch.save(
+            {
+                "epoch": epoch,
+                "model_state": model.state_dict(),
+                "optimizer_state": optimizer.state_dict(),
+            },
+            "checkpoint.pth",
+        )
+        logging.info(f"Checkpoint saved at epoch {epoch}")
 
     logging.info("Training complete. Saving model...")
     save_nnue_weights(model, model_save_path)
@@ -159,7 +177,9 @@ def main():
     parser.add_argument("--epochs", type=int, default=10)
     parser.add_argument("--learning-rate", type=float, default=1e-3)
     parser.add_argument("--decay", type=float, default=1e-6)
-
+    parser.add_argument(
+        "--resume", action="store_true", help="Resume training from checkpoint"
+    )
     args = parser.parse_args()
 
     train_nnue(
@@ -169,6 +189,7 @@ def main():
         epochs=args.epochs,
         learning_rate=args.learning_rate,
         weight_decay=args.decay,
+        resume=args.resume,
     )
 
 

@@ -125,10 +125,9 @@ public:
 
     // NNUE
 #ifdef USE_NNUE
-    int evaluateNNUE();
+    int evaluate();
 #endif
 
-    // Print
     friend std::ostream &operator<<(std::ostream &os, const Position &s);
 
 private:
