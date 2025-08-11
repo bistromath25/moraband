@@ -57,7 +57,7 @@ namespace NNUE {
     }
 
     Accumulator::Accumulator(const Position &s, Color c) {
-        values.fill(0);
+        std::memcpy(values.data(), fc1_bias, HIDDEN_SIZE * sizeof(float));
         Color pov = c;
         U64 occWhite = s.getOccupancyBB(WHITE);
         U64 occBlack = s.getOccupancyBB(BLACK);
