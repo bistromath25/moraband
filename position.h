@@ -11,12 +11,21 @@
 #include "move.h"
 #include "pst.h"
 #include "zobrist.h"
+#ifdef USE_NNUE
+#include "nnue.h"
+#endif
 #include <algorithm>
 #include <array>
 #include <cmath>
 #include <cstring>
 #include <iostream>
 #include <string>
+
+#ifdef USE_NNUE
+namespace NNUE {
+    class NNUE;
+};
+#endif
 
 /** Game phase calculation piece values */
 enum Phase {
@@ -114,6 +123,11 @@ public:
     int see(Move m) const;
     U64 getXRayAttacks(Square sq) const;
 
+    // NNUE
+#ifdef USE_NNUE
+    int evaluate();
+#endif
+
     friend std::ostream &operator<<(std::ostream &os, const Position &s);
 
 private:
@@ -136,6 +150,9 @@ private:
     std::array<std::array<int, PIECE_TYPES_SIZE>, PLAYER_SIZE> pieceCounts;
     std::array<std::array<int, GAMESTAGE_SIZE>, PLAYER_SIZE> pstScore;
     std::array<std::array<std::array<Square, PIECE_MAX>, PIECE_TYPES_SIZE>, PLAYER_SIZE> pieceList;
+#ifdef USE_NNUE
+    NNUE::NNUE nnue;
+#endif
 };
 
 inline Color Position::getOurColor() const {
