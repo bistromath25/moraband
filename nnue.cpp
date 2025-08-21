@@ -21,9 +21,10 @@ namespace NNUE {
     static float fc2_weight[HIDDEN_SIZE];
     static float fc2_bias;
 
-    int getPieceFeatureIndex(Color c, PieceType p, Square sq, Color pov) {
+    /** Feature index using fixed white perspective */
+    int getPieceFeatureIndex(Color c, PieceType p, Square sq) {
         int base = (c == WHITE) ? 0 : 6;
-        return (pov == WHITE ? sq : flip(sq)) * NUM_PIECE_TYPES + base + p;
+        return flip_file(sq) * NUM_PIECE_TYPES + base + p;
     }
 
     void load_weights(const std::string &path) {
@@ -48,24 +49,23 @@ namespace NNUE {
         offset += HIDDEN_SIZE;
         fc2_bias = buffer[offset];
 
-        std::cout << "Loaded network from " << NNUE_PATH << "\n"
+        std::cout << "Loaded network from " << path << "\n"
                   << std::endl;
     }
 
     Accumulator::Accumulator() {
-        values.fill(0);
+        std::memcpy(values.data(), fc1_bias, HIDDEN_SIZE * sizeof(float));
     }
 
-    Accumulator::Accumulator(const Position &s, Color c) {
+    Accumulator::Accumulator(const Position &s) {
         std::memcpy(values.data(), fc1_bias, HIDDEN_SIZE * sizeof(float));
-        Color pov = c;
         U64 occWhite = s.getOccupancyBB(WHITE);
         U64 occBlack = s.getOccupancyBB(BLACK);
 
         while (occWhite) {
             Square sq = pop_lsb(occWhite);
             PieceType p = s.onSquare(sq);
-            int feat = getPieceFeatureIndex(WHITE, p, sq, pov);
+            int feat = getPieceFeatureIndex(WHITE, p, sq);
             const float *w = fc1_weight[feat];
             for (int i = 0; i < HIDDEN_SIZE; ++i) {
                 values[i] += w[i];
@@ -74,7 +74,7 @@ namespace NNUE {
         while (occBlack) {
             Square sq = pop_lsb(occBlack);
             PieceType p = s.onSquare(sq);
-            int feat = getPieceFeatureIndex(BLACK, p, sq, pov);
+            int feat = getPieceFeatureIndex(BLACK, p, sq);
             const float *w = fc1_weight[feat];
             for (int i = 0; i < HIDDEN_SIZE; ++i) {
                 values[i] += w[i];
@@ -84,80 +84,70 @@ namespace NNUE {
 
     NNUE::NNUE() {}
 
-    NNUE::NNUE(const Position &s) : white(s, WHITE), black(s, BLACK) {}
+    NNUE::NNUE(const Position &s) : acc(s) {}
 
     NNUE::NNUE(const NNUE &n) {
-        white = n.white;
-        black = n.black;
+        acc = n.acc;
     }
 
-    void add_feature_simd(float *acc, const float *w) {
+    void add_feature_simd(float *values, const float *w) {
 #ifdef USE_NEON
         for (int i = 0; i < HIDDEN_SIZE; i += 4) {
-            float32x4_t acc_vec = vld1q_f32(&acc[i]);
+            float32x4_t values_vec = vld1q_f32(&values[i]);
             float32x4_t w_vec = vld1q_f32(&w[i]);
-            acc_vec = vaddq_f32(acc_vec, w_vec);
-            vst1q_f32(&acc[i], acc_vec);
+            values_vec = vaddq_f32(values_vec, w_vec);
+            vst1q_f32(&values[i], values_vec);
         }
 #else
         for (int i = 0; i < HIDDEN_SIZE; ++i) {
-            acc[i] += w[i];
+            values[i] += w[i];
         }
 #endif
     }
 
-    void remove_feature_simd(float *acc, const float *w) {
+    void remove_feature_simd(float *values, const float *w) {
 #ifdef USE_NEON
         for (int i = 0; i < HIDDEN_SIZE; i += 4) {
-            float32x4_t acc_vec = vld1q_f32(&acc[i]);
+            float32x4_t values_vec = vld1q_f32(&values[i]);
             float32x4_t w_vec = vld1q_f32(&w[i]);
-            acc_vec = vsubq_f32(acc_vec, w_vec);
-            vst1q_f32(&acc[i], acc_vec);
+            values_vec = vsubq_f32(values_vec, w_vec);
+            vst1q_f32(&values[i], values_vec);
         }
 #else
         for (int i = 0; i < HIDDEN_SIZE; ++i) {
-            acc[i] -= w[i];
+            values[i] -= w[i];
         }
 #endif
     }
 
-    void NNUE::add_feature(Color pov, int idx) {
-        Accumulator &acc = (pov == WHITE) ? white : black;
+    void add_feature(std::array<float, HIDDEN_SIZE> &values, int idx) {
         const float *w = fc1_weight[idx];
-        add_feature_simd(acc.values.data(), w);
+        add_feature_simd(values.data(), w);
     }
 
-    void NNUE::remove_feature(Color pov, int idx) {
-        Accumulator &acc = (pov == WHITE) ? white : black;
+    void remove_feature(std::array<float, HIDDEN_SIZE> &values, int idx) {
         const float *w = fc1_weight[idx];
-        remove_feature_simd(acc.values.data(), w);
+        remove_feature_simd(values.data(), w);
     }
 
     void NNUE::addPiece(Color c, PieceType p, Square sq) {
-        for (Color pov : {WHITE, BLACK}) {
-            int feat = getPieceFeatureIndex(c, p, sq, pov);
-            add_feature(pov, feat);
-        }
+        int feat = getPieceFeatureIndex(c, p, sq);
+        add_feature(acc.values, feat);
     }
 
     void NNUE::removePiece(Color c, PieceType p, Square sq) {
-        for (Color pov : {WHITE, BLACK}) {
-            int feat = getPieceFeatureIndex(c, p, sq, pov);
-            remove_feature(pov, feat);
-        }
+        int feat = getPieceFeatureIndex(c, p, sq);
+        remove_feature(acc.values, feat);
     }
 
     void NNUE::movePiece(Color c, PieceType p, Square src, Square dst) {
-        for (Color pov : {WHITE, BLACK}) {
-            int featSrc = getPieceFeatureIndex(c, p, src, pov);
-            int featDst = getPieceFeatureIndex(c, p, dst, pov);
-            remove_feature(pov, featSrc);
-            add_feature(pov, featDst);
-        }
+        int featSrc = getPieceFeatureIndex(c, p, src);
+        int featDst = getPieceFeatureIndex(c, p, dst);
+        remove_feature(acc.values, featSrc);
+        add_feature(acc.values, featDst);
     }
 
-    int NNUE::evaluate(Color pov) {
-        const Accumulator &acc = (pov == WHITE) ? white : black;
+    int NNUE::evaluate(Color pov) const {
 #ifdef USE_NEON
         float32x4_t sum_vec = vdupq_n_f32(0.0f);
         float32x4_t zero = vdupq_n_f32(0.0f);
@@ -184,7 +174,7 @@ namespace NNUE {
         }
 #endif
         sum += fc2_bias;
-        return static_cast<int>(std::round(sum * SCALE));
+        return static_cast<int>(std::round((pov == WHITE ? sum : -sum) * SCALE));
     }
 
 } // namespace NNUE

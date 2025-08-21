@@ -64,13 +64,15 @@ class FenEvalDataset(IterableDataset):
                 try:
                     fen, score_str = line.split(";")
                     board = chess.Board(fen)
+                    turn = board.turn
                     x = encode_board(board, perspective=self.perspective)
                     raw_eval = int(score_str)
                     clamped = (
                         max(-self.max_cp, min(self.max_cp, raw_eval)) / self.max_cp
                     )
+                    sign = 1.0 if turn == self.perspective else -1.0
                     x_tensor = torch.from_numpy(x)
-                    y_tensor = torch.tensor([clamped], dtype=torch.float32)
+                    y_tensor = torch.tensor([sign * clamped], dtype=torch.float32)
                     yield x_tensor, y_tensor
                 except Exception as e:
                     logging.warning(f"Skipping line {line} due to error: {e}")

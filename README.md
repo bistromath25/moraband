@@ -71,7 +71,7 @@ r4rk1/3p2pp/p7/1pq2p2/2n2P2/P2Q3P/2P1NRP1/R5K1 w - -; 1/2-1/2
 and tune via `tune fens`.
 
 ## NNUE
-Moraband includes support for NNUE (Efficiently Updatable Neural Network) evaluation, using a basic (768 -> 128) x 2 -> 1 architecture. The network is a two-layer feedforward model with clipped ReLU activation and a single scalar output. Input features use a 768-dimensional one-hot encoding representing the presence of each of the 12 piece types across all 64 squares, with separate accumulators maintained for the white and black perspectives to enable efficient incremental updates. Inference is accelerated with Apple NEON intrinsics on ARM64 (Apple Silicon) CPUs, with a scalar fallback for other platforms.
+Moraband includes support for NNUE (Efficiently Updatable Neural Network) evaluation, using a basic 768 -> 128 -> 1 architecture. The network is a two-layer feedforward model with clipped ReLU activation and a single scalar output. Input features use a 768-dimensional one-hot encoding representing the presence of each of the 12 piece types across all 64 squares, encoded from White's perspective. Inference is accelerated with Apple NEON intrinsics on ARM64 (Apple Silicon) CPUs, with a scalar fallback for other platforms.
 
 ## Credit and Resources
 - [Vice chess engine tutorial](https://www.chessprogramming.org/Vice)

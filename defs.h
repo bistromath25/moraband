@@ -253,7 +253,8 @@ inline int abs(int x) { return x >= 0 ? x : -x; }
 inline int clamp(int x, int a, int b) { return std::max(a, std::min(x, b)); }
 inline int manhattanDistance(const Square s1, const Square s2) { return abs(file(s1) - file(s2)) + abs(rank(s1) - rank(s2)); }
 inline int chebyshevDistance(const Square s1, const Square s2) { return std::max(abs(file(s1) - file(s2)), abs(rank(s1) - rank(s2))); }
-inline Square flip(Square s) { return static_cast<Square>(static_cast<int>(s) ^ 56); }
+inline Square flip_rank(Square s) { return static_cast<Square>(static_cast<int>(s) ^ 56); }
+inline Square flip_file(Square s) { return static_cast<Square>(static_cast<int>(s) ^ 7); }
 
 inline std::string to_string(File f) {
     return std::string(1, char('h' - f));
