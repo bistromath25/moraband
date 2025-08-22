@@ -18,15 +18,13 @@ logging.basicConfig(
 torch.set_float32_matmul_precision("high")
 
 MAX_CP = 1_000
-FEATURE_SIZE = 768
+PIECE_FEATURES = 768
+INPUT_FEATURES = PIECE_FEATURES + 1
 DEVICE = torch.device("mps")
 
 
-def encode_board(board: chess.Board, perspective=chess.WHITE):
-    if board.turn != perspective:
-        board = board.mirror()
-        board.turn = perspective
-    x = np.zeros(FEATURE_SIZE, dtype=np.float32)
+def encode_board(board: chess.Board):
+    x = np.zeros(PIECE_FEATURES, dtype=np.float32)
     for square in chess.SQUARES:
         piece = board.piece_at(square)
         if piece:
@@ -40,7 +38,7 @@ def encode_board(board: chess.Board, perspective=chess.WHITE):
 class NNUE(nn.Module):
     def __init__(self, hidden_dim=128):
         super().__init__()
-        self.fc1 = nn.Linear(FEATURE_SIZE, hidden_dim)
+        self.fc1 = nn.Linear(INPUT_FEATURES, hidden_dim)
         self.fc2 = nn.Linear(hidden_dim, 1)
 
     def forward(self, x):
@@ -49,11 +47,10 @@ class NNUE(nn.Module):
 
 
 class FenEvalDataset(IterableDataset):
-    def __init__(self, filename, max_cp=MAX_CP, perspective=chess.WHITE):
+    def __init__(self, filename, max_cp=MAX_CP):
         super().__init__()
         self.filename = filename
         self.max_cp = max_cp
-        self.perspective = perspective
 
     def __iter__(self):
         with open(self.filename, "r") as file:
@@ -65,14 +62,15 @@ class FenEvalDataset(IterableDataset):
                     fen, score_str = line.split(";")
                     board = chess.Board(fen)
                     turn = board.turn
-                    x = encode_board(board, perspective=self.perspective)
+                    x = encode_board(board)
+                    stm = 1.0 if board.turn == chess.WHITE else -1.0
+                    x = np.concatenate([x, np.array([stm], dtype=np.float32)])
                     raw_eval = int(score_str)
                     clamped = (
                         max(-self.max_cp, min(self.max_cp, raw_eval)) / self.max_cp
                     )
-                    sign = 1.0 if turn == self.perspective else -1.0
                     x_tensor = torch.from_numpy(x)
-                    y_tensor = torch.tensor([sign * clamped], dtype=torch.float32)
+                    y_tensor = torch.tensor([clamped], dtype=torch.float32)
                     yield x_tensor, y_tensor
                 except Exception as e:
                     logging.warning(f"Skipping line {line} due to error: {e}")

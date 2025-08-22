@@ -16,7 +16,7 @@
 
 namespace NNUE {
 
-    static float fc1_weight[FEATURE_SIZE][HIDDEN_SIZE];
+    static float fc1_weight[INPUT_FEATURES][HIDDEN_SIZE];
     static float fc1_bias[HIDDEN_SIZE];
     static float fc2_weight[HIDDEN_SIZE];
     static float fc2_bias;
@@ -33,7 +33,7 @@ namespace NNUE {
             throw std::runtime_error("Failed to open file: " + path);
         }
 
-        const size_t size = FEATURE_SIZE * HIDDEN_SIZE + HIDDEN_SIZE + HIDDEN_SIZE + 1;
+        const size_t size = INPUT_FEATURES * HIDDEN_SIZE + HIDDEN_SIZE + HIDDEN_SIZE + 1;
         std::vector<float> buffer(size);
         in.read(reinterpret_cast<char *>(buffer.data()), size * sizeof(float));
         if (in.gcount() != static_cast<std::streamsize>(size * sizeof(float))) {
@@ -41,8 +41,8 @@ namespace NNUE {
         }
 
         size_t offset = 0;
-        std::memcpy(fc1_weight, &buffer[offset], FEATURE_SIZE * HIDDEN_SIZE * sizeof(float));
-        offset += FEATURE_SIZE * HIDDEN_SIZE;
+        std::memcpy(fc1_weight, &buffer[offset], INPUT_FEATURES * HIDDEN_SIZE * sizeof(float));
+        offset += INPUT_FEATURES * HIDDEN_SIZE;
         std::memcpy(fc1_bias, &buffer[offset], HIDDEN_SIZE * sizeof(float));
         offset += HIDDEN_SIZE;
         std::memcpy(fc2_weight, &buffer[offset], HIDDEN_SIZE * sizeof(float));
@@ -148,14 +148,19 @@ namespace NNUE {
     }
 
     int NNUE::evaluate(Color pov) const {
+        const float *w_stm = fc1_weight[INPUT_FEATURES - 1];
+        const float sign = (pov == WHITE) ? 1.0f : -1.0f;
 #ifdef USE_NEON
         float32x4_t sum_vec = vdupq_n_f32(0.0f);
         float32x4_t zero = vdupq_n_f32(0.0f);
         float32x4_t one = vdupq_n_f32(1.0f);
+        float32x4_t sign_vec = vdupq_n_f32(sign);
 
         for (int i = 0; i < HIDDEN_SIZE; i += 4) {
             float32x4_t x = vld1q_f32(&acc.values[i]);
             float32x4_t w = vld1q_f32(&fc2_weight[i]);
+            float32x4_t wstm = vld1q_f32(&w_stm[i]);
+            x = vmlaq_f32(x, wstm, sign_vec);
             x = vmaxq_f32(x, zero);
             x = vminq_f32(x, one);
             float32x4_t product = vmulq_f32(x, w);
@@ -169,7 +174,7 @@ namespace NNUE {
 #else
         float sum = 0.0f;
         for (int i = 0; i < HIDDEN_SIZE; ++i) {
-            float activated = std::min(1.0f, std::max(0.0f, acc.values[i]));
+            float activated = std::min(1.0f, std::max(0.0f, acc.values[i] + sign * w_stm[i]));
             sum += fc2_weight[i] * activated;
         }
 #endif

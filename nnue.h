@@ -15,7 +15,8 @@ class Position;
 namespace NNUE {
 
     const std::string NNUE_PATH = "nnue.bin";
-    constexpr int FEATURE_SIZE = 768;
+    constexpr int PIECE_FEATURES = 768;
+    constexpr int INPUT_FEATURES = PIECE_FEATURES + 1;
     constexpr int HIDDEN_SIZE = 128;
     constexpr float SCALE = 1000.0f;
 
