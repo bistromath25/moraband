@@ -36,7 +36,7 @@ namespace NNUE {
         void addPiece(Color c, PieceType p, Square sq);
         void removePiece(Color c, PieceType p, Square sq);
         void movePiece(Color c, PieceType p, Square src, Square dst);
-        int evaluate(Color pov) const;
+        int evaluate(Color c) const;
 
     private:
         Accumulator acc;

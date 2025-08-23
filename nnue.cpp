@@ -147,9 +147,9 @@ namespace NNUE {
         add_feature(acc.values, featDst);
     }
 
-    int NNUE::evaluate(Color pov) const {
+    int NNUE::evaluate(Color c) const {
         const float *w_stm = fc1_weight[INPUT_FEATURE_SIZE - 1];
-        const float sign = (pov == WHITE) ? 1.0f : -1.0f;
+        const float sign = (c == WHITE) ? 1.0f : -1.0f;
 #ifdef USE_NEON
         float32x4_t sum_vec = vdupq_n_f32(0.0f);
         float32x4_t zero = vdupq_n_f32(0.0f);
@@ -179,7 +179,7 @@ namespace NNUE {
         }
 #endif
         sum += fc2_bias;
-        return static_cast<int>(std::round((pov == WHITE ? sum : -sum) * SCALE));
+        return static_cast<int>(std::round((c == WHITE ? sum : -sum) * SCALE));
     }
 
 } // namespace NNUE
