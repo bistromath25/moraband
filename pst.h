@@ -145,12 +145,12 @@ namespace PieceSquareTable {
                 -53, -34, -21, -11, -28, -14, -24, -43}}};
 
     inline int getScore(PieceType p, GameStage g, Color c, Square sq) {
-        return c == WHITE ? PST[p][g][flip(sq)] : PST[p][g][sq];
+        return c == WHITE ? PST[p][g][flip_rank(sq)] : PST[p][g][sq];
     }
 
     /** Tapered static score with 256 phases */
     inline int getTaperedScore(PieceType p, Color c, Square sq, int phase) {
-        return c == WHITE ? ((PST[p][MIDDLEGAME][flip(sq)] * (256 - phase)) + PST[p][ENDGAME][flip(sq)] * phase) / 256
+        return c == WHITE ? ((PST[p][MIDDLEGAME][flip_rank(sq)] * (256 - phase)) + PST[p][ENDGAME][flip_rank(sq)] * phase) / 256
                           : ((PST[p][MIDDLEGAME][sq] * (256 - phase)) + PST[p][ENDGAME][sq] * phase) / 256;
     }
 
