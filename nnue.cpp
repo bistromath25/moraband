@@ -6,7 +6,6 @@
 #include "nnue.h"
 #include "defs.h"
 #include "position.h"
-#include <cmath>
 #include <fstream>
 
 #if defined(__APPLE__) && defined(__aarch64__)
