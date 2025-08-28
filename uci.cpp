@@ -55,14 +55,14 @@ void go(std::istringstream &is, Position &s) {
             is >> search_info.inc[BLACK];
         }
         else if (token == "movestogo") {
-            is >> search_info.moves_to_go;
+            is >> search_info.movesToGo;
         }
         else if (token == "depth") {
             is >> search_info.depth;
             search_info.infinite = true;
         }
         else if (token == "nodes") {
-            is >> search_info.max_nodes;
+            is >> search_info.maxNodes;
             search_info.infinite = true;
         }
         else if (token == "movetime") {
@@ -78,7 +78,7 @@ void go(std::istringstream &is, Position &s) {
         search_info.moveTime = ONE_HOUR; // Search for one hour in infinite mode
     }
     else if (!search_info.moveTime) {
-        search_info.moveTime = get_search_time(search_info.time[s.getOurColor()], search_info.inc[s.getOurColor()], global_info[0].history.size() / 2, search_info.moves_to_go, search_info.time[s.getOurColor()] - search_info.time[s.getTheirColor()]);
+        search_info.moveTime = get_search_time(search_info.time[s.getOurColor()], search_info.inc[s.getOurColor()], global_info[0].history.size() / 2, search_info.movesToGo, search_info.time[s.getOurColor()] - search_info.time[s.getTheirColor()]);
     }
 
     m = search(s, search_info);
@@ -266,11 +266,12 @@ void uci() {
 
             while (is >> token && token != "value") {
                 name += token;
+                name += " ";
             }
             while (is >> token) {
                 value += token;
             }
-
+            name.pop_back();
             set_option(name, value);
         }
         else if (token == "position") {
