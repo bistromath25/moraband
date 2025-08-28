@@ -1,8 +1,11 @@
 import argparse
+import datetime
 import subprocess
 import threading
 import time
 from concurrent.futures import ThreadPoolExecutor, as_completed
+
+from tqdm import tqdm
 
 DEFAULT_MOVETIME = 5000
 
@@ -87,8 +90,6 @@ class EngineWorker:
 
 
 def main():
-    start_time = time.perf_counter()
-
     parser = argparse.ArgumentParser(description="Test Moraband")
     parser.add_argument("engine", type=str, help="path to Moraband")
     parser.add_argument("test_positions_file", type=str, help="test positions file")
@@ -98,6 +99,9 @@ def main():
     parser.add_argument("--depth", type=int, help="search depth", default=None)
     parser.add_argument(
         "--workers", type=int, help="parallel engine processes", default=4
+    )
+    parser.add_argument(
+        "--verbose", action="store_true", help="Print detailed failure information"
     )
     args = parser.parse_args()
 
@@ -110,7 +114,7 @@ def main():
     print(f"Positions: {total}")
     print(f"Workers:   {args.workers}")
     if args.move_time is not None:
-        print(f"Movetime:  {args.move_time}")
+        print(f"Movetime:  {(args.move_time / 1000):.2f} s")
     if args.depth is not None:
         print(f"Depth:     {args.depth}")
 
@@ -121,32 +125,43 @@ def main():
 
     passed = 0
     failed = 0
+    start_time = time.perf_counter()
+
     with ThreadPoolExecutor(max_workers=args.workers) as executor:
         futures = []
         for i, pos in enumerate(test_positions):
             worker = engines[i % len(engines)]
             futures.append(executor.submit(worker.run_position, pos))
 
-        for future in as_completed(futures):
+        for future in tqdm(
+            as_completed(futures),
+            total=len(futures),
+            desc="Running tests",
+            unit="test",
+            bar_format="{desc}: {n}/{total}",
+        ):
             test_position, engine_best_move, success, engine_out = future.result()
             if success:
                 passed += 1
             else:
                 failed += 1
-                print(f"FAILED: id {test_position.id} fen {test_position.fen}")
-                if len(engine_out) > 1:
-                    print(f"\t{engine_out[-2].split(' pv')[0]}")
-                print(f"\tfound {engine_best_move} expected {test_position.best_moves}")
+                if args.verbose:
+                    print(f"FAILED: id {test_position.id} fen {test_position.fen}")
+                    if len(engine_out) > 1:
+                        print(f"\t{engine_out[-2].split(' pv')[0]}")
+                    print(
+                        f"\tfound {engine_best_move} expected {test_position.best_moves}"
+                    )
+
+    elapsed = time.perf_counter() - start_time
 
     for e in engines:
         e.quit()
 
-    elapsed = time.perf_counter() - start_time
-
-    print(f"Total tests:  {total}")
-    print(f"Passed tests: {passed} ({passed / total * 100:.2f}%)")
-    print(f"Failed tests: {failed} ({failed / total * 100:.2f}%)")
-    print(f"Elapsed time: {elapsed:.2f} s")
+    print(f"Passed: {passed} ({passed / total * 100:.2f}%)")
+    print(f"Failed: {failed} ({failed / total * 100:.2f}%)")
+    minutes, seconds = divmod(int(elapsed), 60)
+    print(f"Time:   {minutes:02d}:{seconds:02d}")
 
 
 if __name__ == "__main__":
