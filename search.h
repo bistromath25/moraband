@@ -31,10 +31,10 @@ constexpr int LATE_MOVE_REDUCTION_DEPTH = 3;
 
 /** Search information */
 struct SearchInfo {
-    SearchInfo() : time{}, inc{}, moves_to_go(0), depth(MAX_PLY), nodes(0), prevNodes(0), totalNodes(0), moveTime(0), quit(false), infinite(false) {}
+    SearchInfo() : time{}, inc{}, movesToGo(0), depth(MAX_PLY), nodes(0), prevNodes(0), maxNodes(0), totalNodes(0), moveTime(0), quit(false), infinite(false) {}
     int time[PLAYER_SIZE], inc[PLAYER_SIZE];
-    int moves_to_go, depth, max_nodes, nodes, prevNodes;
-    U64 totalNodes;
+    int movesToGo, depth, nodes, prevNodes;
+    U64 maxNodes, totalNodes;
     U64 moveTime;
     Clock clock;
     bool quit, infinite;

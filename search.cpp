@@ -536,7 +536,7 @@ Move iterative_deepening(Position &s, SearchInfo &si) {
         if (U64(si.clock.elapsed<std::chrono::milliseconds>()) * 2 > si.moveTime) {
             break; // Insufficient time for next search iteration
         }
-        if ((si.depth && d >= si.depth) || (si.max_nodes && si.totalNodes >= U64(si.max_nodes)) || (si.nodes == si.prevNodes)) {
+        if ((d >= si.depth) || (si.maxNodes && si.totalNodes >= U64(si.maxNodes)) || (si.nodes == si.prevNodes)) {
             break;
         }
 
