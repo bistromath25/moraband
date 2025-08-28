@@ -4,7 +4,7 @@
  **/
 
 #include "eval.h"
-#include "search.h"
+#include "movegen.h"
 #ifdef TUNE
 #include "tune.h"
 #endif

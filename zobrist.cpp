@@ -14,7 +14,6 @@ namespace Zobrist {
     U64 rand_64() {
         return U64(rand()) << 32 | U64(rand());
     }
-
     void init() {
         srand(6736199);
         for (PieceType p = PIECETYPE_PAWN; p < PIECETYPE_NONE; ++p) {
@@ -31,4 +30,4 @@ namespace Zobrist {
         }
         side_to_move_rand = rand_64();
     }
-}; // namespace Zobrist
+} // namespace Zobrist

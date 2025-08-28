@@ -5,7 +5,8 @@
 
 #include "tune.h"
 #include "defs.h"
-#include "search.h"
+#include "eval.h"
+#include "tt.h"
 #include <cmath>
 #include <fstream>
 #include <iostream>
