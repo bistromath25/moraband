@@ -41,13 +41,23 @@ uciok
     - [Check extension/evasion](https://www.chessprogramming.org/Check_Extensions)
     - [Pruning using futility, reverse-futility, null-move and late-moves](https://www.chessprogramming.org/Pruning)
 - Evaluation
-    - [Material evaluation and Piece square tables](https://www.chessprogramming.org/Piece-Square_Tables)
-    - [Pawn structure evaluation](https://www.chessprogramming.org/Pawn_Structure)
-    - [Basic King safety using King safety table](https://www.chessprogramming.org/King_Safety)
-    - [Tapered evaluation](https://www.chessprogramming.org/Tapered_Eval)
+    - Classical
+        - [Material evaluation and Piece square tables](https://www.chessprogramming.org/Piece-Square_Tables)
+        - [Pawn structure evaluation](https://www.chessprogramming.org/Pawn_Structure)
+        - [Basic King safety using King safety table](https://www.chessprogramming.org/King_Safety)
+        - [Tapered evaluation](https://www.chessprogramming.org/Tapered_Eval)
+    - [NNUE](https://www.chessprogramming.org/NNUE)
+        - (768 -> 128) x 2 ->  1
+        - Apple NEON intrinsics
 
 ## Compile
-Compile via `cmake` or `clang++ -Wall -mcpu=apple-m1 -std=c++17 -O3 *.cpp -o Moraband`.
+Compile via `cmake`
+```
+mkdir build
+cd build
+cmake ..  # -DTUNE=ON for tuning, -DUSE_NNUE=ON for NNUE
+make
+```
 
 ## Tune
 Tune material values using [Texel's method](https://www.chessprogramming.org/Texel%27s_Tuning_Method). Provide a `fens` file containing one FEN per line like below
@@ -60,9 +70,13 @@ r4rk1/3p2pp/p7/1pq2p2/2n2P2/P2Q3P/2P1NRP1/R5K1 w - -; 1/2-1/2
 ```
 and tune via `tune fens`.
 
+## NNUE
+Moraband includes support for NNUE (Efficiently Updatable Neural Network) evaluation, using a `(768 + 1) -> 128 -> 1` two-layer feedforward model with clipped ReLU activation producing a single scalar output. The input features consist of a 768-dimensional one-hot encoding of all 12 piece types across 64 squares from White’s perspective, plus a side-to-move feature encoded as +1 for White and –1 for Black. Inference is accelerated with Apple NEON intrinsics on ARM64 (Apple Silicon) CPUs, with a scalar fallback for other platforms.
+
 ## Credit and Resources
 - [Vice chess engine tutorial](https://www.chessprogramming.org/Vice)
 - [Chess programming wiki](https://www.chessprogramming.org/Main_Page)
 - Pradyumna Kannan's `MagicMoves.cpp`, `MagicMoves.hpp`
 - PST and piece evaluation values taken from [Rofchade](http://www.talkchess.com/forum3/viewtopic.php?f=2&t=68311&sid=b2b59fa572501777ceb19d49fa17614f&start=10)
 - Strong, open-source chess engines such as [Stockfish](https://www.chessprogramming.org/Stockfish), [Laser](https://github.com/jeffreyan11/laser-chess-engine), [Bit-Genie](https://github.com/Aryan1508/Bit-Genie), [Clover](https://github.com/lucametehau/CloverEngine/tree/master), [Pawn](https://github.com/ruicoelhopedro/pawn) 
+- Strong, open-source data such as [Ethereal Tuning Data Dump](https://www.talkchess.com/forum3/viewtopic.php?f=7&t=75350)
