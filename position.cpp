@@ -40,24 +40,19 @@ Position &Position::operator=(const Position &s) {
 }
 
 Position::Position(const std::string &fen) {
-    int enpass, position;
-    std::string::const_iterator it;
-    Square s;
-    Color c;
-    PieceType p;
-
     init();
 
-    position = 0;
+    std::string::const_iterator it;
+    int position = 0;
     for (it = fen.begin(); it < fen.end(); ++it) {
         if (isdigit(*it)) {
             position += *it - '0';
         }
         else if (isalpha(*it)) {
-            c = isupper(*it) ? WHITE : BLACK;
-            s = last_sq - position;
+            Color c = isupper(*it) ? WHITE : BLACK;
+            Square s = last_sq - position;
             char t = tolower(*it);
-            p = t == 'p'   ? PIECETYPE_PAWN
+            PieceType p = t == 'p'   ? PIECETYPE_PAWN
                 : t == 'n' ? PIECETYPE_KNIGHT
                 : t == 'b' ? PIECETYPE_BISHOP
                 : t == 'r' ? PIECETYPE_ROOK
@@ -85,7 +80,7 @@ Position::Position(const std::string &fen) {
         key ^= Zobrist::key();
     }
 
-    enpass = -1;
+    int enpass = -1;
     for (++it; it < fen.end(); ++it) {
         if (*it == 'K') {
             castleRights += WHITE_KINGSIDE_CASTLE;
@@ -145,14 +140,13 @@ void Position::init() {
 }
 
 void Position::setPins(Color c) {
-    U64 pinners, ray;
     Square kingSq = getKingSquare(c);
     pinned[c] = 0;
 
-    pinners = bishopMoves[kingSq] & (getPieceBB<PIECETYPE_BISHOP>(!c) | getPieceBB<PIECETYPE_QUEEN>(!c));
+    U64 pinners = bishopMoves[kingSq] & (getPieceBB<PIECETYPE_BISHOP>(!c) | getPieceBB<PIECETYPE_QUEEN>(!c));
 
     while (pinners) {
-        ray = between_dia[pop_lsb(pinners)][kingSq] & getOccupancyBB();
+        U64 ray = between_dia[pop_lsb(pinners)][kingSq] & getOccupancyBB();
         if (pop_count(ray) == 1) {
             pinned[c] |= ray & getOccupancyBB(c);
         }
@@ -161,7 +155,7 @@ void Position::setPins(Color c) {
     pinners = rookMoves[kingSq] & (getPieceBB<PIECETYPE_ROOK>(!c) | getPieceBB<PIECETYPE_QUEEN>(!c));
 
     while (pinners) {
-        ray = between_hor[pop_lsb(pinners)][kingSq] & getOccupancyBB();
+        U64 ray = between_hor[pop_lsb(pinners)][kingSq] & getOccupancyBB();
         if (pop_count(ray) == 1) {
             pinned[c] |= ray & getOccupancyBB(c);
         }
@@ -169,13 +163,12 @@ void Position::setPins(Color c) {
 }
 
 U64 Position::getDiscoveredChecks(Color c) const {
-    U64 pinners, ray, discover = 0;
     Square kingSq = getKingSquare(!c);
-
-    pinners = bishopMoves[kingSq] & (getPieceBB<PIECETYPE_BISHOP>(c) | getPieceBB<PIECETYPE_QUEEN>(c));
+    U64 pinners = bishopMoves[kingSq] & (getPieceBB<PIECETYPE_BISHOP>(c) | getPieceBB<PIECETYPE_QUEEN>(c));
+    U64 discover = 0;
 
     while (pinners) {
-        ray = between_dia[pop_lsb(pinners)][kingSq] & getOccupancyBB();
+        U64 ray = between_dia[pop_lsb(pinners)][kingSq] & getOccupancyBB();
         if (pop_count(ray) == 1) {
             discover |= ray & getOccupancyBB(c);
         }
@@ -184,7 +177,7 @@ U64 Position::getDiscoveredChecks(Color c) const {
     pinners = rookMoves[kingSq] & (getPieceBB<PIECETYPE_ROOK>(c) | getPieceBB<PIECETYPE_QUEEN>(c));
 
     while (pinners) {
-        ray = between_hor[pop_lsb(pinners)][kingSq] & getOccupancyBB();
+        U64 ray = between_hor[pop_lsb(pinners)][kingSq] & getOccupancyBB();
         if (pop_count(ray) == 1) {
             discover |= ray & getOccupancyBB(c);
         }
@@ -233,9 +226,8 @@ bool Position::isValid(Move move, U64 validMoves) const {
     assert(getSrc(move) < no_sq);
     assert(getDst(move) < no_sq);
 
-    Square src, dst;
-    src = getSrc(move);
-    dst = getDst(move);
+    Square src = getSrc(move);
+    Square dst = getDst(move);
 
     if (move == NULL_MOVE) {
         return false;
@@ -333,17 +325,13 @@ bool Position::givesCheck(Move move) const {
 
 /** Static exchange evaluation */
 int Position::see(Move move) const {
-    Color color;
-    Square src, dst, mayAttack;
-    PieceType target;
-    U64 attackers, from, occupancy, xRay, potential;
     int gain[32] = {0};
     int d = 0;
 
-    color = us;
-    src = getSrc(move);
-    dst = getDst(move);
-    from = square_bb[src];
+    Color color = us;
+    Square src = getSrc(move);
+    Square dst = getDst(move);
+    U64 from = square_bb[src];
     if (onSquare(src) == PIECETYPE_PAWN && square_bb[dst] & enPassant) {
         gain[d] = PIECE_VALUE[PIECETYPE_PAWN].score();
     }
@@ -354,13 +342,13 @@ int Position::see(Move move) const {
         gain[d] = PIECE_VALUE[onSquare(dst)].score();
     }
 
-    occupancy = getOccupancyBB();
-    attackers = allAttackers(dst);
-    xRay = getXRayAttacks(dst);
+    U64 occupancy = getOccupancyBB();
+    U64 attackers = allAttackers(dst);
+    U64 xRay = getXRayAttacks(dst);
 
     while (from) {
         src = get_lsb(from);
-        target = onSquare(src);
+        PieceType target = onSquare(src);
         ++d;
         gain[d] = PIECE_VALUE[target].score() - gain[d - 1];
         if (std::max(-gain[d - 1], gain[d]) < 0) {
@@ -371,9 +359,9 @@ int Position::see(Move move) const {
 
         if (target != PIECETYPE_KNIGHT) {
             xRay &= occupancy;
-            potential = coplanar[src][dst] & xRay;
+            U64 potential = coplanar[src][dst] & xRay;
             while (potential) {
-                mayAttack = pop_lsb(potential);
+                Square mayAttack = pop_lsb(potential);
                 if (!(between[mayAttack][dst] & occupancy)) {
                     attackers |= square_bb[mayAttack];
                     break;
@@ -420,16 +408,14 @@ void Position::makeMove(Move move) {
     assert(move != NULL_MOVE);
     assert(getSrc(move) < no_sq);
     assert(getDst(move) < no_sq);
-    Square src, dst;
-    PieceType moved, captured;
     bool epFlag = false;
     bool gamePhase = false;
 
-    src = getSrc(move);
-    dst = getDst(move);
-    moved = onSquare(src);
+    Square src = getSrc(move);
+    Square dst = getDst(move);
+    PieceType moved = onSquare(src);
     assert(moved != PIECETYPE_NONE);
-    captured = onSquare(dst);
+    PieceType captured = onSquare(dst);
     assert(captured != PIECETYPE_KING);
     ++fiftyMoveRule;
 
