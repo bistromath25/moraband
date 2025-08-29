@@ -204,10 +204,9 @@ void Evaluate::evalPawns(const Color c) {
             }
         }
         else if (!(file_bb[p] & in_front[c][p] & position.getPieceBB<PIECETYPE_PAWN>(!c))) {
-            int sentries;
             assert(p < 56 && p > 7);
 
-            sentries = pop_count(pawn_attacks[c][f] & position.getPieceBB<PIECETYPE_PAWN>(!c));
+            int sentries = pop_count(pawn_attacks[c][f] & position.getPieceBB<PIECETYPE_PAWN>(!c));
             if (sentries > 0) {
                 int helpers = pop_count(pawn_attacks[!c][f] & position.getPieceBB<PIECETYPE_PAWN>(c));
                 if (helpers >= sentries) {
@@ -234,13 +233,11 @@ void Evaluate::evalPawns(const Color c) {
 
 /** Evaluate all pieces for a given color */
 void Evaluate::evalPieces(const Color c) {
-    U64 moves, pins;
-    U64 mobilityNet;
-    int king_threats = 0;
     Square kingSq = position.getKingSquare(c);
     const int missingPawns = 8 - position.getPieceCount<PIECETYPE_PAWN>(c);
+    int king_threats = 0;
 
-    mobilityNet = position.getEmptyBB(); // All squares not attacked by pawns
+    U64 mobilityNet = position.getEmptyBB(); // All squares not attacked by pawns
     if (c == WHITE) {
         mobilityNet &= ~((position.getPieceBB<PIECETYPE_PAWN>(BLACK) & NOT_A_FILE) >> 7 | (position.getPieceBB<PIECETYPE_PAWN>(BLACK) & NOT_H_FILE) >> 9);
     }
@@ -248,7 +245,7 @@ void Evaluate::evalPieces(const Color c) {
         mobilityNet &= ~((position.getPieceBB<PIECETYPE_PAWN>(WHITE) & NOT_A_FILE) << 9 | (position.getPieceBB<PIECETYPE_PAWN>(WHITE) & NOT_H_FILE) << 7);
     }
 
-    pins = position.getPinsBB(c);
+    U64 pins = position.getPinsBB(c);
 
     for (Square p : position.getPieceList<PIECETYPE_KNIGHT>(c)) {
         if (p == no_sq) {
@@ -259,7 +256,7 @@ void Evaluate::evalPieces(const Color c) {
             mobility[c] += KNIGHT_MOBILITY[0];
             continue;
         }
-        moves = position.getAttackBB<PIECETYPE_KNIGHT>(p);
+        U64 moves = position.getAttackBB<PIECETYPE_KNIGHT>(p);
         piece_attacks_bb[c][PIECETYPE_KNIGHT] |= moves & position.getOccupancyBB();
         all_attacks_bb[c] |= piece_attacks_bb[c][PIECETYPE_KNIGHT];
         mobility[c] += KNIGHT_MOBILITY[pop_count(moves & mobilityNet)];
@@ -274,7 +271,7 @@ void Evaluate::evalPieces(const Color c) {
             break;
         }
         material[c] += BISHOP_WEIGHT;
-        moves = position.getAttackBB<PIECETYPE_BISHOP>(p);
+        U64 moves = position.getAttackBB<PIECETYPE_BISHOP>(p);
         if (square_bb[p] & pins) {
             moves &= coplanar[p][kingSq];
         }
@@ -292,7 +289,7 @@ void Evaluate::evalPieces(const Color c) {
             break;
         }
         material[c] += ROOK_WEIGHT;
-        moves = position.getAttackBB<PIECETYPE_ROOK>(p);
+        U64 moves = position.getAttackBB<PIECETYPE_ROOK>(p);
         if (square_bb[p] & pins) {
             moves &= coplanar[p][kingSq];
         }
@@ -310,7 +307,7 @@ void Evaluate::evalPieces(const Color c) {
             break;
         }
         material[c] += QUEEN_WEIGHT;
-        moves = position.getAttackBB<PIECETYPE_QUEEN>(p);
+        U64 moves = position.getAttackBB<PIECETYPE_QUEEN>(p);
         if (square_bb[p] & pins) {
             moves &= coplanar[p][kingSq];
         }

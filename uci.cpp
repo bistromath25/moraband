@@ -19,17 +19,13 @@ int CONTEMPT = 0;
 
 // Validate incoming UCI move
 Move get_uci_move(std::string &token, Position &s) {
-    Move m;
     token.erase(std::remove(token.begin(), token.end(), ','),
                 token.end());
     MoveList moveList(s);
     while (moveList.size() > 0) {
-        m = moveList.pop();
+        Move m = moveList.pop();
         if (to_string(m) == token) {
             return m;
-        }
-        if (moveList.size() == 0) {
-            return NULL_MOVE;
         }
     }
     return NULL_MOVE;
@@ -39,7 +35,6 @@ Move get_uci_move(std::string &token, Position &s) {
 void go(std::istringstream &is, Position &s) {
     std::string token;
     SearchInfo search_info;
-    Move m;
 
     while (is >> token) {
         if (token == "wtime") {
@@ -81,14 +76,13 @@ void go(std::istringstream &is, Position &s) {
         search_info.moveTime = get_search_time(search_info.time[s.getOurColor()], search_info.inc[s.getOurColor()], global_info[0].history.size() / 2, search_info.movesToGo, search_info.time[s.getOurColor()] - search_info.time[s.getTheirColor()]);
     }
 
-    m = search(s, search_info);
+    Move m = search(s, search_info);
     std::cout << "bestmove " << to_string(m) << std::endl;
 }
 
 // Set position
 void position(std::istringstream &is, Position &s) {
     std::string token, fen;
-    Move m;
 
     s = Position(START_FEN);
     for (int i = 0; i < NUM_THREADS; ++i) {
@@ -111,7 +105,7 @@ void position(std::istringstream &is, Position &s) {
     }
 
     while (is >> token) {
-        m = get_uci_move(token, s);
+        Move m = get_uci_move(token, s);
         if (m == NULL_MOVE) {
             std::cout << "illegal move found: " << token << '\n';
             return;
@@ -146,7 +140,6 @@ void set_option(std::string &name, std::string &value) {
         CONTEMPT = clamp(std::stoi(value), -100, 100);
         D(std::cout << "Contempt set to value " << CONTEMPT << std::endl;);
     }
-    return;
 }
 
 // Benchmark

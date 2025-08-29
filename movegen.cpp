@@ -140,13 +140,11 @@ void MoveList::pushPawnMoves() {
     constexpr int L = C == WHITE ? 9 : -7;
     constexpr int R = C == WHITE ? 7 : -9;
 
-    U64 promo, pawns;
-    Square dst;
-    pawns = position.getPieceBB<PIECETYPE_PAWN>(C);
-    promo = (C == WHITE ? pawns << 8 : pawns >> 8) & RANK_PROMOTION;
+    U64 pawns = position.getPieceBB<PIECETYPE_PAWN>(C);
+    U64 promo = (C == WHITE ? pawns << 8 : pawns >> 8) & RANK_PROMOTION;
 
     while (promo) {
-        dst = pop_lsb(promo);
+        Square dst = pop_lsb(promo);
         pushPromotion<T>(dst - U, dst);
     }
 
@@ -162,12 +160,12 @@ void MoveList::pushPawnMoves() {
                                : (pawns & NOT_H_FILE) >> 9 & occ;
 
         while (left) {
-            dst = pop_lsb(left);
+            Square dst = pop_lsb(left);
             push(makeMove(dst - L, dst));
         }
 
         while (right) {
-            dst = pop_lsb(right);
+            Square dst = pop_lsb(right);
             push(makeMove(dst - R, dst));
         }
     }
@@ -200,11 +198,11 @@ void MoveList::pushPawnMoves() {
         }
 
         while (up) {
-            dst = pop_lsb(up);
+            Square dst = pop_lsb(up);
             push(makeMove(dst - U, dst));
         }
         while (dbl) {
-            dst = pop_lsb(dbl);
+            Square dst = pop_lsb(dbl);
             push(makeMove(dst - U - U, dst));
         }
     }
@@ -264,8 +262,6 @@ template<>
 void MoveList::generateMoves<MoveType::Evasions>() {
     assert(position.inCheck());
 
-    Square k, c;
-
     valid = position.getOccupancyBB(position.getTheirColor()) | position.getEmptyBB();
     pushMoves<MoveType::Evasions, PIECETYPE_KING>();
 
@@ -273,8 +269,8 @@ void MoveList::generateMoves<MoveType::Evasions>() {
         return;
     }
 
-    k = position.getKingSquare(position.getOurColor());
-    c = get_lsb(position.getCheckersBB());
+    Square k = position.getKingSquare(position.getOurColor());
+    Square c = get_lsb(position.getCheckersBB());
     valid = between[k][c] | position.getCheckersBB();
 
     position.getOurColor() == WHITE ? pushPawnMoves<MoveType::Evasions, WHITE>() : pushPawnMoves<MoveType::Evasions, BLACK>();
@@ -306,8 +302,6 @@ void MoveList::generateMoves<MoveType::All>() {
  * Implements staged move generation for efficiency
  */
 Move MoveList::getBestMove() {
-    Move move;
-
     switch (stage) {
         case BestMove:
             // Best move
@@ -343,7 +337,7 @@ Move MoveList::getBestMove() {
             // seen before!
             while (sz) {
                 std::iter_swap(std::max_element(moveList.begin(), moveList.begin() + sz), moveList.begin() + sz - 1);
-                move = pop();
+                Move move = pop();
                 if (move != best && position.isLegal(move)) {
                     return move;
                 }
@@ -396,13 +390,13 @@ Move MoveList::getBestMove() {
             // Quiet moves
             // Ensure that each move is different from the best move and killers.
             while (sz) {
-                move = pop();
+                Move move = pop();
                 if (move != best && move != killer1 && move != killer2 && position.isLegal(move)) {
                     return move;
                 }
             }
             while (!badCaptures.empty()) {
-                move = badCaptures.back().move;
+                Move move = badCaptures.back().move;
                 badCaptures.pop_back();
                 if (move != best && position.isLegal(move)) {
                     return move;
@@ -432,7 +426,7 @@ Move MoveList::getBestMove() {
             // Ensure that each capture move is different from the best move.
             while (sz) {
                 std::iter_swap(std::max_element(moveList.begin(), moveList.begin() + sz), moveList.begin() + sz - 1);
-                move = pop();
+                Move move = pop();
                 if (position.see(move) < 0 && !isPromotion(move)) {
                     continue;
                 }
@@ -455,7 +449,7 @@ Move MoveList::getBestMove() {
             // Ensure that each move is different from the best move.
             while (sz) {
                 std::iter_swap(std::max_element(moveList.begin(), moveList.begin() + sz), moveList.begin() + sz - 1);
-                move = pop();
+                Move move = pop();
                 if (move != best && position.isLegal(move)) {
                     return move;
                 }
@@ -509,7 +503,7 @@ Move MoveList::getBestMove() {
             // Evade
             // Return the capture move if it's not the same as the best move.
             while (sz) {
-                move = pop();
+                Move move = pop();
                 if (move != best && position.isLegal(move)) {
                     return move;
                 }
@@ -520,7 +514,7 @@ Move MoveList::getBestMove() {
             // All legal
             // Generate and return each legal move.
             while (sz) {
-                move = pop();
+                Move move = pop();
                 return move;
             }
             break;

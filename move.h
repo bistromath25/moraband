@@ -70,13 +70,9 @@ inline bool isCastle(Move m) {
 }
 
 inline std::string to_string(Move m) {
-    std::string res;
-    Square src, dst;
-
-    src = getSrc(m);
-    dst = getDst(m);
-
-    res = SQUARE_TO_STRING[src] + SQUARE_TO_STRING[dst];
+    Square src = getSrc(m);
+    Square dst = getDst(m);
+    std::string res = SQUARE_TO_STRING[src] + SQUARE_TO_STRING[dst];
 
     switch (getPiecePromotion(m)) {
         case PIECETYPE_KNIGHT:

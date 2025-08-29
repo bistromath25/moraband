@@ -226,16 +226,13 @@ inline void Position::movePiece(Color c, PieceType p, Square src, Square dst) {
 }
 
 inline void Position::removePiece(Color c, PieceType p, Square sq) {
-    Square swap;
-    int pieceCount;
-
     pieces[c][p] &= ~(square_bb[sq]);
     occupancy[c] &= ~(square_bb[sq]);
     board[sq] = PIECETYPE_NONE;
 
-    pieceCount = --pieceCounts[c][p];
+    int pieceCount = --pieceCounts[c][p];
 
-    swap = pieceList[c][p][pieceCount];
+    Square swap = pieceList[c][p][pieceCount];
     pieceIndex[swap] = pieceIndex[sq];
     pieceList[c][p][pieceIndex[swap]] = swap;
     pieceList[c][p][pieceCount] = no_sq;

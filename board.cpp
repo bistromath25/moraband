@@ -122,11 +122,9 @@ void bb_init() {
                                 : sq_dst & RANK_7 ? RANK_6 | RANK_8
                                                   : RANK_7;
 
-            U64 r_attacks, b_attacks, occ;
-            occ = 1ULL << sq_src | 1ULL << sq_dst;
-
-            r_attacks = Rmagic(sq_src, 0);
-            b_attacks = Bmagic(sq_src, 0);
+            U64 occ = 1ULL << sq_src | 1ULL << sq_dst;
+            U64 r_attacks = Rmagic(sq_src, 0);
+            U64 b_attacks = Bmagic(sq_src, 0);
 
             r_attacks &= (r_attacks & occ ? Rmagic(sq_dst, 0) : 0);
             b_attacks &= (b_attacks & occ ? Bmagic(sq_dst, 0) : 0);
