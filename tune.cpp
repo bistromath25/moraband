@@ -271,8 +271,6 @@ void tune(std::vector<Parameter> &parameters) {
 }
 
 void tune(std::string fens_file) {
-    tt.clear();
-
     std::ifstream fens(fens_file);
     std::string line;
     while (std::getline(fens, line)) {

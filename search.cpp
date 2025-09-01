@@ -70,7 +70,7 @@ int qsearch(Position &s, SearchInfo &si, GlobalInfo &gi, int ply, int alpha, int
     assert(ply <= MAX_PLY);
 
     if (gi.history.isThreefoldRepetition(s) || s.insufficientMaterial() || s.getFiftyMoveRule() > 99) {
-        return DRAW; // Game must be a draw, return
+        return DRAW;
     }
 
     if (!(si.nodes & 2047) && (si.quit || stop_search(si) || THREAD_STOP)) {
@@ -99,7 +99,7 @@ int qsearch(Position &s, SearchInfo &si, GlobalInfo &gi, int ply, int alpha, int
     int tt_score = NEG_INF;
     int tt_flag = -1;
     Move tt_move = 0;
-#ifndef TUNE_H
+#ifndef TUNE
     TTEntry tt_entry = tt.probe(s.getKey());
     if (tt_entry.getKey() == s.getKey()) {
         tt_move = tt_entry.getMove();
@@ -479,7 +479,7 @@ void parallel_search(Position s, SearchInfo si, int depth, int alpha, int beta, 
     }
 }
 
-/** Iterative deepening routine */
+/** Iterative deepening framework */
 Move iterative_deepening(Position &s, SearchInfo &si) {
     Move best_move = NULL_MOVE;
     //int alpha = NEG_INF;
@@ -502,7 +502,7 @@ Move iterative_deepening(Position &s, SearchInfo &si) {
             THREAD_STOP = true;
 
             for (int i = 1; i < NUM_THREADS; ++i) {
-                threads[i].join(); // join all threads at end of search
+                threads[i].join(); // Join all threads at end of search
             }
         }
         else {

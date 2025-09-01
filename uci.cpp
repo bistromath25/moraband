@@ -17,7 +17,7 @@ int NUM_THREADS = 1;
 int MOVE_OVERHEAD = 500;
 int CONTEMPT = 0;
 
-// Validate incoming UCI move
+/** Validate incoming UCI move */
 Move get_uci_move(std::string &token, Position &s) {
     token.erase(std::remove(token.begin(), token.end(), ','),
                 token.end());
@@ -31,7 +31,7 @@ Move get_uci_move(std::string &token, Position &s) {
     return NULL_MOVE;
 }
 
-// UCI go command
+/** UCI go command */
 void go(std::istringstream &is, Position &s) {
     std::string token;
     SearchInfo search_info;
@@ -80,7 +80,7 @@ void go(std::istringstream &is, Position &s) {
     std::cout << "bestmove " << to_string(m) << std::endl;
 }
 
-// Set position
+/** Set position */
 void position(std::istringstream &is, Position &s) {
     std::string token, fen;
 
@@ -107,7 +107,7 @@ void position(std::istringstream &is, Position &s) {
     while (is >> token) {
         Move m = get_uci_move(token, s);
         if (m == NULL_MOVE) {
-            std::cout << "illegal move found: " << token << '\n';
+            std::cout << "illegal move found: " << token << std::endl;
             return;
         }
         else {
@@ -119,7 +119,7 @@ void position(std::istringstream &is, Position &s) {
     }
 }
 
-// UCI setoption command
+/** UCI setoption command */
 void set_option(std::string &name, std::string &value) {
     if (name == "Hash") {
         HASH_SIZE = clamp(std::stoi(value), 1, MAX_HASH_SIZE);
@@ -130,21 +130,18 @@ void set_option(std::string &name, std::string &value) {
     }
     else if (name == "Threads") {
         NUM_THREADS = clamp(std::stoi(value), 1, MAX_THREADS);
-        D(std::cout << "Threads set to value " << NUM_THREADS << std::endl;);
     }
     else if (name == "Move Overhead") {
         MOVE_OVERHEAD = clamp(std::stoi(value), 0, 10000);
-        D(std::cout << "Move Overhead set to value " << MOVE_OVERHEAD << std::endl;);
     }
     else if (name == "Contempt") {
         CONTEMPT = clamp(std::stoi(value), -100, 100);
-        D(std::cout << "Contempt set to value " << CONTEMPT << std::endl;);
     }
 }
 
-// Benchmark
+/** Benchmark */
 void bench(int depth) {
-    static constexpr std::array fens = {// Bit-genie positions
+    static constexpr std::array fens = { // Bit-genie positions
                                         "r3k2r/2pb1ppp/2pp1q2/p7/1nP1B3/1P2P3/P2N1PPP/R2QK2R w KQkq a6 0 14",
                                         "4rrk1/2p1b1p1/p1p3q1/4p3/2P2n1p/1P1NR2P/PB3PP1/3R1QK1 b - - 2 24",
                                         "r3qbrk/6p1/2b2pPp/p3pP1Q/PpPpP2P/3P1B2/2PB3K/R5R1 w - - 16 42",
@@ -204,13 +201,14 @@ void bench(int depth) {
     search_info.moveTime = ONE_HOUR;
     Clock clock;
     clock.set();
-    for (const auto &fen : fens) {
-        std::cout << fen << std::endl;
-        Position s(fen);
+    for (int i = 0; i < fens.size(); ++i) {
+        std::cout << i + 1 << "/" << fens.size() << " " << fens[i] << std::endl;
+        Position s(fens[i]);
         search_info.totalNodes = 0;
         search_info.clock.set();
         search(s, search_info);
         totalNodes += search_info.totalNodes;
+        std::cout << std::endl;
     }
 
     double time = clock.elapsed<std::chrono::microseconds>() / static_cast<double>(1000000);
@@ -219,7 +217,7 @@ void bench(int depth) {
     std::cout << "NPS:   " << U64(static_cast<long double>(totalNodes) / time) << std::endl;
 }
 
-// Main UCI loop
+/** Main UCI loop */
 void uci() {
     Position root(START_FEN);
     std::string command, token;
@@ -261,10 +259,10 @@ void uci() {
                 name += token;
                 name += " ";
             }
+            name.pop_back();
             while (is >> token) {
                 value += token;
             }
-            name.pop_back();
             set_option(name, value);
         }
         else if (token == "position") {
@@ -274,14 +272,14 @@ void uci() {
             go(is, root);
         }
         else if (token == "display") {
-            std::cout << root;
+            std::cout << root << std::endl;
         }
         else if (token == "fen") {
             std::cout << root.getFen() << std::endl;
         }
         else if (token == "eval") {
             Evaluate evaluate(root);
-            std::cout << evaluate;
+            std::cout << evaluate << std::endl;
         }
         else if (token == "perft") {
             is >> token;
@@ -297,6 +295,7 @@ void uci() {
         }
         else if (token == "bench") {
             is >> token;
+            tt.clear();
             bench(std::stoi(token));
         }
 #ifdef TUNE

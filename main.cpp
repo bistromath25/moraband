@@ -24,8 +24,8 @@ int main(int argc, char *argv[]) {
               << std::endl;
 
 
-    std::cout << "Moraband, known in antiquity as Korriban, was an\n Outer Rim planet that was home to the ancient Sith\n"
-              << std::endl;
+    std::cout << "Moraband, known in antiquity as Korriban, was an\n";
+    std::cout << " Outer Rim planet that was home to the ancient Sith\n" << std::endl;
     mg_init();
     Zobrist::init();
     bb_init();

@@ -53,11 +53,11 @@ Position::Position(const std::string &fen) {
             Square s = last_sq - position;
             char t = tolower(*it);
             PieceType p = t == 'p'   ? PIECETYPE_PAWN
-                : t == 'n' ? PIECETYPE_KNIGHT
-                : t == 'b' ? PIECETYPE_BISHOP
-                : t == 'r' ? PIECETYPE_ROOK
-                : t == 'q' ? PIECETYPE_QUEEN
-                           : PIECETYPE_KING;
+                          : t == 'n' ? PIECETYPE_KNIGHT
+                          : t == 'b' ? PIECETYPE_BISHOP
+                          : t == 'r' ? PIECETYPE_ROOK
+                          : t == 'q' ? PIECETYPE_QUEEN
+                                     : PIECETYPE_KING;
             addPiece(c, p, s);
             key ^= Zobrist::key(c, p, s);
             if (p == PIECETYPE_PAWN) {
@@ -681,10 +681,10 @@ std::ostream &operator<<(std::ostream &os, const Position &s) {
     os << "Phase:   " << s.getGamePhase() << '\n';
     os << "previous move: " << to_string(s.previousMove) << '\n';
     if (s.us == WHITE) {
-        os << "White to move\n";
+        os << "White to move";
     }
     else {
-        os << "Black to move\n";
+        os << "Black to move";
     }
 
     return os;

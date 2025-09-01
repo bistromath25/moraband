@@ -568,9 +568,11 @@ MoveList::MoveList(const Position &s) : isQSearch(false), valid(FULL), position(
 std::ostream &operator<<(std::ostream &os, const MoveList &moveList) {
     MoveList ml = moveList;
     os << ml.size() << " legal moves:\n";
+    const char* sep = "";
     while (ml.size() >= 1) {
         Move move = ml.pop();
-        os << to_string(move) << "\n";
+        os << sep << to_string(move);
+        sep = "\n";
     }
     return os;
 }
