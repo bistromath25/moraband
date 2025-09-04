@@ -7,6 +7,7 @@
 #define DEFS_H
 
 #include <assert.h>
+#include <stdint.h>
 #include <string>
 #include <sys/time.h>
 
