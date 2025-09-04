@@ -60,7 +60,7 @@ struct GlobalInfo {
     U64 nodes;
     History history;
     Variation variation;
-    std::array<U64, 64> evalHistory;
+    std::array<int, 64> evalHistory;
 };
 
 constexpr int MAX_THREADS = 16;

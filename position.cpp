@@ -246,6 +246,8 @@ bool Position::isValid(Move move, U64 validMoves) const {
     assert(dst != getKingSquare(us));
 
     switch (onSquare(src)) {
+        case PIECETYPE_NONE:
+            return false;
         case PIECETYPE_PAWN: {
             if ((square_bb[dst] & RANK_PROMOTION) && !getPiecePromotion(move)) {
                 return false;

@@ -11,6 +11,7 @@
 #ifdef TUNE
 #include "tune.h"
 #endif
+#include <algorithm>
 
 int HASH_SIZE = DEFAULT_HASH_SIZE;
 int NUM_THREADS = 1;
@@ -197,7 +198,7 @@ void bench(int depth) {
     search_info.moveTime = ONE_HOUR;
     Clock clock;
     clock.set();
-    for (int i = 0; i < fens.size(); ++i) {
+    for (unsigned int i = 0; i < fens.size(); ++i) {
         std::cout << i + 1 << "/" << fens.size() << " " << fens[i] << std::endl;
         Position s(fens[i]);
         search_info.totalNodes = 0;

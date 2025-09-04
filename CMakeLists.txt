@@ -6,11 +6,9 @@ if(NOT CMAKE_BUILD_TYPE)
 endif()
 
 set(CMAKE_SYSTEM_NAME CMAKE_HOST_SYSTEM_NAME)
-set(CMAKE_CXX_COMPILER clang++)
 set(CMAKE_CXX_STANDARD 17)
-set(CMAKE_CXX_FLAGS "-Wall -DNAME=Moraband -march=native")
-set(CMAKE_CXX_FLAGS_DEBUG "-g -fno-omit-frame-pointer -DDEBUG")
-set(CMAKE_CXX_FLAGS_RELEASE "-O3 -DNDEBUG")
+set(CMAKE_CXX_STANDARD_REQUIRED ON)
+set(CMAKE_CXX_EXTENSIONS OFF)
 
 set(MAIN_SOURCES
     main.cpp
@@ -35,3 +33,13 @@ if(TUNE)
 endif()
 
 add_executable(Moraband ${MAIN_SOURCES})
+
+if(CMAKE_CXX_COMPILER_ID MATCHES "Clang|GNU")
+    target_compile_options(Moraband PRIVATE -Wall -Wextra -Wpedantic -Werror)
+endif()
+
+if(NOT CMAKE_CROSSCOMPILING)
+    target_compile_options(Moraband PRIVATE -march=native)
+endif()
+
+target_compile_definitions(Moraband PRIVATE NAME=\"Moraband\")

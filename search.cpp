@@ -41,7 +41,7 @@ inline int null_move_pruning_reduction(int depth, int eval, int beta) {
     return std::max(4, 3 + depth / 3) + clamp((eval - beta) / 256, 0, 2);
 }
 
-inline int reverse_futility_pruning_margin(int depth, int eval, bool improving) {
+inline int reverse_futility_pruning_margin(int depth, bool improving) {
     return 100 * depth / (improving + 1);
 }
 
@@ -237,7 +237,7 @@ int search(Position &s, SearchInfo &si, GlobalInfo &gi, int depth, int ply, int 
     // Pruning
     if (!isPv && !s.inCheck() && s.getNonPawnPieceCount() && beta > -CHECKMATE_BOUND) {
         // Reverse futility pruning
-        if (depth <= REVERSE_FUTILITY_DEPTH && staticEval - reverse_futility_pruning_margin(depth, staticEval, improving) >= beta) {
+        if (depth <= REVERSE_FUTILITY_DEPTH && staticEval - reverse_futility_pruning_margin(depth, improving) >= beta) {
             return beta;
         }
         // Null move pruning

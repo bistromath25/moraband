@@ -18,7 +18,6 @@
 struct Score {
     Score() : mg(0), eg(0) {}
     Score(int m, int e) : mg(m), eg(e) {}
-    Score(const Score &s) : mg(s.mg), eg(s.eg) {}
     Score operator+(const int s) { return Score(mg + s, eg + s); }
     Score operator*(const int s) { return Score(mg * s, eg * s); }
     Score operator+(const Score &s) { return Score(mg + s.mg, eg + s.eg); }
