@@ -4,7 +4,6 @@
  **/
 
 #include "movegen.h"
-#include <algorithm>
 
 /** Initialize magic moves */
 void mg_init() {
