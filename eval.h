@@ -55,7 +55,6 @@ private:
 
 /** Evaluation parameters and weights */
 extern Score TEMPO_BONUS; // Side-to-move bonus
-extern int CONTEMPT;
 
 /** Piece threat values for king safety */
 extern int KNIGHT_THREAT; // Threats on enemy King

@@ -145,7 +145,7 @@ Evaluate::Evaluate(const Position &s) : position(s), mobility{}, king_safety{}, 
 
 /** Get the final evaluation score */
 int Evaluate::getScore() const {
-    return score.score(gamePhase) + CONTEMPT;
+    return score.score(gamePhase);
 }
 
 /** Evaluate outpost squares for knights and bishops */

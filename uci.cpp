@@ -15,7 +15,6 @@
 int HASH_SIZE = DEFAULT_HASH_SIZE;
 int NUM_THREADS = 1;
 int MOVE_OVERHEAD = 500;
-int CONTEMPT = 0;
 
 /** Validate incoming UCI move */
 Move get_uci_move(std::string &token, Position &s) {
@@ -134,9 +133,6 @@ void set_option(std::string &name, std::string &value) {
     else if (name == "Move Overhead") {
         MOVE_OVERHEAD = clamp(std::stoi(value), 0, 10000);
     }
-    else if (name == "Contempt") {
-        CONTEMPT = clamp(std::stoi(value), -100, 100);
-    }
 }
 
 /** Benchmark */
@@ -247,8 +243,7 @@ void uci() {
                       << "id author " << ENGINE_AUTHOR << "\n"
                       << "option name Hash type spin default " << DEFAULT_HASH_SIZE << " min " << MIN_HASH_SIZE << " max " << MAX_HASH_SIZE << "\n"
                       << "option name Threads type spin default 1 min 1 max 16\n"
-                      << "option name Move Overhead type spin default 500 min 0 max 10000\n"
-                      << "option name Contempt type spin default 0 min -100 max 100\n";
+                      << "option name Move Overhead type spin default 500 min 0 max 10000\n";
             std::cout << "uciok" << std::endl;
         }
         else if (token == "setoption") {
