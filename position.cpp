@@ -6,7 +6,6 @@
 #include "position.h"
 #include "eval.h"
 #include "zobrist.h"
-#include <utility>
 
 /** Board position and related functions */
 Position::Position() {}

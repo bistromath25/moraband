@@ -11,10 +11,7 @@
 #include "move.h"
 #include "pst.h"
 #include "zobrist.h"
-#include <algorithm>
 #include <array>
-#include <cmath>
-#include <cstring>
 #include <iostream>
 #include <string>
 
