@@ -17,7 +17,7 @@ logging.basicConfig(
 
 torch.set_float32_matmul_precision("high")
 
-MAX_CP = 1_000
+MAX_CP = 1000
 PIECE_FEATURES = 768
 INPUT_FEATURES = PIECE_FEATURES + 1
 DEVICE = torch.device("mps")
@@ -25,14 +25,19 @@ DEVICE = torch.device("mps")
 
 def encode_board(board: chess.Board):
     x = np.zeros(PIECE_FEATURES, dtype=np.float32)
-    for square in chess.SQUARES:
-        piece = board.piece_at(square)
-        if piece:
-            piece_index = (piece.piece_type - 1) + (
-                0 if piece.color == chess.WHITE else 6
-            )
-            x[square * 12 + piece_index] = 1.0
-    return x
+
+    piece_map = board.piece_map()
+    if piece_map:
+        squares = np.fromiter(piece_map.keys(), dtype=np.int32, count=len(piece_map))
+        pieces = np.fromiter((p.piece_type for p in piece_map.values()), dtype=np.int32, count=len(piece_map))
+        colors = np.fromiter((p.color for p in piece_map.values()), dtype=np.int32, count=len(piece_map))
+
+        piece_indices = (pieces - 1) + (1 - colors) * 6  # chess.WHITE == 1
+        indices = squares * 12 + piece_indices
+        x[indices] = 1.0
+
+    stm = 1.0 if board.turn == chess.WHITE else -1.0
+    return np.concatenate([x, np.array([stm], dtype=np.float32)])
 
 
 class NNUE(nn.Module):
@@ -61,10 +66,7 @@ class FenEvalDataset(IterableDataset):
                 try:
                     fen, score_str = line.split(";")
                     board = chess.Board(fen)
-                    turn = board.turn
                     x = encode_board(board)
-                    stm = 1.0 if board.turn == chess.WHITE else -1.0
-                    x = np.concatenate([x, np.array([stm], dtype=np.float32)])
                     raw_eval = int(score_str)
                     clamped = (
                         max(-self.max_cp, min(self.max_cp, raw_eval)) / self.max_cp
