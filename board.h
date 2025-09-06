@@ -9,7 +9,6 @@
 #include "MagicMoves.hpp"
 #include "defs.h"
 #include <iostream>
-#include <string>
 
 /** Bitboard representations of various chess board elements */
 extern U64 square_bb[BOARD_SIZE];

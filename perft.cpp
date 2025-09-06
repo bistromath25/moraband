@@ -26,7 +26,7 @@ U64 perft(Position &s, int depth) {
     return nodes;
 }
 
-void test(Position s, MoveList *moveList, int depth, int id) {
+void test(Position s, MoveList *moveList, int depth) {
     Move m = moveList->getBestMove();
     while (m != NULL_MOVE) {
         Position c(s);
@@ -42,8 +42,8 @@ U64 MTperft(Position &s, int depth) {
     std::vector<std::thread> threads;
     nodeCount.clear();
     MoveList moveList(s);
-    for (unsigned int i = 0; i < NUM_THREADS; ++i) {
-        threads.push_back(std::thread(test, s, &moveList, depth, i));
+    for (int i = 0; i < NUM_THREADS; ++i) {
+        threads.push_back(std::thread(test, s, &moveList, depth));
     }
     for (std::thread &thread : threads) thread.join();
     return std::accumulate(nodeCount.begin(), nodeCount.end(), 0);

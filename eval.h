@@ -18,7 +18,6 @@
 struct Score {
     Score() : mg(0), eg(0) {}
     Score(int m, int e) : mg(m), eg(e) {}
-    Score(const Score &s) : mg(s.mg), eg(s.eg) {}
     Score operator+(const int s) { return Score(mg + s, eg + s); }
     Score operator*(const int s) { return Score(mg * s, eg * s); }
     Score operator+(const Score &s) { return Score(mg + s.mg, eg + s.eg); }
@@ -55,7 +54,6 @@ private:
 
 /** Evaluation parameters and weights */
 extern Score TEMPO_BONUS; // Side-to-move bonus
-extern int CONTEMPT;
 
 /** Piece threat values for king safety */
 extern int KNIGHT_THREAT; // Threats on enemy King

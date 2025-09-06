@@ -78,12 +78,10 @@ public:
     friend std::ostream &operator<<(std::ostream &os, const MoveList &moveList);
 
 private:
-    bool isQSearch;
     U64 valid;
     U64 discover;
     const Position &position;
     const History *history;
-    int ply;
     int stage;
     std::array<MoveEntry, MOVELIST_MAX_SIZE> moveList;
     std::vector<MoveEntry> badCaptures;
