@@ -44,7 +44,7 @@ inline int null_move_pruning_reduction(int depth, int eval, int beta) {
     return std::max(4, 3 + depth / 3) + clamp((eval - beta) / 256, 0, 2);
 }
 
-inline int reverse_futility_pruning_margin(int depth, int eval, bool improving) {
+inline int reverse_futility_pruning_margin(int depth, bool improving) {
     return 100 * depth / (improving + 1);
 }
 
@@ -73,7 +73,7 @@ int qsearch(Position &s, SearchInfo &si, GlobalInfo &gi, int ply, int alpha, int
     assert(ply <= MAX_PLY);
 
     if (gi.history.isThreefoldRepetition(s) || s.insufficientMaterial() || s.getFiftyMoveRule() > 99) {
-        return DRAW; // Game must be a draw, return
+        return DRAW;
     }
 
     if (!(si.nodes & 2047) && (si.quit || stop_search(si) || THREAD_STOP)) {
@@ -107,7 +107,7 @@ int qsearch(Position &s, SearchInfo &si, GlobalInfo &gi, int ply, int alpha, int
     int tt_score = NEG_INF;
     int tt_flag = -1;
     Move tt_move = 0;
-#ifndef TUNE_H
+#ifndef TUNE
     TTEntry tt_entry = tt.probe(s.getKey());
     if (tt_entry.getKey() == s.getKey()) {
         tt_move = tt_entry.getMove();
@@ -248,7 +248,7 @@ int search(Position &s, SearchInfo &si, GlobalInfo &gi, int depth, int ply, int 
     // Pruning
     if (!isPv && !s.inCheck() && s.getNonPawnPieceCount() && beta > -CHECKMATE_BOUND) {
         // Reverse futility pruning
-        if (depth <= REVERSE_FUTILITY_DEPTH && staticEval - reverse_futility_pruning_margin(depth, staticEval, improving) >= beta) {
+        if (depth <= REVERSE_FUTILITY_DEPTH && staticEval - reverse_futility_pruning_margin(depth, improving) >= beta) {
             return beta;
         }
         // Null move pruning
@@ -534,7 +534,7 @@ Move iterative_deepening(Position &s, SearchInfo &si) {
             THREAD_STOP = true;
 
             for (int i = 1; i < NUM_THREADS; ++i) {
-                threads[i].join(); // join all threads at end of search
+                threads[i].join(); // Join all threads at end of search
             }
         }
         else {

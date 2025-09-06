@@ -30,7 +30,6 @@
 
 /** Bitboard type definition and constants */
 typedef unsigned long long U64;
-#define C64(u) u##ULL;
 
 /** Game constants */
 constexpr int BOARD_SIZE = 64;
