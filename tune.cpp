@@ -124,7 +124,7 @@ inline long double kahan_sum() {
         for (int i = 0; i < diffs[thread_id].size(); ++i) {
             y = diffs[thread_id][i] - c;
             t = result + y;
-            c = t - result - y;
+            c = (t - result) - y;
             result = t;
         }
     }
@@ -261,7 +261,7 @@ void tune(std::vector<Parameter> &parameters) {
                 }
                 else {
                     min = min + (max - min) / 2;
-                    p->value = max;
+                    p->value = min;
                     min_error = get_error(parameters);
                     std::cerr << p->name << " " << p->value << " " << min_error << "\n";
                 }
@@ -281,6 +281,13 @@ void tune(std::string fens_file) {
               << "\n";
     fens.close();
 
+    NUM_THREADS = std::thread::hardware_concurrency();
+    if (NUM_THREADS == 0) {
+        NUM_THREADS = 1;
+    }
+    std::cerr << "Tuning with " << NUM_THREADS << " threads"
+              << "\n";
+
     std::vector<Parameter> best;
     set_material(best);
     set_mobility(best);
@@ -289,13 +296,6 @@ void tune(std::string fens_file) {
     std::cerr << "k best " << k << "\n";
     long double best_error = get_error(best);
     std::cerr << "best error " << best_error << "\n";
-
-    NUM_THREADS = std::thread::hardware_concurrency();
-    if (NUM_THREADS == 0) {
-        NUM_THREADS = 1;
-    }
-    std::cerr << "Tuning with " << NUM_THREADS << " threads"
-              << "\n";
 
     for (int i = 0; i < 2; ++i) {
         for (int j = 0; j < best.size(); ++j) {
