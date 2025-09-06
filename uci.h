@@ -11,7 +11,7 @@
 #if defined(TUNE)
 #define ENGINE_VERSION "1.2-tune"
 #elif defined(USE_NNUE)
-#define ENGINE_VERSION "1.2-nnue"
+#define ENGINE_VERSION "1.2-NNUE"
 #else
 #define ENGINE_VERSION "1.2"
 #endif

@@ -32,7 +32,6 @@ namespace NNUE {
     public:
         NNUE();
         NNUE(const Position &s);
-        NNUE(const NNUE &n);
         void addPiece(Color c, PieceType p, Square sq);
         void removePiece(Color c, PieceType p, Square sq);
         void movePiece(Color c, PieceType p, Square src, Square dst);

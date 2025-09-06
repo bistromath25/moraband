@@ -85,10 +85,6 @@ namespace NNUE {
 
     NNUE::NNUE(const Position &s) : acc(s) {}
 
-    NNUE::NNUE(const NNUE &n) {
-        acc = n.acc;
-    }
-
     void add_feature_simd(float *values, const float *w) {
 #ifdef USE_NEON
         for (int i = 0; i < HIDDEN_SIZE; i += 4) {
