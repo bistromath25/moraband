@@ -24,17 +24,16 @@ jobs:
           $CC --version
           $CXX --version
 
+      - name: Configure
+        run: cmake -B build -S . -DCMAKE_BUILD_TYPE=Release
+
       - name: Build
-        run: |
-          mkdir -p build
-          cd build
-          cmake .. -DCMAKE_BUILD_TYPE=Release
-          make -j$(nproc)
-      
+        run: cmake --build build --parallel
+
       - name: Bench
         working-directory: build
         run: ./Moraband bench | tee ../bench.txt
-      
+
       - name: Upload bench output
         uses: actions/upload-artifact@v4
         with:

@@ -6,7 +6,7 @@
 #include "position.h"
 #include "eval.h"
 #include "zobrist.h"
-#include <utility>
+#include <algorithm>
 
 /** Board position and related functions */
 Position::Position() {}
@@ -53,11 +53,11 @@ Position::Position(const std::string &fen) {
             Square s = last_sq - position;
             char t = tolower(*it);
             PieceType p = t == 'p'   ? PIECETYPE_PAWN
-                : t == 'n' ? PIECETYPE_KNIGHT
-                : t == 'b' ? PIECETYPE_BISHOP
-                : t == 'r' ? PIECETYPE_ROOK
-                : t == 'q' ? PIECETYPE_QUEEN
-                           : PIECETYPE_KING;
+                          : t == 'n' ? PIECETYPE_KNIGHT
+                          : t == 'b' ? PIECETYPE_BISHOP
+                          : t == 'r' ? PIECETYPE_ROOK
+                          : t == 'q' ? PIECETYPE_QUEEN
+                                     : PIECETYPE_KING;
             addPiece(c, p, s);
             key ^= Zobrist::key(c, p, s);
             if (p == PIECETYPE_PAWN) {
@@ -246,6 +246,8 @@ bool Position::isValid(Move move, U64 validMoves) const {
     assert(dst != getKingSquare(us));
 
     switch (onSquare(src)) {
+        case PIECETYPE_NONE:
+            return false;
         case PIECETYPE_PAWN: {
             if ((square_bb[dst] & RANK_PROMOTION) && !getPiecePromotion(move)) {
                 return false;
@@ -681,10 +683,10 @@ std::ostream &operator<<(std::ostream &os, const Position &s) {
     os << "Phase:   " << s.getGamePhase() << '\n';
     os << "previous move: " << to_string(s.previousMove) << '\n';
     if (s.us == WHITE) {
-        os << "White to move\n";
+        os << "White to move";
     }
     else {
-        os << "Black to move\n";
+        os << "Black to move";
     }
 
     return os;

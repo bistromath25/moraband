@@ -11,10 +11,7 @@
 #include "move.h"
 #include "pst.h"
 #include "zobrist.h"
-#include <algorithm>
 #include <array>
-#include <cmath>
-#include <cstring>
 #include <iostream>
 #include <string>
 
@@ -327,27 +324,27 @@ inline U64 Position::getAttackBB(Square sq, Color c) const {
 }
 
 template<>
-inline U64 Position::getAttackBB<PIECETYPE_KNIGHT>(Square sq, Color c) const {
+inline U64 Position::getAttackBB<PIECETYPE_KNIGHT>(Square sq, [[maybe_unused]] Color c) const {
     return KNIGHT_MOVES[sq];
 }
 
 template<>
-inline U64 Position::getAttackBB<PIECETYPE_BISHOP>(Square sq, Color c) const {
+inline U64 Position::getAttackBB<PIECETYPE_BISHOP>(Square sq, [[maybe_unused]] Color c) const {
     return Bmagic(sq, getOccupancyBB());
 }
 
 template<>
-inline U64 Position::getAttackBB<PIECETYPE_ROOK>(Square sq, Color c) const {
+inline U64 Position::getAttackBB<PIECETYPE_ROOK>(Square sq, [[maybe_unused]] Color c) const {
     return Rmagic(sq, getOccupancyBB());
 }
 
 template<>
-inline U64 Position::getAttackBB<PIECETYPE_QUEEN>(Square sq, Color c) const {
+inline U64 Position::getAttackBB<PIECETYPE_QUEEN>(Square sq, [[maybe_unused]] Color c) const {
     return Qmagic(sq, getOccupancyBB());
 }
 
 template<>
-inline U64 Position::getAttackBB<PIECETYPE_KING>(Square sq, Color c) const {
+inline U64 Position::getAttackBB<PIECETYPE_KING>(Square sq, [[maybe_unused]] Color c) const {
     return KING_MOVES[sq];
 }
 

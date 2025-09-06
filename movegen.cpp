@@ -4,6 +4,7 @@
  **/
 
 #include "movegen.h"
+#include <algorithm>
 
 /** Initialize magic moves */
 void mg_init() {
@@ -532,7 +533,7 @@ Move MoveList::getBestMove() {
  * Sets up move generation for search with move ordering
  */
 MoveList::MoveList(const Position &s, Move bestMove, History *history, int ply, bool qsearch)
-    : isQSearch(qsearch), valid(FULL), position(s), history(history), ply(ply), sz(0), best(bestMove), killer1(NULL_MOVE), killer2(NULL_MOVE) {
+    : valid(FULL), position(s), history(history), sz(0), best(bestMove), killer1(NULL_MOVE), killer2(NULL_MOVE) {
     if (history) {
         killer1 = history->getKiller(ply).first;
         killer2 = history->getKiller(ply).second;
@@ -559,7 +560,7 @@ MoveList::MoveList(const Position &s, Move bestMove, History *history, int ply, 
  * Initialize move list with position only
  * Used for generating all legal moves without search information
  */
-MoveList::MoveList(const Position &s) : isQSearch(false), valid(FULL), position(s), history(nullptr), ply(0), sz(0), best(NULL_MOVE) {
+MoveList::MoveList(const Position &s) : valid(FULL), position(s), history(nullptr), sz(0), best(NULL_MOVE) {
     generateMoves<MoveType::All>();
     checkLegal();
     stage = AllLegal;
@@ -568,9 +569,11 @@ MoveList::MoveList(const Position &s) : isQSearch(false), valid(FULL), position(
 std::ostream &operator<<(std::ostream &os, const MoveList &moveList) {
     MoveList ml = moveList;
     os << ml.size() << " legal moves:\n";
+    const char *sep = "";
     while (ml.size() >= 1) {
         Move move = ml.pop();
-        os << to_string(move) << "\n";
+        os << sep << to_string(move);
+        sep = "\n";
     }
     return os;
 }
