@@ -490,26 +490,47 @@ void parallel_search(Position s, SearchInfo si, int depth, int alpha, int beta, 
     }
 }
 
-/** Iterative deepening routine */
+/** Aspiration window search */
+int aspiration_window(Position &s, SearchInfo &si, int depth, int prev_score) {
+    if (depth <= 4) {
+        return search_root(s, si, global_info[0], depth, 0, NEG_INF, POS_INF);
+    }
+
+    int window = 30;
+    int alpha = prev_score - window;
+    int beta = prev_score + window;
+    while (true) {
+        int score = search_root(s, si, global_info[0], depth, 0, alpha, beta);
+        if (score <= alpha) {
+            window *= 2;
+            alpha = std::max(score - window, NEG_INF);
+        }
+        else if (score >= beta) {
+            window *= 2;
+            beta = std::min(score + window, POS_INF);
+        }
+        else {
+            return score;
+        }
+    }
+}
+
+/** Iterative deepening framework */
 Move iterative_deepening(Position &s, SearchInfo &si) {
     Move best_move = NULL_MOVE;
-    //int alpha = NEG_INF;
-    //int beta = POS_INF;
-    int results_index = 0;
     int score = 0;
     for (int d = 1; !si.quit && d < MAX_PLY; ++d) {
         for (int i = 0; i < NUM_THREADS; ++i) {
             global_info[i].variation.clearPv();
         }
 
-        results_index = 0;
         THREAD_STOP = false;
         if (d > 4) {
             for (int i = 1; i < NUM_THREADS; ++i) {
                 threads[i] = std::thread{parallel_search, s, si, d + (i & 1), NEG_INF, POS_INF, i};
             }
 
-            results[0].first = search_root(s, si, global_info[0], d, 0, NEG_INF, POS_INF);
+            score = aspiration_window(s, si, d, score);
             THREAD_STOP = true;
 
             for (int i = 1; i < NUM_THREADS; ++i) {
@@ -517,19 +538,19 @@ Move iterative_deepening(Position &s, SearchInfo &si) {
             }
         }
         else {
-            results[0].first = search_root(s, si, global_info[0], d, 0, NEG_INF, POS_INF);
+            score = aspiration_window(s, si, d, score);
         }
 
         if (si.quit || (d > 1 && stop_search(si))) {
             break;
         }
 
-        score = results[results_index].first;
-        global_info[results_index].variation.checkPv(s);
+        results[0].first = score;
+        global_info[0].variation.checkPv(s);
 
         std::cout << "info depth " << d;
-        if (global_info[results_index].variation.isMate()) {
-            int n = global_info[results_index].variation.getMateInN();
+        if (global_info[0].variation.isMate()) {
+            int n = global_info[0].variation.getMateInN();
             std::cout << " score mate " << (score > 0 ? n : -n);
         }
         else {
@@ -539,10 +560,10 @@ Move iterative_deepening(Position &s, SearchInfo &si) {
         std::cout << " time " << si.clock.elapsed<std::chrono::milliseconds>()
                   << " nodes " << si.totalNodes
                   << " nps " << si.totalNodes / (si.clock.elapsed<std::chrono::milliseconds>() + 1) * 1000;
-        global_info[results_index].variation.printPv();
+        global_info[0].variation.printPv();
         std::cout << std::endl;
 
-        best_move = global_info[results_index].variation.getPvMove();
+        best_move = global_info[0].variation.getPvMove();
 
         if (U64(si.clock.elapsed<std::chrono::milliseconds>()) * 2 > si.moveTime) {
             break; // Insufficient time for next search iteration
