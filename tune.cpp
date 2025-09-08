@@ -120,7 +120,7 @@ inline long double sigmoid(long double x) {
 
 inline long double kahan_sum() {
     long double result = 0.0L, c = 0.0L, y, t;
-    for (int thread_id = 0; thread_id < NUM_THREADS; ++thread_id) {
+    for (int thread_id = 0; thread_id < MAX_THREADS; ++thread_id) {
         for (int i = 0; i < diffs[thread_id].size(); ++i) {
             y = diffs[thread_id][i] - c;
             t = result + y;
@@ -132,7 +132,7 @@ inline long double kahan_sum() {
 }
 
 void get_single_error(int thread_id) {
-    for (int i = thread_id; i < num_fens; i += NUM_THREADS) {
+    for (int i = thread_id; i < num_fens; i += MAX_THREADS) {
         std::vector<std::string> info;
         get_fen_info(input[i], info);
 
@@ -174,12 +174,12 @@ long double get_error(std::vector<Parameter> &parameters) {
         set_parameter(p);
     }
     std::vector<std::thread> threads;
-    for (int i = 0; i < NUM_THREADS; ++i) {
+    for (int i = 0; i < MAX_THREADS; ++i) {
         diffs[i].clear();
         threads.push_back(std::thread(get_single_error, i));
     }
     U64 t = 0;
-    for (int i = 0; i < NUM_THREADS; ++i) {
+    for (int i = 0; i < MAX_THREADS; ++i) {
         threads[i].join();
         t += diffs[i].size();
     }
@@ -281,11 +281,7 @@ void tune(std::string fens_file) {
               << "\n";
     fens.close();
 
-    NUM_THREADS = std::thread::hardware_concurrency();
-    if (NUM_THREADS == 0) {
-        NUM_THREADS = 1;
-    }
-    std::cerr << "Tuning with " << NUM_THREADS << " threads"
+    std::cerr << "Tuning with " << MAX_THREADS << " threads"
               << "\n";
 
     std::vector<Parameter> best;
@@ -297,7 +293,7 @@ void tune(std::string fens_file) {
     long double best_error = get_error(best);
     std::cerr << "best error " << best_error << "\n";
 
-    for (int i = 0; i < 2; ++i) {
+    for (int i = 0; i < 4; ++i) {
         for (int j = 0; j < best.size(); ++j) {
             best[j].stability = 1;
         }

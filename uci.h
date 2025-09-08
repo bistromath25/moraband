@@ -8,7 +8,7 @@
 
 #define ENGINE_NAME "Moraband"
 #ifdef TUNE
-#define ENGINE_VERSION "1.2-tune"
+#define ENGINE_VERSION "1.2-Tune"
 #else
 #define ENGINE_VERSION "1.2"
 #endif
