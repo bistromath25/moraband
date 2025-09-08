@@ -293,7 +293,7 @@ void tune(std::string fens_file) {
     long double best_error = get_error(best);
     std::cerr << "best error " << best_error << "\n";
 
-    for (int i = 0; i < 4; ++i) {
+    for (int i = 0; i < 2; ++i) {
         for (int j = 0; j < best.size(); ++j) {
             best[j].stability = 1;
         }
