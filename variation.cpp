@@ -45,9 +45,8 @@ void Variation::clearPv() {
 
 void Variation::checkPv(Position &s) {
     Position c(s);
-    Move nextMove;
     for (int i = 0; i < MAX_PLY; ++i) {
-        nextMove = pv[i].first;
+        Move nextMove = pv[i].first;
         if (nextMove == NULL_MOVE) {
             sz = i;
             break;

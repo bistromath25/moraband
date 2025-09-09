@@ -28,6 +28,7 @@ constexpr int FUTILITY_DEPTH = 7;
 constexpr int RAZOR_DEPTH = 2;
 constexpr int RAZOR_MARGIN = 300;
 constexpr int LATE_MOVE_REDUCTION_DEPTH = 3;
+constexpr int ASPIRATION_WINDOW = 30;
 
 /** Search information */
 struct SearchInfo {
