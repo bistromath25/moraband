@@ -115,9 +115,8 @@ int qsearch(Position &s, SearchInfo &si, GlobalInfo &gi, int ply, int alpha, int
     MoveList moveList(s, tt_move, &gi.history, ply, true);
     int score = 0;
     int bestScore = staticEval;
-    Move m = NULL_MOVE;
     int legalMoves = 0;
-    while ((m = moveList.getBestMove())) {
+    while (Move m = moveList.getBestMove()) {
         if (s.givesCheck(m)) {
             continue;
         }
@@ -283,8 +282,7 @@ int search(Position &s, SearchInfo &si, GlobalInfo &gi, int depth, int ply, int 
 
     int legalMoves = 0;
     int oldAlpha = alpha;
-    Move m = NULL_MOVE;
-    while ((m = moveList.getBestMove())) {
+    while (Move m = moveList.getBestMove()) {
         int d = depth - 1; // Early pruning
         ++legalMoves;
 
@@ -396,8 +394,7 @@ int search_root(Position &s, SearchInfo &si, GlobalInfo &gi, int depth, int ply,
 
     int legalMoves = 0;
     int oldAlpha = alpha;
-    Move m = NULL_MOVE;
-    while ((m = moveList.getBestMove())) {
+    while (Move m = moveList.getBestMove()) {
         int d = depth - 1;
         ++legalMoves;
 
