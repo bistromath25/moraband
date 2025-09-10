@@ -28,7 +28,6 @@ uciok
 ## Details 
 - Move Generation
     - [(Magic) Bitboards](https://www.chessprogramming.org/Bitboards)
-    - Pseudo-Legal move generation
     - [Zobrist Hashing](https://www.chessprogramming.org/Zobrist_Hashing)
 - Search
     - [Alpha-beta search in Nega-max framework](https://www.chessprogramming.org/Negamax)
