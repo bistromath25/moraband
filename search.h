@@ -28,6 +28,7 @@ constexpr int FUTILITY_DEPTH = 7;
 constexpr int RAZOR_DEPTH = 2;
 constexpr int RAZOR_MARGIN = 300;
 constexpr int LATE_MOVE_REDUCTION_DEPTH = 3;
+constexpr int ASPIRATION_WINDOW = 30;
 
 /** Search information */
 struct SearchInfo {
@@ -63,7 +64,7 @@ struct GlobalInfo {
     std::array<int, 64> evalHistory;
 };
 
-constexpr int MAX_THREADS = 16;
+constexpr int MAX_THREADS = 64;
 extern int NUM_THREADS;
 extern std::atomic<bool> THREAD_STOP;
 extern std::thread threads[MAX_THREADS];

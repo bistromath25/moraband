@@ -142,7 +142,6 @@ void Position::init() {
 void Position::setPins(Color c) {
     Square kingSq = getKingSquare(c);
     pinned[c] = 0;
-
     U64 pinners = bishopMoves[kingSq] & (getPieceBB<PIECETYPE_BISHOP>(!c) | getPieceBB<PIECETYPE_QUEEN>(!c));
 
     while (pinners) {

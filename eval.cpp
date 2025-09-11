@@ -18,11 +18,11 @@ int ROOK_THREAT = 4;
 int QUEEN_THREAT = 5;
 
 /** Material values for each piece type (middle game and endgame) */
-Score PAWN_WEIGHT = S(82, 105);
-Score KNIGHT_WEIGHT = S(426, 254);
-Score BISHOP_WEIGHT = S(424, 339);
-Score ROOK_WEIGHT = S(685, 510);
-Score QUEEN_WEIGHT = S(1327, 1124);
+Score PAWN_WEIGHT = S(82, 103);
+Score KNIGHT_WEIGHT = S(460, 263);
+Score BISHOP_WEIGHT = S(466, 350);
+Score ROOK_WEIGHT = S(726, 541);
+Score QUEEN_WEIGHT = S(1411, 1132);
 
 const Score KING_WEIGHT = S(32767, 32767);
 
@@ -38,16 +38,16 @@ const Score PIECE_VALUE[7] = {
 
 /** Mobility tables for each piece type */
 Score KNIGHT_MOBILITY[9] = {
-    S(-50, -60), S(-30, -30), S(-10, -10), S(0, 0), S(10, 10), S(20, 20), S(25, 25), S(30, 30), S(35, 35)};
+    S(-32, -42), S(-16, -20), S(6, 5), S(12, 19), S(19, 20), S(24, 31), S(26, 25), S(17, 40), S(35, 25)};
 
 Score BISHOP_MOBILITY[14] = {
-    S(-30, -40), S(-15, -15), S(-5, -5), S(0, 0), S(5, 5), S(10, 10), S(15, 15), S(20, 20), S(25, 25), S(30, 30), S(35, 35), S(40, 40), S(45, 45), S(50, 50)};
+    S(-18, -21), S(-8, -27), S(5, -11), S(10, -2), S(14, 7), S(7, 25), S(14, 22), S(15, 29), S(13, 38), S(17, 29), S(18, 34), S(35, 30), S(28, 59), S(60, 35)};
 
 Score ROOK_MOBILITY[15] = {
-    S(-30, -40), S(-15, -15), S(-5, -5), S(0, 0), S(5, 10), S(10, 20), S(15, 30), S(20, 40), S(25, 50), S(30, 55), S(35, 60), S(40, 65), S(45, 70), S(50, 75), S(50, 80)};
+    S(-24, -22), S(0, -11), S(2, 7), S(-2, 10), S(-6, 19), S(3, 28), S(4, 34), S(18, 36), S(25, 41), S(29, 48), S(42, 53), S(40, 58), S(45, 74), S(50, 67), S(40, 70)};
 
 Score QUEEN_MOBILITY[28] = {
-    S(-30, -40), S(-20, -20), S(-10, -10), S(0, 0), S(5, 5), S(10, 10), S(15, 15), S(20, 20), S(25, 25), S(30, 30), S(35, 35), S(40, 40), S(45, 45), S(50, 50), S(50, 55), S(50, 60), S(50, 65), S(50, 70), S(50, 75), S(50, 80), S(50, 85), S(50, 90), S(50, 90), S(50, 90), S(50, 90), S(50, 90), S(50, 90), S(50, 90)};
+    S(-24, -48), S(-3, -35), S(5, -16), S(14, -6), S(15, 10), S(30, -5), S(27, 20), S(27, 20), S(29, 38), S(34, 31), S(30, 42), S(27, 48), S(27, 45), S(35, 37), S(41, 50), S(46, 73), S(35, 63), S(47, 74), S(55, 76), S(60, 92), S(68, 81), S(58, 91), S(48, 93), S(51, 108), S(56, 103), S(50, 103), S(32, 111), S(40, 94)};
 
 /**
  * Passed pawn evaluation tables
@@ -58,37 +58,33 @@ Score QUEEN_MOBILITY[28] = {
  * 3: Safe advance
  */
 Score PAWN_PASSED[4][7] = {
-    // Cannot advance
-    {S(-9, 10), S(-3, 4), S(-1, 16), S(7, 30), S(30, 44), S(48, 78), S(67, 68)},
-    // Unsafe advance
-    {S(8, -10), S(15, -5), S(51, 51), S(58, 44), S(51, 66), S(64, 90), S(72, 96)},
-    // Protected advance
-    {S(5, 0), S(16, 7), S(3, 2), S(14, 27), S(33, 45), S(71, 90), S(92, 215)},
-    // Safe advance
-    {S(9, -1), S(14, 18), S(12, 21), S(26, 34), S(35, 70), S(80, 152), S(123, 232)}};
+    {S(-7, 11), S(-21, 21), S(-16, 25), S(-1, 46), S(13, 62), S(30, 73), S(48, 84)},
+    {S(15, -15), S(23, 14), S(49, 36), S(69, 39), S(31, 62), S(76, 68), S(77, 79)},
+    {S(2, 20), S(6, 12), S(3, 12), S(4, 38), S(26, 61), S(75, 87), S(94, 294)},
+    {S(16, -9), S(32, 19), S(22, 28), S(23, 46), S(25, 70), S(58, 111), S(80, 149)}};
 
-Score PAWN_PASSED_CANDIDATE = S(-2, 39);
-Score PAWN_CONNECTED = S(14, 20);
-Score PAWN_ISOLATED = S(-11, -6);
-Score PAWN_DOUBLED = S(-8, -9);
-Score PAWN_FULL_BACKWARDS = S(-18, -8);
-Score PAWN_BACKWARDS = S(-34, -7);
-Score PAWN_SHIELD_CLOSE = S(4, 29);
-Score PAWN_SHIELD_FAR = S(-15, 14);
-Score PAWN_SHIELD_MISSING = S(-59, 8);
-Score STRONG_PAWN_ATTACK = S(-51, -12);
-Score WEAK_PAWN_ATTACK = S(-32, -3);
-Score HANGING = S(-2, -21);
-Score KNIGHT_PAWN_PENALTY = S(-1, 13);
-Score ROOK_PAWN_BONUS = S(-10, 13);
+Score PAWN_PASSED_CANDIDATE = S(2, 29);
+Score PAWN_CONNECTED = S(16, 17);
+Score PAWN_ISOLATED = S(-10, -7);
+Score PAWN_DOUBLED = S(-4, -10);
+Score PAWN_FULL_BACKWARDS = S(-33, -16);
+Score PAWN_BACKWARDS = S(-28, -15);
+Score PAWN_SHIELD_CLOSE = S(-1, 48);
+Score PAWN_SHIELD_FAR = S(-15, 27);
+Score PAWN_SHIELD_MISSING = S(-65, 21);
+Score STRONG_PAWN_ATTACK = S(-54, 0);
+Score WEAK_PAWN_ATTACK = S(-42, 7);
+Score HANGING = S(-3, -17);
+Score KNIGHT_PAWN_PENALTY = S(-1, 10);
+Score ROOK_PAWN_BONUS = S(-12, 8);
 
 /** Piece-specific evaluation terms */
-Score BISHOP_PAIR = S(74, 59);
-Score BAD_BISHOP = S(-2, -4);
-Score ROOK_OPEN_FILE = S(39, 20);
-Score ROOK_ON_SEVENTH_RANK = S(40, 12);
-Score KNIGHT_OUTPOST = S(64, 23);
-Score BISHOP_OUTPOST = S(40, 16);
+Score BISHOP_PAIR = S(65, 41);
+Score BAD_BISHOP = S(-2, -7);
+Score ROOK_OPEN_FILE = S(44, 5);
+Score ROOK_ON_SEVENTH_RANK = S(31, 28);
+Score KNIGHT_OUTPOST = S(73, 26);
+Score BISHOP_OUTPOST = S(30, 18);
 
 /** King safety tables */
 int KING_RING[2][64];
@@ -382,9 +378,7 @@ void Evaluate::evalPawnShield(const Color c, U64 pawnShieldCloseMask) {
 
 /** Evaluate tactical aspects of the position */
 void Evaluate::evalAttacks(const Color c) {
-    U64 attackedByPawn, hanging;
-    attackedByPawn = piece_attacks_bb[!c][PIECETYPE_PAWN] & (position.getOccupancyBB(c) ^ position.getPieceBB<PIECETYPE_PAWN>(c));
-
+    U64 attackedByPawn = piece_attacks_bb[!c][PIECETYPE_PAWN] & (position.getOccupancyBB(c) ^ position.getPieceBB<PIECETYPE_PAWN>(c));
     while (attackedByPawn) {
         Square to = pop_lsb(attackedByPawn);
         if (position.getAttackBB<PIECETYPE_PAWN>(to, c) & position.getPieceBB<PIECETYPE_PAWN>(!c) & all_attacks_bb[!c]) {
@@ -395,8 +389,7 @@ void Evaluate::evalAttacks(const Color c) {
         }
     }
 
-    hanging = all_attacks_bb[!c] & position.getOccupancyBB(c) & ~all_attacks_bb[c];
-
+    U64 hanging = all_attacks_bb[!c] & position.getOccupancyBB(c) & ~all_attacks_bb[c];
     attacks[c] += HANGING * pop_count(hanging);
 }
 
