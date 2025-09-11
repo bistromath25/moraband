@@ -1,4 +1,5 @@
 import argparse
+import hashlib
 import logging
 import os
 
@@ -79,7 +80,7 @@ class FenEvalDataset(IterableDataset):
                     continue
 
 
-def save_nnue_weights(model, path):
+def save_nnue_weights(model):
     fc1_w = model.fc1.weight.detach().cpu().numpy()
     fc1_b = model.fc1.bias.detach().cpu().numpy()
     fc2_w = model.fc2.weight.detach().cpu().numpy()
@@ -88,13 +89,14 @@ def save_nnue_weights(model, path):
     weights = np.concatenate(
         [fc1_w.T.flatten(), fc1_b.flatten(), fc2_w.flatten(), fc2_b.flatten()]
     ).astype(np.float32)
-    weights.tofile(path)
-    logging.info(f"Saved NNUE weights to {path} ({weights.size} floats)")
+    digest = hashlib.sha256(weights.tobytes()).hexdigest()[:12]
+    filename = f"nn-{digest}.nnue"
+    weights.tofile(filename)
+    logging.info(f"Saved NNUE weights to {filename} ({weights.size} floats)")
 
 
 def train_nnue(
     fen_eval_path,
-    model_save_path,
     batch_size=64,
     epochs=10,
     learning_rate=1e-3,
@@ -159,7 +161,7 @@ def train_nnue(
         logging.info(f"Checkpoint saved at epoch {epoch}")
 
     logging.info("Training complete. Saving model...")
-    save_nnue_weights(model, model_save_path)
+    save_nnue_weights(model)
 
 
 def main():
@@ -172,9 +174,6 @@ def main():
     parser.add_argument(
         "--data", type=str, default="fens_evals.txt", help="Path to fens file"
     )
-    parser.add_argument(
-        "--model", type=str, default="nnue.bin", help="Where to save NNUE weights"
-    )
     parser.add_argument("--batch-size", type=int, default=64)
     parser.add_argument("--epochs", type=int, default=10)
     parser.add_argument("--learning-rate", type=float, default=1e-3)
@@ -186,7 +185,6 @@ def main():
 
     train_nnue(
         fen_eval_path=args.data,
-        model_save_path=args.model,
         batch_size=args.batch_size,
         epochs=args.epochs,
         learning_rate=args.learning_rate,
