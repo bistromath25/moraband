@@ -46,13 +46,13 @@ uciok
         - [Basic King safety using King safety table](https://www.chessprogramming.org/King_Safety)
         - [Tapered evaluation](https://www.chessprogramming.org/Tapered_Eval)
     - [NNUE](https://www.chessprogramming.org/NNUE)
-        - (768 -> 128) x 2 ->  1
+        - (768 + 1) -> 128 -> 1
         - Apple NEON intrinsics
 
 ## Compile
 Compile via `cmake`
 ```
-cmake -B build -S . -DCMAKE_BUILD_TYPE=Release # Release, Tune
+cmake -B build -S . -DCMAKE_BUILD_TYPE=Release # Release, Release-NNUE, Tune
 cmake --build build --parallel
 ```
 
