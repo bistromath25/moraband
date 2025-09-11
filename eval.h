@@ -7,7 +7,6 @@
 #define EVAL_H
 
 #include "position.h"
-#include "pst.h"
 #include <array>
 #include <iomanip>
 

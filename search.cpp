@@ -123,9 +123,8 @@ int qsearch(Position &s, SearchInfo &si, GlobalInfo &gi, int ply, int alpha, int
     MoveList moveList(s, tt_move, &gi.history, ply, true);
     int score = 0;
     int bestScore = staticEval;
-    Move m = NULL_MOVE;
     int legalMoves = 0;
-    while ((m = moveList.getBestMove())) {
+    while (Move m = moveList.getBestMove()) {
         if (s.givesCheck(m)) {
             continue;
         }
@@ -294,10 +293,8 @@ int search(Position &s, SearchInfo &si, GlobalInfo &gi, int depth, int ply, int 
 
     int legalMoves = 0;
     int oldAlpha = alpha;
-    Move m;
-    int d;
-    while ((m = moveList.getBestMove())) {
-        d = depth - 1; // Early pruning
+    while (Move m = moveList.getBestMove()) {
+        int d = depth - 1; // Early pruning
         ++legalMoves;
 
         if (bestScore > -CHECKMATE_BOUND && legalMoves > 1 && !s.inCheck() && !s.givesCheck(m) && !isPromotion(m) && s.getNonPawnPieceCount()) {
@@ -408,10 +405,8 @@ int search_root(Position &s, SearchInfo &si, GlobalInfo &gi, int depth, int ply,
 
     int legalMoves = 0;
     int oldAlpha = alpha;
-    Move m;
-    int d;
-    while ((m = moveList.getBestMove())) {
-        d = depth - 1;
+    while (Move m = moveList.getBestMove()) {
+        int d = depth - 1;
         ++legalMoves;
 
         Position c(s);
@@ -496,7 +491,7 @@ int aspiration_window(Position &s, SearchInfo &si, int depth, int prev_score) {
         return search_root(s, si, global_info[0], depth, 0, NEG_INF, POS_INF);
     }
 
-    int window = 30;
+    int window = ASPIRATION_WINDOW;
     int alpha = prev_score - window;
     int beta = prev_score + window;
     while (true) {

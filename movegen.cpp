@@ -105,14 +105,13 @@ void MoveList::pushPromotion(Square src, Square dst) {
 
 template<MoveType T, PieceType P>
 void MoveList::pushMoves() {
-    U64 m;
     Color c = position.getOurColor();
 
     for (Square src : position.getPieceList<P>(c)) {
         if (src == no_sq) {
             break;
         }
-        m = position.getAttackBB<P>(src) & valid;
+        U64 m = position.getAttackBB<P>(src) & valid;
 
         if (T == MoveType::QuietChecks) {
             if (square_bb[src] & discover) {
@@ -185,12 +184,10 @@ void MoveList::pushPawnMoves() {
         }
 
         if (T == MoveType::QuietChecks) {
-            U64 dis;
-
             up &= position.getCheckSquaresBB(PIECETYPE_PAWN);
             dbl &= position.getCheckSquaresBB(PIECETYPE_PAWN);
 
-            dis = discover & pawns & ~file_bb[position.getKingSquare(!C)];
+            U64 dis = discover & pawns & ~file_bb[position.getKingSquare(!C)];
             dis = (C == WHITE ? dis << 8 : dis >> 8) & empty;
             up |= dis;
             dbl |= (C == WHITE ? (dis & RANK_3) << 8

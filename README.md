@@ -15,12 +15,11 @@ Moraband, known in antiquity as Korriban, was an
  Outer Rim planet that was home to the ancient Sith
 
 uci
-id name Moraband 1.0
+id name Moraband 1.2
 id author Brighten Zhang
 option name Hash type spin default 256 min 1 max 65536
 option name Threads type spin default 1 min 1 max 16
 option name Move Overhead type spin default 500 min 0 max 10000
-option name Contempt type spin default 0 min -100 max 100
 uciok
 ```
 
@@ -29,7 +28,6 @@ uciok
 ## Details 
 - Move Generation
     - [(Magic) Bitboards](https://www.chessprogramming.org/Bitboards)
-    - Pseudo-Legal move generation
     - [Zobrist Hashing](https://www.chessprogramming.org/Zobrist_Hashing)
 - Search
     - [Alpha-beta search in Nega-max framework](https://www.chessprogramming.org/Negamax)
@@ -54,10 +52,8 @@ uciok
 ## Compile
 Compile via `cmake`
 ```
-mkdir build
-cd build
-cmake ..  # -DTUNE=ON for tuning, -DUSE_NNUE=ON for NNUE
-make
+cmake -B build -S . -DCMAKE_BUILD_TYPE=Release # Release, Tune
+cmake --build build --parallel
 ```
 
 ## Tune
