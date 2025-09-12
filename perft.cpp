@@ -4,6 +4,7 @@
  **/
 
 #include "perft.h"
+#include "search.h"
 #include <numeric>
 #include <thread>
 #include <vector>
