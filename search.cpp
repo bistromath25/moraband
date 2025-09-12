@@ -8,7 +8,6 @@
 #include "io.h"
 #include "tt.h"
 #include <atomic>
-#include <fstream>
 #include <string>
 #include <thread>
 
@@ -96,10 +95,10 @@ int qsearch(Position &s, SearchInfo &si, GlobalInfo &gi, int ply, int alpha, int
     }
 
     // Probe tt
+    Move tt_move = NULL_MOVE;
+#ifndef TUNE
     int tt_score = NEG_INF;
     int tt_flag = -1;
-    Move tt_move = 0;
-#ifndef TUNE
     TTEntry tt_entry = tt.probe(s.getKey());
     if (tt_entry.getKey() == s.getKey()) {
         tt_move = tt_entry.getMove();
@@ -193,10 +192,10 @@ int search(Position &s, SearchInfo &si, GlobalInfo &gi, int depth, int ply, int 
     }
 
     // Probe tt
+    Move tt_move = NULL_MOVE;
     bool tt_hit = false;
     int tt_score = NEG_INF;
     int tt_flag = -1;
-    Move tt_move = 0;
     TTEntry tt_entry = tt.probe(s.getKey());
     if (tt_entry.getKey() == s.getKey()) {
         tt_hit = true;
