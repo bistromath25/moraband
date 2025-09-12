@@ -6,9 +6,7 @@
 #ifndef SEARCH_H
 #define SEARCH_H
 
-#include "defs.h"
 #include "history.h"
-#include "move.h"
 #include "position.h"
 #include "timeman.h"
 #include "variation.h"
