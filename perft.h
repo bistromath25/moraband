@@ -6,13 +6,8 @@
 #ifndef PERFT_H
 #define PERFT_H
 
-#include "move.h"
 #include "position.h"
-#include "search.h"
 
-U64 perft(Position &s, int depth);
-void test(Position s, MoveList *moveList, int depth);
-U64 MTperft(Position &s, int depth);
 void perftTest(Position &s, int depth, bool mt);
 
 #endif

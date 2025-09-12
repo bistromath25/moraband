@@ -8,9 +8,7 @@
 
 #include "defs.h"
 #include <array>
-#include <iterator>
 #include <string>
-#include <vector>
 
 typedef uint16_t Move;
 
