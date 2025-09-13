@@ -87,11 +87,9 @@ int qsearch(Position &s, SearchInfo &si, GlobalInfo &gi, int ply, int alpha, int
     int staticEval = evaluate.getScore();
     if (!s.inCheck()) {
         if (staticEval >= beta) {
-            return beta;
+            return staticEval;
         }
-        if (staticEval > alpha) {
-            alpha = staticEval;
-        }
+        alpha = std::max(alpha, staticEval);
     }
 
     // Probe TT
@@ -112,7 +110,6 @@ int qsearch(Position &s, SearchInfo &si, GlobalInfo &gi, int ply, int alpha, int
 
     // Generate moves and create the movelist.
     MoveList moveList(s, tt_move, &gi.history, ply, true);
-    int score = 0;
     int bestScore = staticEval;
     int legalMoves = 0;
     while (Move m = moveList.getBestMove()) {
@@ -134,27 +131,22 @@ int qsearch(Position &s, SearchInfo &si, GlobalInfo &gi, int ply, int alpha, int
         Position c(s);
         c.makeMove(m);
         gi.history.push(std::make_pair(m, c.getKey()));
-        score = -qsearch(c, si, gi, ply + 1, -beta, -alpha);
+        int score = -qsearch(c, si, gi, ply + 1, -beta, -alpha);
         gi.history.pop();
+
         if (!(si.nodes & 2047) && (si.quit || stop_search(si) || THREAD_STOP)) {
             return 0;
         }
 
-        if (score >= bestScore) {
-            bestScore = score;
-        }
-        if (bestScore > alpha) {
-            alpha = bestScore;
-            if (bestScore >= beta) {
-                return beta;
-            }
-        }
+        bestScore = std::max(bestScore, score);
+        alpha = std::max(alpha, score);
     }
 
     if (!legalMoves && s.check()) {
         return -PSEUDO_CHECKMATE; // Viridithas trick
     }
-    return alpha;
+
+    return bestScore;
 }
 
 /** Main search */
