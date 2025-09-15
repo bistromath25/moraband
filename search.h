@@ -6,16 +6,10 @@
 #ifndef SEARCH_H
 #define SEARCH_H
 
-#include <thread>
-
-#include "defs.h"
 #include "history.h"
-#include "move.h"
 #include "position.h"
 #include "timeman.h"
 #include "variation.h"
-#include <atomic>
-#include <vector>
 
 constexpr int LMR_COUNT = 3;
 constexpr int LMR_DEPTH = 2;
@@ -66,15 +60,11 @@ struct GlobalInfo {
 
 constexpr int MAX_THREADS = 64;
 extern int NUM_THREADS;
-extern std::atomic<bool> THREAD_STOP;
-extern std::thread threads[MAX_THREADS];
 extern GlobalInfo global_info[MAX_THREADS];
-extern std::pair<int, bool> results[MAX_THREADS];
 
+#ifdef TUNE
 int qsearch(Position &s, SearchInfo &si, GlobalInfo &gi, int ply, int alpha, int beta);
-int search(Position &s, SearchInfo &si, GlobalInfo &gi, int depth, int ply, int alpha, int beta, bool isPv, bool isNull);
-int search_root(Position &s, SearchInfo &si, GlobalInfo &gi, int depth, int ply, int alpha, int beta);
-Move iterative_deepening(Position &s, SearchInfo &si);
+#endif
 Move search(Position &s, SearchInfo &si);
 
 #endif
