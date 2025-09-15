@@ -7,6 +7,7 @@
 #include "eval.h"
 #include "io.h"
 #include "perft.h"
+#include "search.h"
 #include "tt.h"
 #ifdef USE_NNUE
 #include "nnue.h"
@@ -15,6 +16,7 @@
 #include "tune.h"
 #endif
 #include <algorithm>
+#include <sstream>
 
 int HASH_SIZE = DEFAULT_HASH_SIZE;
 int NUM_THREADS = 1;

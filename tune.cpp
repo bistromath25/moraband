@@ -19,6 +19,14 @@ std::vector<std::string> input;
 long double k = 0.93L;
 U64 num_fens;
 
+struct Parameter {
+    int *variable;
+    int value;
+    std::string name;
+    bool increasing;
+    int stability;
+};
+
 void set_parameter(Parameter *p) {
     *p->variable = p->value;
 }
@@ -270,7 +278,7 @@ void tune(std::vector<Parameter> &parameters) {
     }
 }
 
-void tune(std::string fens_file) {
+void tune(const std::string &fens_file) {
     std::ifstream fens(fens_file);
     std::string line;
     while (std::getline(fens, line)) {

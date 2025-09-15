@@ -8,21 +8,7 @@
 
 #include "search.h"
 #include <string>
-#include <vector>
 
-extern std::vector<long double> diffs[MAX_THREADS];
-extern std::vector<std::string> input;
-extern long double k;
-extern U64 num_fens;
-
-struct Parameter {
-    int *variable;
-    int value;
-    std::string name;
-    bool increasing;
-    int stability;
-};
-
-void tune(std::string fen_file);
+void tune(const std::string &fen_file);
 
 #endif
