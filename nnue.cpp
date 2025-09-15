@@ -6,11 +6,14 @@
 #include "nnue.h"
 #include "defs.h"
 #include "position.h"
+#include <cmath>
+#include <cstring>
 #include <fstream>
 
-#if defined(__APPLE__) && defined(__aarch64__)
+#if defined(USE_NEON)
 #include <arm_neon.h>
-#define USE_NEON
+#elif defined(USE_AVX2) || defined(USE_AVX512)
+#include <immintrin.h>
 #endif
 
 namespace NNUE {
@@ -86,12 +89,26 @@ namespace NNUE {
     NNUE::NNUE(const Position &s) : acc(s) {}
 
     void add_feature_simd(float *values, const float *w) {
-#ifdef USE_NEON
+#if defined(USE_NEON)
         for (int i = 0; i < HIDDEN_SIZE; i += 4) {
             float32x4_t values_vec = vld1q_f32(&values[i]);
             float32x4_t w_vec = vld1q_f32(&w[i]);
             values_vec = vaddq_f32(values_vec, w_vec);
             vst1q_f32(&values[i], values_vec);
+        }
+#elif defined(USE_AVX512)
+        for (int i = 0; i < HIDDEN_SIZE; i += 16) {
+            __m512 values_vec = _mm512_loadu_ps(&values[i]);
+            __m512 w_vec = _mm512_loadu_ps(&w[i]);
+            values_vec = _mm512_add_ps(values_vec, w_vec);
+            _mm512_storeu_ps(&values[i], values_vec);
+        }
+#elif defined(USE_AVX2)
+        for (int i = 0; i < HIDDEN_SIZE; i += 8) {
+            __m256 values_vec = _mm256_loadu_ps(&values[i]);
+            __m256 w_vec = _mm256_loadu_ps(&w[i]);
+            values_vec = _mm256_add_ps(values_vec, w_vec);
+            _mm256_storeu_ps(&values[i], values_vec);
         }
 #else
         for (int i = 0; i < HIDDEN_SIZE; ++i) {
@@ -101,12 +118,26 @@ namespace NNUE {
     }
 
     void remove_feature_simd(float *values, const float *w) {
-#ifdef USE_NEON
+#if defined(USE_NEON)
         for (int i = 0; i < HIDDEN_SIZE; i += 4) {
             float32x4_t values_vec = vld1q_f32(&values[i]);
             float32x4_t w_vec = vld1q_f32(&w[i]);
             values_vec = vsubq_f32(values_vec, w_vec);
             vst1q_f32(&values[i], values_vec);
+        }
+#elif defined(USE_AVX512)
+        for (int i = 0; i < HIDDEN_SIZE; i += 16) {
+            __m512 values_vec = _mm512_loadu_ps(&values[i]);
+            __m512 w_vec = _mm512_loadu_ps(&w[i]);
+            values_vec = _mm512_sub_ps(values_vec, w_vec);
+            _mm512_storeu_ps(&values[i], values_vec);
+        }
+#elif defined(USE_AVX2)
+        for (int i = 0; i < HIDDEN_SIZE; i += 8) {
+            __m256 values_vec = _mm256_loadu_ps(&values[i]);
+            __m256 w_vec = _mm256_loadu_ps(&w[i]);
+            values_vec = _mm256_sub_ps(values_vec, w_vec);
+            _mm256_storeu_ps(&values[i], values_vec);
         }
 #else
         for (int i = 0; i < HIDDEN_SIZE; ++i) {
@@ -145,7 +176,8 @@ namespace NNUE {
     int NNUE::evaluate(Color c) const {
         const float *w_stm = fc1_weight[INPUT_FEATURE_SIZE - 1];
         const float sign = (c == WHITE) ? 1.0f : -1.0f;
-#ifdef USE_NEON
+
+#if defined(USE_NEON)
         float32x4_t sum_vec = vdupq_n_f32(0.0f);
         float32x4_t zero = vdupq_n_f32(0.0f);
         float32x4_t one = vdupq_n_f32(1.0f);
@@ -166,12 +198,55 @@ namespace NNUE {
         float32x2_t hi = vget_high_f32(sum_vec);
         float32x2_t sum2 = vpadd_f32(lo, hi);
         float sum = vget_lane_f32(sum2, 0) + vget_lane_f32(sum2, 1);
+
+#elif defined(USE_AVX512)
+        __m512 sum_vec = _mm512_setzero_ps();
+        __m512 sign_vec = _mm512_set1_ps(sign);
+        __m512 zero = _mm512_setzero_ps();
+        __m512 one = _mm512_set1_ps(1.0f);
+
+        for (int i = 0; i < HIDDEN_SIZE; i += 16) {
+            __m512 x = _mm512_loadu_ps(&acc.values[i]);
+            __m512 w = _mm512_loadu_ps(&fc2_weight[i]);
+            __m512 wstm = _mm512_loadu_ps(&w_stm[i]);
+            x = _mm512_add_ps(x, _mm512_mul_ps(wstm, sign_vec));
+            x = _mm512_max_ps(x, zero);
+            x = _mm512_min_ps(x, one);
+            sum_vec = _mm512_add_ps(sum_vec, _mm512_mul_ps(x, w));
+        }
+        float sum = _mm512_reduce_add_ps(sum_vec);
+
+#elif defined(USE_AVX2)
+        __m256 sum_vec = _mm256_setzero_ps();
+        __m256 sign_vec = _mm256_set1_ps(sign);
+        __m256 zero = _mm256_setzero_ps();
+        __m256 one = _mm256_set1_ps(1.0f);
+
+        for (int i = 0; i < HIDDEN_SIZE; i += 8) {
+            __m256 x = _mm256_loadu_ps(&acc.values[i]);
+            __m256 w = _mm256_loadu_ps(&fc2_weight[i]);
+            __m256 wstm = _mm256_loadu_ps(&w_stm[i]);
+            x = _mm256_add_ps(x, _mm256_mul_ps(wstm, sign_vec));
+            x = _mm256_max_ps(x, zero);
+            x = _mm256_min_ps(x, one);
+            sum_vec = _mm256_add_ps(sum_vec, _mm256_mul_ps(x, w));
+        }
+
+        __m128 lo = _mm256_castps256_ps128(sum_vec);
+        __m128 hi = _mm256_extractf128_ps(sum_vec, 1);
+        __m128 sum2 = _mm_add_ps(lo, hi);
+        sum2 = _mm_hadd_ps(sum2, sum2);
+        sum2 = _mm_hadd_ps(sum2, sum2);
+        float sum;
+        _mm_store_ss(&sum, sum2);
+
 #else
         float sum = 0.0f;
         for (int i = 0; i < HIDDEN_SIZE; ++i) {
             float activated = std::min(1.0f, std::max(0.0f, acc.values[i] + sign * w_stm[i]));
             sum += fc2_weight[i] * activated;
         }
+
 #endif
         sum += fc2_bias;
         return static_cast<int>(std::round((c == WHITE ? sum : -sum) * SCALE));

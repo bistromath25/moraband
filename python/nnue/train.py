@@ -1,7 +1,10 @@
 import argparse
 import hashlib
 import logging
+import math
 import os
+import subprocess
+import time
 
 import chess
 import numpy as np
@@ -24,14 +27,25 @@ INPUT_FEATURES = PIECE_FEATURES + 1
 DEVICE = torch.device("mps")
 
 
+def format_time(seconds: float) -> str:
+    minutes, sec = divmod(int(seconds), 60)
+    return f"{minutes:02d}:{sec:02d}"
+
+
 def encode_board(board: chess.Board):
     x = np.zeros(PIECE_FEATURES, dtype=np.float32)
 
     piece_map = board.piece_map()
     if piece_map:
         squares = np.fromiter(piece_map.keys(), dtype=np.int32, count=len(piece_map))
-        pieces = np.fromiter((p.piece_type for p in piece_map.values()), dtype=np.int32, count=len(piece_map))
-        colors = np.fromiter((p.color for p in piece_map.values()), dtype=np.int32, count=len(piece_map))
+        pieces = np.fromiter(
+            (p.piece_type for p in piece_map.values()),
+            dtype=np.int32,
+            count=len(piece_map),
+        )
+        colors = np.fromiter(
+            (p.color for p in piece_map.values()), dtype=np.int32, count=len(piece_map)
+        )
 
         piece_indices = (pieces - 1) + (1 - colors) * 6  # chess.WHITE == 1
         indices = squares * 12 + piece_indices
@@ -110,11 +124,20 @@ def train_nnue(
         model.parameters(), lr=learning_rate, weight_decay=weight_decay
     )
 
+    total_samples = int(
+        subprocess.run(
+            ["wc", "-l", fen_eval_path], capture_output=True, text=True, check=True
+        ).stdout.split()[0]
+    )
+    total_batches = math.ceil(total_samples / batch_size)
+
     logging.info("Training Configuration")
     logging.info(f"Epochs:             {epochs}")
     logging.info(f"Batch size:         {batch_size}")
     logging.info(f"Learning rate:      {learning_rate}")
     logging.info(f"Weight decay:       {weight_decay}")
+    logging.info(f"Total lines:        {total_samples}")
+    logging.info(f"Total batches:      {total_batches}")
 
     if resume and os.path.exists("checkpoint.pth"):
         checkpoint = torch.load("checkpoint.pth", map_location=DEVICE)
@@ -124,18 +147,16 @@ def train_nnue(
         logging.info(f"Resuming from epoch {start_epoch}")
 
     dataset = FenEvalDataset(fen_eval_path)
-    dataloader = DataLoader(
-        dataset,
-        batch_size=batch_size,
-        num_workers=0,
-    )
+    dataloader = DataLoader(dataset, batch_size=batch_size, num_workers=0)
 
     for epoch in range(start_epoch, epochs + 1):
         logging.info(f"=== Epoch {epoch}/{epochs} ===")
         total_loss = 0.0
-        total_samples = 0
+        total_samples_so_far = 0
         model.train()
-        for batch_inputs, batch_targets in dataloader:
+        start_time = time.time()
+
+        for batch_idx, (batch_inputs, batch_targets) in enumerate(dataloader, 1):
             batch_inputs = batch_inputs.to(DEVICE)
             batch_targets = batch_targets.to(DEVICE)
 
@@ -146,9 +167,29 @@ def train_nnue(
             optimizer.step()
 
             total_loss += loss.item() * batch_inputs.size(0)
-            total_samples += batch_inputs.size(0)
+            total_samples_so_far += batch_inputs.size(0)
 
-        avg_loss = total_loss / total_samples if total_samples > 0 else float("nan")
+            if batch_idx % 10000 == 0 or batch_idx == total_batches:
+                elapsed = time.time() - start_time
+                batches_done = batch_idx
+                batches_left = total_batches - batches_done
+                eta_seconds = (
+                    elapsed / batches_done * batches_left if batches_done > 0 else 0
+                )
+                eta_str = format_time(eta_seconds)
+                avg_loss = total_loss / total_samples_so_far
+                logging.info(
+                    f"Epoch {epoch} [Batch {batch_idx}/{total_batches}] - "
+                    f"Batch Loss: {loss.item():.6f}, "
+                    f"Avg Loss: {avg_loss:.6f}, "
+                    f"ETA: {eta_str}"
+                )
+
+        avg_loss = (
+            total_loss / total_samples_so_far
+            if total_samples_so_far > 0
+            else float("nan")
+        )
         logging.info(f"Epoch {epoch} - Avg Loss: {avg_loss:.6f}")
         torch.save(
             {
