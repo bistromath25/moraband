@@ -9,6 +9,9 @@
 #include "perft.h"
 #include "search.h"
 #include "tt.h"
+#ifdef USE_NNUE
+#include "nnue.h"
+#endif
 #ifdef TUNE
 #include "tune.h"
 #endif
@@ -276,8 +279,13 @@ void uci() {
             std::cout << root.getFen() << std::endl;
         }
         else if (token == "eval") {
+#ifdef USE_NNUE
+            NNUE::NNUE nnue(root);
+            std::cout << nnue.evaluate(root.getOurColor()) << std::endl;
+#else
             Evaluate evaluate(root);
             std::cout << evaluate << std::endl;
+#endif
         }
         else if (token == "perft") {
             is >> token;

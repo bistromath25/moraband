@@ -7,12 +7,14 @@
 #define UCI_H
 
 #define ENGINE_NAME "Moraband"
-#ifdef TUNE
+#define ENGINE_AUTHOR "Brighten Zhang"
+#if defined(TUNE)
 #define ENGINE_VERSION "1.2-Tune"
+#elif defined(USE_NNUE)
+#define ENGINE_VERSION "1.2-NNUE"
 #else
 #define ENGINE_VERSION "1.2"
 #endif
-#define ENGINE_AUTHOR "Brighten Zhang"
 
 extern int HASH_SIZE;
 extern int NUM_THREADS;

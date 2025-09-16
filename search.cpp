@@ -7,6 +7,9 @@
 #include "eval.h"
 #include "io.h"
 #include "tt.h"
+#ifdef USE_NNUE
+#include "nnue.h"
+#endif
 #include <atomic>
 #include <string>
 #include <thread>
@@ -83,8 +86,13 @@ int qsearch(Position &s, SearchInfo &si, GlobalInfo &gi, int ply, int alpha, int
         return alpha;
     }
 
+#ifdef USE_NNUE
+    int staticEval = s.evaluate();
+#else
     Evaluate evaluate(s);
     int staticEval = evaluate.getScore();
+#endif
+
     if (!s.inCheck()) {
         if (staticEval >= beta) {
             return beta;
@@ -133,7 +141,6 @@ int qsearch(Position &s, SearchInfo &si, GlobalInfo &gi, int ply, int alpha, int
 
         Position c(s);
         c.makeMove(m);
-
         gi.history.push(std::make_pair(m, c.getKey()));
         score = -qsearch(c, si, gi, ply + 1, -beta, -alpha);
         gi.history.pop();
@@ -173,8 +180,12 @@ int search(Position &s, SearchInfo &si, GlobalInfo &gi, int depth, int ply, int 
         return DRAW;
     }
 
+#ifdef USE_NNUE
+    int staticEval = s.evaluate();
+#else
     Evaluate evaluate(s);
     int staticEval = evaluate.getScore();
+#endif
 
     if (ply >= MAX_PLY) {
         return staticEval;
