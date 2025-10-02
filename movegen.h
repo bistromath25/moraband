@@ -6,7 +6,6 @@
 #ifndef MOVE_GENERATOR_H
 #define MOVE_GENERATOR_H
 
-#include "MagicMoves.hpp"
 #include "defs.h"
 #include "history.h"
 #include "move.h"

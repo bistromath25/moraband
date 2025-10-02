@@ -3,6 +3,7 @@
  * Outer Rim planet that was home to the ancient Sith 
  **/
 
+#include "MagicMoves.hpp"
 #include "movegen.h"
 #include <algorithm>
 
