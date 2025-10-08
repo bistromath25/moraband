@@ -6,6 +6,8 @@
 #include "nnue.h"
 #include "defs.h"
 #include "position.h"
+#include <cmath>
+#include <cstring>
 #include <fstream>
 #include <vector>
 
