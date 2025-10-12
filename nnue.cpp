@@ -6,7 +6,10 @@
 #include "nnue.h"
 #include "defs.h"
 #include "position.h"
+#include <cmath>
+#include <cstring>
 #include <fstream>
+#include <vector>
 
 #if defined(__APPLE__) && defined(__aarch64__)
 #include <arm_neon.h>
