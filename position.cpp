@@ -537,7 +537,7 @@ bool Position::insufficientMaterial() const {
     return res;
 }
 
-std::string Position::getFen() { // Current FEN
+std::string Position::getFen() const { // Current FEN
     Square src = getSrc(getPreviousMove());
     Square dst = getDst(getPreviousMove());
     PieceType moved = onSquare(dst);
