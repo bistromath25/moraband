@@ -13,6 +13,7 @@
 #include "tune.h"
 #endif
 #include <algorithm>
+#include <array>
 #include <sstream>
 
 int HASH_SIZE = DEFAULT_HASH_SIZE;

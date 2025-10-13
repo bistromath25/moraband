@@ -10,6 +10,7 @@
 #include "position.h"
 #include "timeman.h"
 #include "variation.h"
+#include <array>
 
 constexpr int LMR_COUNT = 3;
 constexpr int LMR_DEPTH = 2;
