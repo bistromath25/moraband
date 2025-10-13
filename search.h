@@ -60,11 +60,11 @@ struct GlobalInfo {
 
 constexpr int MAX_THREADS = 64;
 extern int NUM_THREADS;
-extern GlobalInfo global_info[MAX_THREADS];
+extern std::array<GlobalInfo, MAX_THREADS> global_info;
 
 #ifdef TUNE
-int qsearch(Position &s, SearchInfo &si, GlobalInfo &gi, int ply, int alpha, int beta);
+int qsearch(const Position &s, SearchInfo &si, GlobalInfo &gi, int ply, int alpha, int beta);
 #endif
-Move search(Position &s, SearchInfo &si);
+Move search(const Position &s, SearchInfo &si);
 
 #endif

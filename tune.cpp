@@ -110,15 +110,10 @@ void set_mobility(std::vector<Parameter> &parameters) {
 }
 
 void get_fen_info(std::string &s, std::vector<std::string> &v) {
-    int i = 0;
-    for (int j = 0; j < s.length(); ++j) {
-        if (s[j] == ';') {
-            v.push_back(s.substr(i, j - i));
-            i = j + 2;
-        }
-        if (j == s.length() - 1) {
-            v.push_back(s.substr(i));
-        }
+    auto i = s.find("; ");
+    if (i != std::string::npos) {
+        v.push_back(s.substr(0, i));
+        v.push_back(s.substr(i + 2));
     }
 }
 

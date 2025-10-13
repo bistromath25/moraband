@@ -43,7 +43,7 @@ void Variation::clearPv() {
     std::fill(pv.begin(), pv.begin() + MAX_PLY, std::make_pair(0, 0));
 }
 
-void Variation::checkPv(Position &s) {
+void Variation::checkPv(const Position &s) {
     Position c(s);
     for (int i = 0; i < MAX_PLY; ++i) {
         Move nextMove = pv[i].first;

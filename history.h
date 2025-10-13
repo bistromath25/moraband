@@ -53,7 +53,7 @@ public:
             game_history.pop_back();
         }
     }
-    bool isThreefoldRepetition(Position &s) const {
+    bool isThreefoldRepetition(const Position &s) const {
         int cnt = 0;
         for (int i = game_history.size() - 5; i >= 0; i -= 4) {
             if (game_history[i].second == s.getKey() && ++cnt == 2) {

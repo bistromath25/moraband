@@ -24,7 +24,7 @@ public:
     bool isMate() const;
     int getMateInN() const;
     void clearPv();
-    void checkPv(Position &s);
+    void checkPv(const Position &s);
     void printPv();
     int getIndex(int ply); // Triangular index
 private:
