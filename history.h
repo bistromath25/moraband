@@ -81,15 +81,6 @@ public:
         assert(butterfly[getSrc(move)][getDst(move)] > 0);
         return history[getSrc(move)][getDst(move)] / butterfly[getSrc(move)][getDst(move)];
     }
-    int count(Position &s) {
-        int cnt = 0;
-        for (int i = game_history.size() - 1; i >= 0; i -= 4) {
-            if (game_history[i].second == s.getKey()) {
-                ++cnt;
-            }
-        }
-        return cnt;
-    }
 
 private:
     std::vector<std::pair<Move, U64>> game_history;
