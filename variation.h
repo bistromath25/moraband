@@ -25,8 +25,7 @@ public:
     int getMateInN() const;
     void clearPv();
     void checkPv(const Position &s);
-    void printPv();
-    int getIndex(int ply); // Triangular index
+    void printPv() const;
 private:
     std::array<std::pair<Move, U64>, MAX_PV_SIZE> pv; // (move, key)
     bool isMatingLine;

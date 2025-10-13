@@ -27,7 +27,7 @@ public:
         }
         push(std::make_pair(NULL_MOVE, s.getKey()));
     }
-    std::size_t size() {
+    std::size_t size() const {
         return game_history.size();
     }
     void init() {
