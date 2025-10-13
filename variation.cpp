@@ -72,4 +72,3 @@ void Variation::printPv() const {
         std::cout << to_string(it->first) << " ";
     }
 }
-
