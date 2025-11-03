@@ -36,13 +36,13 @@ jobs:
       
       - name: Create zip artifact
         working-directory: build
-        run: zip Moraband-v1.2-Linux-${GITHUB_SHA::7}.zip Moraband bench.txt
+        run: zip Moraband-v1.2-Linux-$(echo ${GITHUB_SHA} | cut -c1-7).zip Moraband bench.txt
 
       - name: Upload zip artifact
         uses: actions/upload-artifact@v4
         with:
           name: Moraband-Linux-artifact
-          path: build/Moraband-v1.2-Linux-${GITHUB_SHA::7}.zip
+          path: build/Moraband-v1.2-Linux-${{ github.sha.substr(0,7) }}.zip
 
       - name: Post results
         if: github.event_name == 'pull_request'
