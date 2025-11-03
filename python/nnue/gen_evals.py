@@ -1,6 +1,7 @@
 import argparse
 import logging
 import os
+import time
 from multiprocessing import Pool, cpu_count
 from pathlib import Path
 
@@ -19,6 +20,11 @@ STOCKFISH_PATH = "/opt/homebrew/bin/stockfish"
 DEPTH = 6
 NUM_WORKERS = cpu_count() or 4
 MAX_FENS = 10_000_000
+
+
+def format_time(seconds: float) -> str:
+    minutes, sec = divmod(int(seconds), 60)
+    return f"{minutes:02d}:{sec:02d}"
 
 
 # Persistent Worker Engine
@@ -58,7 +64,7 @@ def fen_worker(task):
 
 
 def clean_fen(fen: str) -> str:
-    return fen.split("[")[0].strip()
+    return " ".join(fen.split(maxsplit=6)[:6])
 
 
 def load_fens(path: str, max_fens: int = None):
@@ -111,13 +117,20 @@ def generate_fen_evals_slice(
     ) as pool:
         results = pool.imap_unordered(fen_worker, args_list)
         result_buffer = [None] * total
+        start_time = time.time()
         completed = 0
 
         for idx, fen, score in results:
             result_buffer[idx] = (idx, fen, score)
             completed += 1
             if completed % 10_000 == 0 or completed == total:
-                logging.info(f"Evaluated {completed}/{total} positions")
+                elapsed = time.time() - start_time
+                remaining = total - completed
+                eta_seconds = (elapsed / completed) * remaining if completed > 0 else 0
+                eta_str = format_time(eta_seconds)
+                logging.info(
+                    f"Evaluated {completed}/{total} positions - ETA: {eta_str}"
+                )
 
     save_fens(cache_path, result_buffer)
     logging.info("All evaluations complete.")
