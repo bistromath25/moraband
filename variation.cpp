@@ -6,6 +6,10 @@
 #include "variation.h"
 #include "eval.h"
 
+constexpr int getIndex(int ply) {
+    return ply * (2 * MAX_PLY + 1 - ply) / 2;
+}
+
 Variation::Variation() : isMatingLine(false), sz(0) {}
 
 int Variation::size() const {
@@ -43,7 +47,7 @@ void Variation::clearPv() {
     std::fill(pv.begin(), pv.begin() + MAX_PLY, std::make_pair(0, 0));
 }
 
-void Variation::checkPv(Position &s) {
+void Variation::checkPv(const Position &s) {
     Position c(s);
     for (int i = 0; i < MAX_PLY; ++i) {
         Move nextMove = pv[i].first;
@@ -62,13 +66,9 @@ void Variation::checkPv(Position &s) {
     }
 }
 
-void Variation::printPv() {
+void Variation::printPv() const {
     std::cout << " pv ";
     for (auto it = pv.begin(); it != pv.begin() + sz; ++it) {
         std::cout << to_string(it->first) << " ";
     }
-}
-
-int Variation::getIndex(int ply) {
-    return ply * (2 * MAX_PLY + 1 - ply) / 2;
 }

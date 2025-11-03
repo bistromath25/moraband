@@ -82,7 +82,7 @@ inline U64 operator^(Square s, U64 u) {
 inline int pop_count(U64 bb) {
 #if defined(_MSC_VER) && defined(_WIN64)
     return _mm_popcnt_u64(bb);
-#elif defined(__GNUC__)
+#elif defined(__GNUC__) || defined(__clang__)
     return __builtin_popcountll(bb);
 #else
     constexpr U64 m1 = 0x5555555555555555ull;
@@ -110,7 +110,7 @@ inline Square get_lsb(U64 bb) {
     _BitScanForward(&index, bb >> 32);
     return static_cast<Square>(index);
 #endif
-#elif defined(__GNUC__)
+#elif defined(__GNUC__) || defined(__clang__)
     return static_cast<Square>(__builtin_ctzll(bb));
 #else
     constexpr U64 DeBrujin = 0x03f79d71b4cb0a89;

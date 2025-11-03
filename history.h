@@ -9,6 +9,7 @@
 #include "defs.h"
 #include "move.h"
 #include "position.h"
+#include <array>
 #include <vector>
 
 /** History heuristic for move ordering */
@@ -27,7 +28,7 @@ public:
         }
         push(std::make_pair(NULL_MOVE, s.getKey()));
     }
-    std::size_t size() {
+    std::size_t size() const {
         return game_history.size();
     }
     void init() {
@@ -53,7 +54,7 @@ public:
             game_history.pop_back();
         }
     }
-    bool isThreefoldRepetition(Position &s) const {
+    bool isThreefoldRepetition(const Position &s) const {
         int cnt = 0;
         for (int i = game_history.size() - 5; i >= 0; i -= 4) {
             if (game_history[i].second == s.getKey() && ++cnt == 2) {
@@ -80,15 +81,6 @@ public:
     int getHistoryScore(Move move) const {
         assert(butterfly[getSrc(move)][getDst(move)] > 0);
         return history[getSrc(move)][getDst(move)] / butterfly[getSrc(move)][getDst(move)];
-    }
-    int count(Position &s) {
-        int cnt = 0;
-        for (int i = game_history.size() - 1; i >= 0; i -= 4) {
-            if (game_history[i].second == s.getKey()) {
-                ++cnt;
-            }
-        }
-        return cnt;
     }
 
 private:

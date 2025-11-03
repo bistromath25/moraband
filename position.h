@@ -47,7 +47,7 @@ public:
     int getPstScore(GameStage g) const;
     int getGamePhase() const;
     void setGamePhase();
-    std::string getFen();
+    std::string getFen() const;
     Move getPreviousMove() const;
 
     template<PieceType P>

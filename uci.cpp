@@ -13,6 +13,7 @@
 #include "tune.h"
 #endif
 #include <algorithm>
+#include <array>
 #include <sstream>
 
 int HASH_SIZE = DEFAULT_HASH_SIZE;
@@ -34,7 +35,7 @@ Move get_uci_move(std::string &token, Position &s) {
 }
 
 /** UCI go command */
-void go(std::istringstream &is, Position &s) {
+void go(std::istringstream &is, const Position &s) {
     std::string token;
     SearchInfo search_info;
 

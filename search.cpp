@@ -12,11 +12,11 @@
 #include <thread>
 
 std::atomic<bool> THREAD_STOP{false};
-std::thread threads[MAX_THREADS];
-GlobalInfo global_info[MAX_THREADS];
-std::pair<int, bool> results[MAX_THREADS];
+std::array<std::thread, MAX_THREADS> threads;
+std::array<GlobalInfo, MAX_THREADS> global_info;
+std::array<std::pair<int, bool>, MAX_THREADS> results;
 
-inline int value_to_tt(int value, int ply) {
+constexpr int value_to_tt(int value, int ply) {
     if (value >= CHECKMATE_BOUND) {
         value += ply;
     }
@@ -26,7 +26,7 @@ inline int value_to_tt(int value, int ply) {
     return value;
 }
 
-inline int value_from_tt(int value, int ply) {
+constexpr int value_from_tt(int value, int ply) {
     if (value >= CHECKMATE_BOUND) {
         value -= ply;
     }
@@ -64,7 +64,7 @@ bool stop_search(SearchInfo &si) {
 }
 
 /** Quiescence search */
-int qsearch(Position &s, SearchInfo &si, GlobalInfo &gi, int ply, int alpha, int beta) {
+int qsearch(const Position &s, SearchInfo &si, GlobalInfo &gi, int ply, int alpha, int beta) {
     ++si.nodes;
     assert(ply <= MAX_PLY);
 
@@ -159,7 +159,7 @@ int qsearch(Position &s, SearchInfo &si, GlobalInfo &gi, int ply, int alpha, int
 }
 
 /** Main search */
-int search(Position &s, SearchInfo &si, GlobalInfo &gi, int depth, int ply, int alpha, int beta, bool isPv, bool isNull) {
+int search(const Position &s, SearchInfo &si, GlobalInfo &gi, int depth, int ply, int alpha, int beta, bool isPv, bool isNull) {
     assert(depth >= 0);
 
     if (depth == 0 || ply > MAX_PLY) { // Perform qsearch when regular search is completed
@@ -368,7 +368,7 @@ int search(Position &s, SearchInfo &si, GlobalInfo &gi, int depth, int ply, int 
 }
 
 /** Root search */
-int search_root(Position &s, SearchInfo &si, GlobalInfo &gi, int depth, int ply, int alpha, int beta) {
+int search_root(const Position &s, SearchInfo &si, GlobalInfo &gi, int depth, int ply, int alpha, int beta) {
     assert(depth >= 0);
 
     ++si.nodes;
@@ -462,7 +462,7 @@ int search_root(Position &s, SearchInfo &si, GlobalInfo &gi, int depth, int ply,
 }
 
 /** Multi-threaded search driver */
-void parallel_search(Position s, SearchInfo si, int depth, int alpha, int beta, int t) {
+void parallel_search(const Position s, SearchInfo si, int depth, int alpha, int beta, int t) {
     auto &[value, valid] = results[t];
     auto &gi = global_info[t];
     valid = false;
@@ -474,7 +474,7 @@ void parallel_search(Position s, SearchInfo si, int depth, int alpha, int beta, 
 }
 
 /** Aspiration window search */
-int aspiration_window(Position &s, SearchInfo &si, int depth, int prev_score) {
+int aspiration_window(const Position &s, SearchInfo &si, int depth, int prev_score) {
     if (depth <= 4) {
         return search_root(s, si, global_info[0], depth, 0, NEG_INF, POS_INF);
     }
@@ -499,7 +499,7 @@ int aspiration_window(Position &s, SearchInfo &si, int depth, int prev_score) {
 }
 
 /** Iterative deepening framework */
-Move iterative_deepening(Position &s, SearchInfo &si) {
+Move iterative_deepening(const Position &s, SearchInfo &si) {
     Move best_move = NULL_MOVE;
     int score = 0;
     for (int d = 1; !si.quit && d < MAX_PLY; ++d) {
@@ -563,7 +563,7 @@ Move iterative_deepening(Position &s, SearchInfo &si) {
 }
 
 /** Search driver */
-Move search(Position &s, SearchInfo &si) {
+Move search(const Position &s, SearchInfo &si) {
     for (int i = 0; i < NUM_THREADS; ++i) {
         global_info[i].clear();
         results[i].first = 0;
