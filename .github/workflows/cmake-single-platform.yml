@@ -48,13 +48,16 @@ jobs:
           path: build/Moraband-v1.2-Linux-${{ env.SHORT_SHA }}.zip
 
       - name: Post results
+        working-directory: build
         if: github.event_name == 'pull_request'
         run: |
-          tail -n 3 build/bench.txt | grep -q "^Time:" && \
-          tail -n 3 build/bench.txt | grep -q "^Nodes:" && \
-          tail -n 3 build/bench.txt | grep -q "^NPS:" && \
-          gh pr comment "$PR_URL" --body <(tail -n 3 build/bench.txt) || \
-          echo "Bench results invalid or missing, skipping comment"
+          tail -n 3 bench.txt > results.txt
+          if grep -q "^Time:" results.txt && grep -q "^Nodes:" results.txt && grep -q "^NPS:" results.txt; then
+            echo "Bench results valid, posting comment"
+            gh pr comment "$PR_URL" --body-file results.txt
+          else
+            echo "Bench results invalid or missing, skipping comment"
+          fi
         env:
           GH_TOKEN: ${{ secrets.GITHUB_TOKEN }}
           PR_URL: ${{ github.event.pull_request.html_url }}
