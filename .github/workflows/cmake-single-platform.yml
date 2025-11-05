@@ -32,15 +32,23 @@ jobs:
 
       - name: Bench
         working-directory: build
-        run: ./Moraband bench | tee ../bench.txt
+        run: ./Moraband bench | tee bench.txt
+      
+      - name: Create zip artifact
+        working-directory: build
+        run: |
+          SHORT_SHA=$(echo "${GITHUB_SHA}" | cut -c1-7)
+          zip Moraband-v1.2-Linux-${SHORT_SHA}.zip Moraband bench.txt
+          echo "SHORT_SHA=$SHORT_SHA" >> $GITHUB_ENV
 
-      - name: Upload bench output
+      - name: Upload zip artifact
         uses: actions/upload-artifact@v4
         with:
-          name: bench
-          path: bench.txt
+          name: Moraband-Linux
+          path: build/Moraband-v1.2-Linux-${{ env.SHORT_SHA }}.zip
 
       - name: Post results
+        working-directory: build
         if: github.event_name == 'pull_request'
         run: |
           tail -n 3 bench.txt > results.txt
