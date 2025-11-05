@@ -8,6 +8,6 @@
 
 #include "position.h"
 
-void perftTest(Position &s, int depth, bool mt);
+void perftTest(const Position &s, int depth, bool mt);
 
 #endif

@@ -17,7 +17,7 @@
 std::vector<long double> diffs[MAX_THREADS];
 std::vector<std::string> input;
 long double k = 0.93L;
-U64 num_fens;
+int num_fens;
 
 struct Parameter {
     int *variable;
@@ -110,15 +110,10 @@ void set_mobility(std::vector<Parameter> &parameters) {
 }
 
 void get_fen_info(std::string &s, std::vector<std::string> &v) {
-    int i = 0;
-    for (int j = 0; j < s.length(); ++j) {
-        if (s[j] == ';') {
-            v.push_back(s.substr(i, j - i));
-            i = j + 2;
-        }
-        if (j == s.length() - 1) {
-            v.push_back(s.substr(i));
-        }
+    auto i = s.find("; ");
+    if (i != std::string::npos) {
+        v.push_back(s.substr(0, i));
+        v.push_back(s.substr(i + 2));
     }
 }
 
@@ -129,7 +124,7 @@ inline long double sigmoid(long double x) {
 inline long double kahan_sum() {
     long double result = 0.0L, c = 0.0L, y, t;
     for (int thread_id = 0; thread_id < MAX_THREADS; ++thread_id) {
-        for (int i = 0; i < diffs[thread_id].size(); ++i) {
+        for (int i = 0; i < int(diffs[thread_id].size()); ++i) {
             y = diffs[thread_id][i] - c;
             t = result + y;
             c = (t - result) - y;
@@ -177,7 +172,7 @@ void get_single_error(int thread_id) {
 }
 
 long double get_error(std::vector<Parameter> &parameters) {
-    for (int i = 0; i < parameters.size(); ++i) {
+    for (int i = 0; i < int(parameters.size()); ++i) {
         Parameter *p = &parameters[i];
         set_parameter(p);
     }
@@ -231,7 +226,7 @@ void get_best_k(std::vector<Parameter> &parameters) {
 }
 
 void tune(std::vector<Parameter> &parameters) {
-    for (int i = 0; i < parameters.size(); ++i) {
+    for (int i = 0; i < int(parameters.size()); ++i) {
         Parameter *p = &parameters[i];
         int d = std::max(10, abs(p->value / 5));
         int min = p->value - d, max = p->value + d;
@@ -302,7 +297,7 @@ void tune(const std::string &fens_file) {
     std::cerr << "best error " << best_error << "\n";
 
     for (int i = 0; i < 2; ++i) {
-        for (int j = 0; j < best.size(); ++j) {
+        for (int j = 0; j < int(best.size()); ++j) {
             best[j].stability = 1;
         }
 
@@ -310,7 +305,7 @@ void tune(const std::string &fens_file) {
         bool improving = true;
         while (improving) {
             improving = false;
-            for (int b = 0; b < best.size(); ++b) {
+            for (int b = 0; b < int(best.size()); ++b) {
                 if (best[b].stability >= 3) {
                     continue;
                 }
@@ -349,7 +344,7 @@ void tune(const std::string &fens_file) {
                 }
             }
 
-            for (int b = 0; b < best.size(); ++b) {
+            for (int b = 0; b < int(best.size()); ++b) {
                 Parameter *p = &best[b];
                 std::cerr << "best " << p->name << " " << p->value << "\n";
             }
@@ -357,7 +352,7 @@ void tune(const std::string &fens_file) {
     }
 
     std::ofstream tuning_log("tuning_log", std::ios_base::app);
-    for (int b = 0; b < best.size(); ++b) {
+    for (int b = 0; b < int(best.size()); ++b) {
         Parameter *p = &best[b];
         std::cerr << "best " << p->name << " " << p->value << "\n";
         tuning_log << "best " << p->name << " " << p->value << "\n";
