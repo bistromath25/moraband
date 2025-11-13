@@ -9,17 +9,17 @@
 #include <thread>
 #include <vector>
 
-static History history;
-std::vector<U64> nodeCount;
-
 /** Perft test */
 U64 perft(const Position &s, int depth) {
     int nodes = 0;
-    if (s.getFiftyMoveRule() > 99) return nodes;
+    if (s.getFiftyMoveRule() > 99) {
+        return nodes;
+    }
     MoveList moveList(s);
-    if (depth == 1) return moveList.size();
-    Move m;
-    while ((m = moveList.getBestMove())) {
+    if (depth == 1) {
+        return moveList.size();
+    }
+    while (Move m = moveList.getBestMove()) {
         Position c(s);
         c.makeMove(m);
         nodes += perft(c, depth - 1);
@@ -27,27 +27,33 @@ U64 perft(const Position &s, int depth) {
     return nodes;
 }
 
-void test(Position s, MoveList *moveList, int depth) {
-    Move m = moveList->getBestMove();
-    while (m != NULL_MOVE) {
-        Position c(s);
-        c.makeMove(m);
-        int nodes = perft(c, depth - 1);
-        m = moveList->getBestMove();
-        nodeCount.push_back(nodes);
+void perftWorker(const Position &pos, const std::vector<Move> &moves, int depth, size_t start,
+                 size_t step, std::vector<U64> &results) {
+    for (size_t i = start; i < moves.size(); i += step) {
+        Position child(pos);
+        child.makeMove(moves[i]);
+        results[i] = perft(child, depth - 1);
     }
 }
 
 /** Multi-threaded Perft test */
-U64 MTperft(const Position &s, int depth) {
-    std::vector<std::thread> threads;
-    nodeCount.clear();
-    MoveList moveList(s);
-    for (int i = 0; i < NUM_THREADS; ++i) {
-        threads.push_back(std::thread(test, s, &moveList, depth));
+U64 MTperft(const Position &pos, int depth) {
+    MoveList moveList(pos);
+    std::vector<Move> moves;
+    while (Move m = moveList.getBestMove()) {
+        moves.push_back(m);
     }
-    for (std::thread &thread : threads) thread.join();
-    return std::accumulate(nodeCount.begin(), nodeCount.end(), 0);
+    std::vector<U64> results(moves.size(), 0);
+    std::vector<std::thread> threads;
+    int numThreads = std::min(NUM_THREADS, static_cast<int>(moves.size()));
+    for (int t = 0; t < numThreads; ++t) {
+        threads.emplace_back(perftWorker, std::cref(pos), std::cref(moves),
+                             depth, t, numThreads, std::ref(results));
+    }
+    for (auto &thread : threads) {
+        thread.join();
+    }
+    return std::accumulate(results.begin(), results.end(), 0ULL);
 }
 
 void perftTest(const Position &s, int depth, bool mt) {
