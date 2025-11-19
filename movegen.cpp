@@ -209,24 +209,36 @@ void MoveList::pushPawnMoves() {
 template<MoveType T>
 void MoveList::pushCastle() {
     Square k = position.getKingSquare(position.getOurColor());
-    if (position.canCastleKingside() && !(between_hor[k][k - 3] & position.getOccupancyBB()) && !position.attacked(k - 1) && !position.attacked(k - 2)) {
-        if (T == MoveType::QuietChecks) {
-            if (square_bb[k - 1] & position.getCheckSquaresBB(PIECETYPE_ROOK)) {
+    if (position.canCastleKingside() &&
+        position.canCastle(k, position.getOurColor() == WHITE ? G1 : G8, position.getKingsideCastleRookSrc())) {
+        if (position.isChess960()) {
+            push(makeCastle(k, position.getKingsideCastleRookSrc()));
+        }
+        else {
+            if (T == MoveType::QuietChecks) {
+                if (square_bb[k - 1] & position.getCheckSquaresBB(PIECETYPE_ROOK)) {
+                    push(makeCastle(k, k - 2));
+                }
+            }
+            else {
                 push(makeCastle(k, k - 2));
             }
         }
-        else {
-            push(makeCastle(k, k - 2));
-        }
     }
-    if (position.canCastleQueenside() && !(between_hor[k][k + 4] & position.getOccupancyBB()) && !position.attacked(k + 1) && !position.attacked(k + 2)) {
-        if (T == MoveType::QuietChecks) {
-            if (square_bb[k + 1] & position.getCheckSquaresBB(PIECETYPE_ROOK)) {
+    if (position.canCastleQueenside() &&
+        position.canCastle(k, position.getOurColor() == WHITE ? C1 : C8, position.getQueensideCastleRookSrc())) {
+        if (position.isChess960()) {
+            push(makeCastle(k, position.getQueensideCastleRookSrc()));
+        }
+        else {
+            if (T == MoveType::QuietChecks) {
+                if (square_bb[k + 1] & position.getCheckSquaresBB(PIECETYPE_ROOK)) {
+                    push(makeCastle(k, k + 2));
+                }
+            }
+            else {
                 push(makeCastle(k, k + 2));
             }
-        }
-        else {
-            push(makeCastle(k, k + 2));
         }
     }
 }

@@ -12,7 +12,13 @@
 Position::Position() {}
 
 Position::Position(const Position &s)
-    : us(s.us), them(s.them), fiftyMoveRule(s.fiftyMoveRule), castleRights(s.castleRights), phase(s.phase), key(s.key), pawnKey(s.pawnKey), checkers(s.checkers), enPassant(s.enPassant), previousMove(s.previousMove), checkSquares(s.checkSquares), pinned(s.pinned), occupancy(s.occupancy), pieceIndex(s.pieceIndex), board(s.board), pieces(s.pieces), pieceCounts(s.pieceCounts), pstScore(s.pstScore), pieceList(s.pieceList) {}
+    : us(s.us), them(s.them), fiftyMoveRule(s.fiftyMoveRule), castleRights(s.castleRights), phase(s.phase), chess960(s.chess960), key(s.key), pawnKey(s.pawnKey), checkers(s.checkers), enPassant(s.enPassant), previousMove(s.previousMove), checkSquares(s.checkSquares), pinned(s.pinned), occupancy(s.occupancy), pieceIndex(s.pieceIndex), board(s.board), pieces(s.pieces), pieceCounts(s.pieceCounts), pstScore(s.pstScore), pieceList(s.pieceList) {
+    for (int r = 0; r < 2; ++r) {
+        for (int c = 0; c < 2; ++c) {
+            castleRookSrc[r][c] = s.castleRookSrc[r][c];
+        }
+    }
+}
 
 Position &Position::operator=(const Position &s) {
     if (this != &s) {
@@ -21,6 +27,7 @@ Position &Position::operator=(const Position &s) {
         fiftyMoveRule = s.fiftyMoveRule;
         castleRights = s.castleRights;
         phase = s.phase;
+        chess960 = s.chess960;
         key = s.key;
         pawnKey = s.pawnKey;
         checkers = s.checkers;
@@ -35,12 +42,17 @@ Position &Position::operator=(const Position &s) {
         pieceCounts = s.pieceCounts;
         pstScore = s.pstScore;
         pieceList = s.pieceList;
+        for (int r = 0; r < 2; ++r) {
+            for (int c = 0; c < 2; ++c) {
+                castleRookSrc[r][c] = s.castleRookSrc[r][c];
+            }
+        }
     }
     return *this;
 }
 
-Position::Position(const std::string &fen) {
-    init();
+Position::Position(const std::string &fen, bool isChess960) {
+    init(isChess960);
 
     std::string::const_iterator it;
     int position = 0;
@@ -112,13 +124,33 @@ Position::Position(const std::string &fen) {
     setPins(BLACK);
     setCheckers();
     setGamePhase();
+
+    if (chess960) {
+        for (const Color c : {WHITE, BLACK}) {
+            Square k = getKingSquare(c);
+            castleRookSrc[c][0] = no_sq;
+            castleRookSrc[c][1] = no_sq;
+            for (Square p : getPieceList<PIECETYPE_ROOK>(c)) {
+                if (p == no_sq) {
+                    break;
+                }
+                if (p > k) {
+                    castleRookSrc[c][0] = p;
+                }
+                else if (p < k) {
+                    castleRookSrc[c][1] = p;
+                }
+            }
+        }
+    }
 }
 
-void Position::init() {
+void Position::init(bool isChess960) {
     us = WHITE;
     them = BLACK;
     fiftyMoveRule = 0;
     castleRights = 0;
+    chess960 = isChess960;
     key = 0;
     pawnKey = 0;
     checkers = 0;
@@ -137,6 +169,10 @@ void Position::init() {
             j->fill(no_sq);
         }
     }
+    castleRookSrc[WHITE][0] = A1;
+    castleRookSrc[WHITE][1] = H1;
+    castleRookSrc[BLACK][0] = A8;
+    castleRookSrc[BLACK][1] = H8;
 }
 
 void Position::setPins(Color c) {
@@ -212,7 +248,7 @@ bool Position::isLegal(Move move) const {
         return false;
     }
 
-    if ((square_bb[dst] & occupancy[us]) != 0) {
+    if (!isChess960() && (square_bb[dst] & occupancy[us]) != 0) {
         return false;
     }
 
@@ -237,7 +273,7 @@ bool Position::isValid(Move move, U64 validMoves) const {
     if (isCastle(move) && onSquare(src) != PIECETYPE_KING) {
         return false;
     }
-    if (!(square_bb[src] & getOccupancyBB(us)) || (square_bb[dst] & getOccupancyBB(us)) || dst == getKingSquare(them)) {
+    if (!(square_bb[src] & getOccupancyBB(us)) || (square_bb[dst] & getOccupancyBB(us)) || dst == getKingSquare(them)) { // chess960 check castling
         return false;
     }
 
@@ -279,11 +315,16 @@ bool Position::isValid(Move move, U64 validMoves) const {
         case PIECETYPE_KING: {
             Square k = getKingSquare(us);
             if (isCastle(move)) {
-                if (src > dst) {
-                    return (canCastleKingside() && !(between_hor[k][k - 3] & getOccupancyBB()) && !attacked(k - 1) && !attacked(k - 2));
+                if (isChess960()) {
+                    return canCastle(src, dst, (dst < src) ? getKingsideCastleRookSrc() : getQueensideCastleRookSrc());
                 }
                 else {
-                    return (canCastleQueenside() && !(between_hor[k][k + 4] & getOccupancyBB()) && !attacked(k + 1) && !attacked(k + 2));
+                    if (src > dst) {
+                        return (canCastleKingside() && !(between_hor[k][k - 3] & getOccupancyBB()) && !attacked(k - 1) && !attacked(k - 2));
+                    }
+                    else {
+                        return (canCastleQueenside() && !(between_hor[k][k + 4] & getOccupancyBB()) && !attacked(k + 1) && !attacked(k + 2));
+                    }
                 }
             }
             return square_bb[dst];
@@ -435,13 +476,25 @@ void Position::makeMove(Move move) {
     }
 
     if (isCastle(move)) {
-        if (dst < src) {
-            movePiece(us, PIECETYPE_ROOK, src - 3, dst + 1);
-            movePiece(us, PIECETYPE_KING, src, dst);
+        if (isChess960()) {
+            if (dst < src) {
+                movePiece(us, PIECETYPE_ROOK, getKingsideCastleRookSrc(), us == WHITE ? F1 : F8);
+                movePiece(us, PIECETYPE_KING, src, us == WHITE ? G1 : G8);
+            }
+            else {
+                movePiece(us, PIECETYPE_ROOK, getQueensideCastleRookSrc(), us == WHITE ? D1 : D8);
+                movePiece(us, PIECETYPE_KING, src, us == WHITE ? C1 : C8);
+            }
         }
         else {
-            movePiece(us, PIECETYPE_ROOK, src + 4, dst - 1);
-            movePiece(us, PIECETYPE_KING, src, dst);
+            if (dst < src) {
+                movePiece(us, PIECETYPE_ROOK, src - 3, dst + 1);
+                movePiece(us, PIECETYPE_KING, src, dst);
+            }
+            else {
+                movePiece(us, PIECETYPE_ROOK, src + 4, dst - 1);
+                movePiece(us, PIECETYPE_KING, src, dst);
+            }
         }
     }
     else {

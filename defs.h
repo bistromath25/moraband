@@ -246,6 +246,24 @@ inline Color operator!(const Color c) { return static_cast<Color>(!static_cast<b
 inline Square operator+(const Square s, const int i) { return static_cast<Square>(static_cast<int>(s) + i); }
 inline Square operator-(const Square s, const int i) { return static_cast<Square>(static_cast<int>(s) - i); }
 inline Square operator-(const Square s1, const Square s2) { return static_cast<Square>(static_cast<int>(s1) - static_cast<int>(s2)); }
+inline Square min(const Square s1, const Square s2) {
+    if (file(s1) < file(s2)) {
+        return s1;
+    }
+    else if (rank(s1) < rank(s2)) {
+        return s1;
+    }
+    return s2;
+}
+inline Square max(const Square s1, const Square s2) {
+    if (file(s1) > file(s2)) {
+        return s1;
+    }
+    else if (rank(s1) > rank(s2)) {
+        return s1;
+    }
+    return s2;
+}
 
 /** Utility functions for chess operations */
 inline int abs(int x) { return x >= 0 ? x : -x; }
