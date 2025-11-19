@@ -19,7 +19,7 @@
 int HASH_SIZE = DEFAULT_HASH_SIZE;
 int NUM_THREADS = 1;
 int MOVE_OVERHEAD = 500;
-bool IS_UCI_CHESS960 = true;
+bool IS_UCI_CHESS960 = false;
 
 /** Validate incoming UCI move */
 Move get_uci_move(std::string &token, Position &s) {
