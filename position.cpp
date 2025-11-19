@@ -128,8 +128,8 @@ Position::Position(const std::string &fen, bool isChess960) {
     if (chess960) {
         for (const Color c : {WHITE, BLACK}) {
             Square k = getKingSquare(c);
-            castleRookSrc[c][0] = no_sq;
-            castleRookSrc[c][1] = no_sq;
+            castleRookSrc[c][CASTLE_KINGSIDE] = no_sq;
+            castleRookSrc[c][CASTLE_QUEENSIDE] = no_sq;
             for (Square p : getPieceList<PIECETYPE_ROOK>(c)) {
                 if (p == no_sq) {
                     break;
@@ -165,10 +165,10 @@ void Position::init(bool isChess960) {
             j->fill(no_sq);
         }
     }
-    castleRookSrc[WHITE][0] = A1;
-    castleRookSrc[WHITE][1] = H1;
-    castleRookSrc[BLACK][0] = A8;
-    castleRookSrc[BLACK][1] = H8;
+    castleRookSrc[WHITE][CASTLE_KINGSIDE] = H1;
+    castleRookSrc[WHITE][CASTLE_QUEENSIDE] = A1;
+    castleRookSrc[BLACK][CASTLE_KINGSIDE] = H8;
+    castleRookSrc[BLACK][CASTLE_QUEENSIDE] = A8;
 }
 
 void Position::setPins(Color c) {
