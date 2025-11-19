@@ -478,12 +478,24 @@ void Position::makeMove(Move move) {
     if (isCastle(move)) {
         if (isChess960()) {
             if (dst < src) {
-                movePiece(us, PIECETYPE_ROOK, getKingsideCastleRookSrc(), us == WHITE ? F1 : F8);
-                movePiece(us, PIECETYPE_KING, src, us == WHITE ? G1 : G8);
+                Square rookDst = us == WHITE ? F1 : F8;
+                if (getKingsideCastleRookSrc() != rookDst) {
+                    movePiece(us, PIECETYPE_ROOK, getKingsideCastleRookSrc(), rookDst);
+                }
+                Square kingDst = us == WHITE ? G1 : G8;
+                if (kingDst != src) {
+                    movePiece(us, PIECETYPE_KING, src, kingDst);
+                }
             }
             else {
-                movePiece(us, PIECETYPE_ROOK, getQueensideCastleRookSrc(), us == WHITE ? D1 : D8);
-                movePiece(us, PIECETYPE_KING, src, us == WHITE ? C1 : C8);
+                Square rookDst = us == WHITE ? D1 : D8;
+                if (getQueensideCastleRookSrc() != rookDst) {
+                    movePiece(us, PIECETYPE_ROOK, getQueensideCastleRookSrc(), rookDst);
+                }
+                Square kingDst = us == WHITE ? C1 : C8;
+                if (kingDst != src) {
+                    movePiece(us, PIECETYPE_KING, src, kingDst);
+                }
             }
         }
         else {

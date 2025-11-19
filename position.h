@@ -316,7 +316,7 @@ inline bool Position::canCastle(Square kingSrc, Square kingDst, Square rookSrc) 
     if (between_hor[min(kingSrc, rookSrc)][max(kingSrc, rookSrc)] & getOccupancyBB()) {
         return false;
     }
-    for (Square s = min(kingSrc, kingDst) + 1; s < max(kingSrc, kingDst); ++s) {
+    for (Square s = min(kingSrc, kingDst); s <= max(kingSrc, kingDst); ++s) {
         if (attacked(s)) {
             return false;
         }
