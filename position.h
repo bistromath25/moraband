@@ -75,7 +75,9 @@ public:
     bool canCastleQueenside() const;
     bool canCastleQueenside(Color c) const;
     inline Square getKingsideCastleRookSrc() const;
+    inline Square getKingsideCastleRookSrc(Color c) const;
     inline Square getQueensideCastleRookSrc() const;
+    inline Square getQueensideCastleRookSrc(Color c) const;
     bool isQuiet(Move move) const;
     bool isCapture(Move move) const;
     bool isEnPassant(Move m) const;
@@ -344,8 +346,16 @@ inline Square Position::getKingsideCastleRookSrc() const {
     return castleRookSrc[us][CASTLE_KINGSIDE];
 }
 
+inline Square Position::getKingsideCastleRookSrc(Color c) const {
+    return castleRookSrc[c][CASTLE_KINGSIDE];
+}
+
 inline Square Position::getQueensideCastleRookSrc() const {
     return castleRookSrc[us][CASTLE_QUEENSIDE];
+}
+
+inline Square Position::getQueensideCastleRookSrc(Color c) const {
+    return castleRookSrc[c][CASTLE_QUEENSIDE];
 }
 
 template<PieceType PIECETYPE_PAWN>

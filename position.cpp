@@ -54,15 +54,14 @@ Position &Position::operator=(const Position &s) {
 Position::Position(const std::string &fen, bool isChess960) {
     init(isChess960);
 
-    std::string::const_iterator it;
+    std::string::const_iterator it = fen.begin();
     int position = 0;
-    for (it = fen.begin(); it < fen.end(); ++it) {
+    for (; it != fen.end() && *it != ' '; ++it) {
         if (isdigit(*it)) {
             position += *it - '0';
         }
         else if (isalpha(*it)) {
             Color c = isupper(*it) ? WHITE : BLACK;
-            Square s = last_sq - position;
             char t = tolower(*it);
             PieceType p = t == 'p'   ? PIECETYPE_PAWN
                           : t == 'n' ? PIECETYPE_KNIGHT
@@ -70,6 +69,7 @@ Position::Position(const std::string &fen, bool isChess960) {
                           : t == 'r' ? PIECETYPE_ROOK
                           : t == 'q' ? PIECETYPE_QUEEN
                                      : PIECETYPE_KING;
+            Square s = last_sq - position;
             addPiece(c, p, s);
             key ^= Zobrist::key(c, p, s);
             if (p == PIECETYPE_PAWN) {
@@ -77,11 +77,12 @@ Position::Position(const std::string &fen, bool isChess960) {
             }
             ++position;
         }
-        else if (*it == ' ') {
-            ++it;
-            break;
+        else if (*it == '/') {
+            continue;
         }
     }
+
+    ++it;
     if (*it == 'w') {
         us = WHITE;
         them = BLACK;
@@ -92,30 +93,45 @@ Position::Position(const std::string &fen, bool isChess960) {
         key ^= Zobrist::key();
     }
 
-    int enpass = -1;
-    for (++it; it < fen.end(); ++it) {
-        if (*it == 'K') {
-            castleRights += WHITE_KINGSIDE_CASTLE;
+    ++it;
+    ++it;
+    if (isChess960) {
+        for (; it != fen.end() && *it != ' '; ++it) {
+            if (isalpha(*it)) {
+                Color c = isupper(*it) ? WHITE : BLACK;
+                int f = 7 - (towlower(*it) - 'a');
+                auto side = file(getKingSquare(c)) < f ? CASTLE_KINGSIDE : CASTLE_QUEENSIDE;
+                castleRookSrc[c][side] = static_cast<Square>(((c == WHITE) ? 0 : 7) * 8 + f);
+                castleRights |= (c == WHITE)
+                                    ? (side == CASTLE_KINGSIDE ? WHITE_KINGSIDE_CASTLE : WHITE_QUEENSIDE_CASTLE)
+                                    : (side == CASTLE_KINGSIDE ? BLACK_KINGSIDE_CASTLE : BLACK_QUEENSIDE_CASTLE);
+            }
         }
-        else if (*it == 'Q') {
-            castleRights += WHITE_QUEENSIDE_CASTLE;
-        }
-        else if (*it == 'k') {
-            castleRights += BLACK_KINGSIDE_CASTLE;
-        }
-        else if (*it == 'q') {
-            castleRights += BLACK_QUEENSIDE_CASTLE;
-        }
-        else if (isalpha(*it)) {
-            enpass = 'h' - *it;
-            ++it;
-            enpass += 8 * (*it - '1');
+    }
+    else {
+        for (; it != fen.end() && *it != ' '; ++it) {
+            if (*it == 'K') {
+                castleRights += WHITE_KINGSIDE_CASTLE;
+            }
+            else if (*it == 'Q') {
+                castleRights += WHITE_QUEENSIDE_CASTLE;
+            }
+            else if (*it == 'k') {
+                castleRights += BLACK_KINGSIDE_CASTLE;
+            }
+            else if (*it == 'q') {
+                castleRights += BLACK_QUEENSIDE_CASTLE;
+            }
         }
     }
     key ^= Zobrist::key(castleRights);
 
-    if (enpass > -1) {
-        enPassant = square_bb[enpass];
+    ++it;
+    if (it != fen.end() && *it != '-') {
+        int f = *it - 'a';
+        ++it;
+        int r = *it - '1';
+        enPassant = square_bb[r * 8 + f];
         key ^= Zobrist::key(get_file(enPassant));
     }
 
@@ -124,21 +140,6 @@ Position::Position(const std::string &fen, bool isChess960) {
     setPins(BLACK);
     setCheckers();
     setGamePhase();
-
-    if (chess960) {
-        for (const Color c : {WHITE, BLACK}) {
-            Square k = getKingSquare(c);
-            castleRookSrc[c][CASTLE_KINGSIDE] = no_sq;
-            castleRookSrc[c][CASTLE_QUEENSIDE] = no_sq;
-            for (Square p : getPieceList<PIECETYPE_ROOK>(c)) {
-                if (p == no_sq) {
-                    break;
-                }
-                auto side = p < k ? CASTLE_KINGSIDE : CASTLE_QUEENSIDE;
-                castleRookSrc[c][side] = p;
-            }
-        }
-    }
 }
 
 void Position::init(bool isChess960) {
@@ -165,10 +166,10 @@ void Position::init(bool isChess960) {
             j->fill(no_sq);
         }
     }
-    castleRookSrc[WHITE][CASTLE_KINGSIDE] = H1;
-    castleRookSrc[WHITE][CASTLE_QUEENSIDE] = A1;
-    castleRookSrc[BLACK][CASTLE_KINGSIDE] = H8;
-    castleRookSrc[BLACK][CASTLE_QUEENSIDE] = A8;
+    castleRookSrc[WHITE][CASTLE_KINGSIDE] = isChess960 ? no_sq : H1;
+    castleRookSrc[WHITE][CASTLE_QUEENSIDE] = isChess960 ? no_sq : A1;
+    castleRookSrc[BLACK][CASTLE_KINGSIDE] = isChess960 ? no_sq : H8;
+    castleRookSrc[BLACK][CASTLE_QUEENSIDE] = isChess960 ? no_sq : A8;
 }
 
 void Position::setPins(Color c) {
@@ -655,21 +656,41 @@ std::string Position::getFen() const { // Current FEN
     }
     fen += ' ';
     bool castle = false;
-    if (canCastleKingside(WHITE)) {
-        fen += 'K';
-        castle = true;
+    if (isChess960()) {
+        if (canCastleKingside(WHITE)) {
+            fen += toupper(char('h' - file(getKingsideCastleRookSrc(WHITE))));
+            castle = true;
+        }
+        if (canCastleQueenside(WHITE)) {
+            fen += toupper(char('h' - file(getQueensideCastleRookSrc(WHITE))));
+            castle = true;
+        }
+        if (canCastleKingside(BLACK)) {
+            fen += char('h' - file(getKingsideCastleRookSrc(BLACK)));
+            castle = true;
+        }
+        if (canCastleQueenside(BLACK)) {
+            fen += char('h' - file(getQueensideCastleRookSrc(BLACK)));
+            castle = true;
+        }
     }
-    if (canCastleQueenside(WHITE)) {
-        fen += 'Q';
-        castle = true;
-    }
-    if (canCastleKingside(BLACK)) {
-        fen += 'k';
-        castle = true;
-    }
-    if (canCastleQueenside(BLACK)) {
-        fen += 'q';
-        castle = true;
+    else {
+        if (canCastleKingside(WHITE)) {
+            fen += 'K';
+            castle = true;
+        }
+        if (canCastleQueenside(WHITE)) {
+            fen += 'Q';
+            castle = true;
+        }
+        if (canCastleKingside(BLACK)) {
+            fen += 'k';
+            castle = true;
+        }
+        if (canCastleQueenside(BLACK)) {
+            fen += 'q';
+            castle = true;
+        }
     }
 
     if (!castle) {
