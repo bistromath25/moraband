@@ -248,8 +248,8 @@ bool Position::isLegal(Move move) const {
         return false;
     }
 
-    if (!isChess960() && (square_bb[dst] & occupancy[us]) != 0) {
-        return false;
+    if ((square_bb[dst] & occupancy[us]) != 0) {
+        return isChess960() && isCastle(move);
     }
 
     //assert(dst != getKingSquare(them));
@@ -273,7 +273,7 @@ bool Position::isValid(Move move, U64 validMoves) const {
     if (isCastle(move) && onSquare(src) != PIECETYPE_KING) {
         return false;
     }
-    if (!(square_bb[src] & getOccupancyBB(us)) || (square_bb[dst] & getOccupancyBB(us)) || dst == getKingSquare(them)) { // chess960 check castling
+    if (!(square_bb[src] & getOccupancyBB(us)) || (square_bb[dst] & getOccupancyBB(us)) || dst == getKingSquare(them)) {
         return false;
     }
 
