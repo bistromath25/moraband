@@ -341,11 +341,11 @@ inline bool Position::canCastleQueenside(Color c) const {
 }
 
 inline Square Position::getKingsideCastleRookSrc() const {
-    return castleRookSrc[us][1];
+    return castleRookSrc[us][CASTLE_KINGSIDE];
 }
 
 inline Square Position::getQueensideCastleRookSrc() const {
-    return castleRookSrc[us][0];
+    return castleRookSrc[us][CASTLE_QUEENSIDE];
 }
 
 template<PieceType PIECETYPE_PAWN>

@@ -134,7 +134,7 @@ Position::Position(const std::string &fen, bool isChess960) {
                 if (p == no_sq) {
                     break;
                 }
-                auto side = k < p ? CASTLE_KINGSIDE : CASTLE_QUEENSIDE;
+                auto side = p < k ? CASTLE_KINGSIDE : CASTLE_QUEENSIDE;
                 castleRookSrc[c][side] = p;
             }
         }
