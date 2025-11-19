@@ -210,7 +210,7 @@ template<MoveType T>
 void MoveList::pushCastle() {
     Square k = position.getKingSquare(position.getOurColor());
     if (position.canCastleKingside() &&
-        position.canCastle(k, position.getOurColor() == WHITE ? G1 : G8, position.getKingsideCastleRookSrc())) {
+        position.canCastle(k, CASTLE_KING_DST[position.getOurColor()][CASTLE_KINGSIDE], position.getKingsideCastleRookSrc())) {
         if (position.isChess960()) {
             push(makeCastle(k, position.getKingsideCastleRookSrc()));
         }
@@ -226,7 +226,7 @@ void MoveList::pushCastle() {
         }
     }
     if (position.canCastleQueenside() &&
-        position.canCastle(k, position.getOurColor() == WHITE ? C1 : C8, position.getQueensideCastleRookSrc())) {
+        position.canCastle(k, CASTLE_KING_DST[position.getOurColor()][CASTLE_QUEENSIDE], position.getQueensideCastleRookSrc())) {
         if (position.isChess960()) {
             push(makeCastle(k, position.getQueensideCastleRookSrc()));
         }

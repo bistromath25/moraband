@@ -179,11 +179,26 @@ inline Rank rank(Square s) {
 }
 
 /** Castling rights bitmask */
-enum CASTLINGRIGHTS {
+enum CASTLING_RIGHTS {
     WHITE_KINGSIDE_CASTLE = 1,
     WHITE_QUEENSIDE_CASTLE = 2,
     BLACK_KINGSIDE_CASTLE = 4,
     BLACK_QUEENSIDE_CASTLE = 8
+};
+
+enum CASTLING_SIDE {
+    CASTLE_KINGSIDE = 0,
+    CASTLE_QUEENSIDE = 1
+};
+
+constexpr Square CASTLE_KING_DST[PLAYER_SIZE][2] = {
+    {G1, C1},
+    {G8, C8},
+};
+
+constexpr Square CASTLE_ROOK_DST[PLAYER_SIZE][2] = {
+    {F1, D1},
+    {F8, D8},
 };
 
 /** Piece square table ordering */

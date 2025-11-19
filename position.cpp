@@ -134,12 +134,8 @@ Position::Position(const std::string &fen, bool isChess960) {
                 if (p == no_sq) {
                     break;
                 }
-                if (p > k) {
-                    castleRookSrc[c][0] = p;
-                }
-                else if (p < k) {
-                    castleRookSrc[c][1] = p;
-                }
+                auto side = k < p ? CASTLE_KINGSIDE : CASTLE_QUEENSIDE;
+                castleRookSrc[c][side] = p;
             }
         }
     }
@@ -477,25 +473,29 @@ void Position::makeMove(Move move) {
 
     if (isCastle(move)) {
         if (isChess960()) {
-            if (dst < src) {
-                Square rookDst = us == WHITE ? F1 : F8;
+            auto side = dst < src ? CASTLE_KINGSIDE : CASTLE_QUEENSIDE;
+            Square rookDst = CASTLE_ROOK_DST[us][side];
+            Square kingDst = CASTLE_KING_DST[us][side];
+
+            if (side == CASTLE_KINGSIDE) {
                 if (getKingsideCastleRookSrc() != rookDst) {
                     movePiece(us, PIECETYPE_ROOK, getKingsideCastleRookSrc(), rookDst);
                 }
-                Square kingDst = us == WHITE ? G1 : G8;
-                if (kingDst != src) {
-                    movePiece(us, PIECETYPE_KING, src, kingDst);
-                }
             }
             else {
-                Square rookDst = us == WHITE ? D1 : D8;
                 if (getQueensideCastleRookSrc() != rookDst) {
                     movePiece(us, PIECETYPE_ROOK, getQueensideCastleRookSrc(), rookDst);
                 }
-                Square kingDst = us == WHITE ? C1 : C8;
-                if (kingDst != src) {
-                    movePiece(us, PIECETYPE_KING, src, kingDst);
-                }
+            }
+            if (kingDst != src) {
+                movePiece(us, PIECETYPE_KING, src, kingDst);
+            }
+
+            if (us == WHITE) {
+                castleRights &= ~(WHITE_KINGSIDE_CASTLE | WHITE_QUEENSIDE_CASTLE);
+            }
+            else {
+                castleRights &= ~(BLACK_KINGSIDE_CASTLE | BLACK_QUEENSIDE_CASTLE);
             }
         }
         else {
