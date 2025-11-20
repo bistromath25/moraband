@@ -15,6 +15,29 @@
 #include <iostream>
 #include <string>
 
+/** Castling rights bitmask */
+enum CASTLING_RIGHTS {
+    WHITE_KINGSIDE_CASTLE = 1,
+    WHITE_QUEENSIDE_CASTLE = 2,
+    BLACK_KINGSIDE_CASTLE = 4,
+    BLACK_QUEENSIDE_CASTLE = 8
+};
+
+enum CASTLING_SIDE {
+    CASTLE_KINGSIDE = 0,
+    CASTLE_QUEENSIDE = 1
+};
+
+constexpr Square CASTLE_KING_DST[PLAYER_SIZE][2] = {
+    {G1, C1},
+    {G8, C8},
+};
+
+constexpr Square CASTLE_ROOK_DST[PLAYER_SIZE][2] = {
+    {F1, D1},
+    {F8, D8},
+};
+
 /** Game phase calculation piece values */
 enum Phase {
     pawnPhase = 0,
@@ -315,7 +338,7 @@ inline U64 Position::getCheckersBB() const {
 }
 
 inline bool Position::canCastle(Square kingSrc, Square kingDst, Square rookSrc) const {
-    if (between_hor[min(kingSrc, rookSrc)][max(kingSrc, rookSrc)] & getOccupancyBB()) {
+    if (between_hor[min(min(kingSrc, kingDst), rookSrc)][max(max(kingSrc, kingDst), rookSrc)] & getOccupancyBB()) {
         return false;
     }
     for (Square s = min(kingSrc, kingDst); s <= max(kingSrc, kingDst); ++s) {

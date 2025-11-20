@@ -8,6 +8,27 @@
 #include "zobrist.h"
 #include <algorithm>
 
+/** Castling rights lookup table */
+constexpr int CASTLE_RIGHTS[BOARD_SIZE] = {
+    14, 15, 15, 12, 15, 15, 15, 13,
+    15, 15, 15, 15, 15, 15, 15, 15,
+    15, 15, 15, 15, 15, 15, 15, 15,
+    15, 15, 15, 15, 15, 15, 15, 15,
+    15, 15, 15, 15, 15, 15, 15, 15,
+    15, 15, 15, 15, 15, 15, 15, 15,
+    15, 15, 15, 15, 15, 15, 15, 15,
+    11, 15, 15, 3, 15, 15, 15, 7};
+
+int CASTLE_RIGHTS_CHESS960[BOARD_SIZE] = {
+    15, 15, 15, 15, 15, 15, 15, 15,
+    15, 15, 15, 15, 15, 15, 15, 15,
+    15, 15, 15, 15, 15, 15, 15, 15,
+    15, 15, 15, 15, 15, 15, 15, 15,
+    15, 15, 15, 15, 15, 15, 15, 15,
+    15, 15, 15, 15, 15, 15, 15, 15,
+    15, 15, 15, 15, 15, 15, 15, 15,
+    15, 15, 15, 15, 15, 15, 15, 15};
+
 /** Board position and related functions */
 Position::Position() {}
 
@@ -100,7 +121,7 @@ Position::Position(const std::string &fen, bool isChess960) {
             if (isalpha(*it)) {
                 Color c = isupper(*it) ? WHITE : BLACK;
                 int f = 7 - (towlower(*it) - 'a');
-                auto side = file(getKingSquare(c)) < f ? CASTLE_KINGSIDE : CASTLE_QUEENSIDE;
+                auto side = file(getKingSquare(c)) > f ? CASTLE_KINGSIDE : CASTLE_QUEENSIDE;
                 castleRookSrc[c][side] = static_cast<Square>(((c == WHITE) ? 0 : 7) * 8 + f);
                 castleRights |= (c == WHITE)
                                     ? (side == CASTLE_KINGSIDE ? WHITE_KINGSIDE_CASTLE : WHITE_QUEENSIDE_CASTLE)
@@ -111,16 +132,16 @@ Position::Position(const std::string &fen, bool isChess960) {
     else {
         for (; it != fen.end() && *it != ' '; ++it) {
             if (*it == 'K') {
-                castleRights += WHITE_KINGSIDE_CASTLE;
+                castleRights |= WHITE_KINGSIDE_CASTLE;
             }
             else if (*it == 'Q') {
-                castleRights += WHITE_QUEENSIDE_CASTLE;
+                castleRights |= WHITE_QUEENSIDE_CASTLE;
             }
             else if (*it == 'k') {
-                castleRights += BLACK_KINGSIDE_CASTLE;
+                castleRights |= BLACK_KINGSIDE_CASTLE;
             }
             else if (*it == 'q') {
-                castleRights += BLACK_QUEENSIDE_CASTLE;
+                castleRights |= BLACK_QUEENSIDE_CASTLE;
             }
         }
     }
@@ -140,6 +161,15 @@ Position::Position(const std::string &fen, bool isChess960) {
     setPins(BLACK);
     setCheckers();
     setGamePhase();
+
+    if (isChess960) {
+        CASTLE_RIGHTS_CHESS960[getKingSquare(WHITE)] &= ~(WHITE_KINGSIDE_CASTLE | WHITE_QUEENSIDE_CASTLE);
+        CASTLE_RIGHTS_CHESS960[getKingsideCastleRookSrc(WHITE)] &= ~WHITE_KINGSIDE_CASTLE;
+        CASTLE_RIGHTS_CHESS960[getQueensideCastleRookSrc(WHITE)] &= ~WHITE_QUEENSIDE_CASTLE;
+        CASTLE_RIGHTS_CHESS960[getKingSquare(BLACK)] &= ~(BLACK_KINGSIDE_CASTLE | BLACK_QUEENSIDE_CASTLE);
+        CASTLE_RIGHTS_CHESS960[getKingsideCastleRookSrc(BLACK)] &= ~BLACK_KINGSIDE_CASTLE;
+        CASTLE_RIGHTS_CHESS960[getQueensideCastleRookSrc(BLACK)] &= ~BLACK_QUEENSIDE_CASTLE;
+    }
 }
 
 void Position::init(bool isChess960) {
@@ -473,42 +503,14 @@ void Position::makeMove(Move move) {
     }
 
     if (isCastle(move)) {
-        if (isChess960()) {
-            auto side = dst < src ? CASTLE_KINGSIDE : CASTLE_QUEENSIDE;
-            Square rookDst = CASTLE_ROOK_DST[us][side];
-            Square kingDst = CASTLE_KING_DST[us][side];
-
-            if (side == CASTLE_KINGSIDE) {
-                if (getKingsideCastleRookSrc() != rookDst) {
-                    movePiece(us, PIECETYPE_ROOK, getKingsideCastleRookSrc(), rookDst);
-                }
-            }
-            else {
-                if (getQueensideCastleRookSrc() != rookDst) {
-                    movePiece(us, PIECETYPE_ROOK, getQueensideCastleRookSrc(), rookDst);
-                }
-            }
-            if (kingDst != src) {
-                movePiece(us, PIECETYPE_KING, src, kingDst);
-            }
-
-            if (us == WHITE) {
-                castleRights &= ~(WHITE_KINGSIDE_CASTLE | WHITE_QUEENSIDE_CASTLE);
-            }
-            else {
-                castleRights &= ~(BLACK_KINGSIDE_CASTLE | BLACK_QUEENSIDE_CASTLE);
-            }
-        }
-        else {
-            if (dst < src) {
-                movePiece(us, PIECETYPE_ROOK, src - 3, dst + 1);
-                movePiece(us, PIECETYPE_KING, src, dst);
-            }
-            else {
-                movePiece(us, PIECETYPE_ROOK, src + 4, dst - 1);
-                movePiece(us, PIECETYPE_KING, src, dst);
-            }
-        }
+        auto side = dst < src ? CASTLE_KINGSIDE : CASTLE_QUEENSIDE;
+        Square rookSrc = side == CASTLE_KINGSIDE ? getKingsideCastleRookSrc() : getQueensideCastleRookSrc();
+        Square rookDst = CASTLE_ROOK_DST[us][side];
+        Square kingDst = CASTLE_KING_DST[us][side];
+        removePiece(us, PIECETYPE_ROOK, rookSrc);
+        removePiece(us, PIECETYPE_KING, src);
+        addPiece(us, PIECETYPE_ROOK, rookDst);
+        addPiece(us, PIECETYPE_KING, kingDst);
     }
     else {
         movePiece(us, moved, src, dst);
@@ -545,8 +547,14 @@ void Position::makeMove(Move move) {
         setGamePhase();
     }
 
-    castleRights &= CASTLE_RIGHTS[src];
-    castleRights &= CASTLE_RIGHTS[dst];
+    if (isChess960()) {
+        castleRights &= CASTLE_RIGHTS_CHESS960[src];
+        castleRights &= CASTLE_RIGHTS_CHESS960[dst];
+    }
+    else {
+        castleRights &= CASTLE_RIGHTS[src];
+        castleRights &= CASTLE_RIGHTS[dst];
+    }
     key ^= Zobrist::key(castleRights);
 
     assert(!check());
@@ -603,7 +611,7 @@ bool Position::insufficientMaterial() const {
     return res;
 }
 
-std::string Position::getFen() const { // Current FEN
+std::string Position::getFen() const {
     Square src = getSrc(getPreviousMove());
     Square dst = getDst(getPreviousMove());
     PieceType moved = onSquare(dst);

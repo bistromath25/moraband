@@ -88,24 +88,24 @@ void go(std::istringstream &is, const Position &s) {
 void position(std::istringstream &is, Position &s) {
     std::string token, fen;
 
-    s = Position(START_FEN, IS_UCI_CHESS960);
-    for (int i = 0; i < NUM_THREADS; ++i) {
-        global_info[i].history.push(std::make_pair(NULL_MOVE, s.getKey()));
-    }
-
     is >> token;
     if (token == "fen") {
         while (is >> token && token != "moves") {
             fen += token + " ";
         }
-        s = Position(fen, IS_UCI_CHESS960);
     }
     else if (token == "startpos") {
+        fen = START_FEN;
         is >> token;
     }
     else {
         std::cout << "unknown command\n";
         return;
+    }
+
+    s = Position(fen, IS_UCI_CHESS960);
+    for (int i = 0; i < NUM_THREADS; ++i) {
+        global_info[i].history.push(std::make_pair(NULL_MOVE, s.getKey()));
     }
 
     while (is >> token) {
