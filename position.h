@@ -92,7 +92,7 @@ public:
     U64 getOccupancyBB(Color c) const;
     U64 getEmptyBB() const;
 
-    bool canCastle(Square kingSrc, Square kingDst, Square rookSrc) const;
+    bool canCastle(Square kingSrc, Square kingDst, Square rookSrc, Square rookDst) const;
     bool canCastleKingside() const;
     bool canCastleKingside(Color c) const;
     bool canCastleQueenside() const;
@@ -337,8 +337,11 @@ inline U64 Position::getCheckersBB() const {
     return checkers;
 }
 
-inline bool Position::canCastle(Square kingSrc, Square kingDst, Square rookSrc) const {
-    if (between_hor[min(min(kingSrc, kingDst), rookSrc)][max(max(kingSrc, kingDst), rookSrc)] & getOccupancyBB()) {
+inline bool Position::canCastle(Square kingSrc, Square kingDst, Square rookSrc, Square rookDst) const {
+    U64 m = between_hor[min(min(kingSrc, kingDst), rookSrc)][max(max(kingSrc, kingDst), rookSrc)];
+    m &= ~(square_bb[kingSrc] | square_bb[rookSrc]);
+
+    if ((m | square_bb[rookDst]) & getOccupancyBB()) {
         return false;
     }
     for (Square s = min(kingSrc, kingDst); s <= max(kingSrc, kingDst); ++s) {

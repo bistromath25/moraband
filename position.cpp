@@ -343,7 +343,8 @@ bool Position::isValid(Move move, U64 validMoves) const {
             Square k = getKingSquare(us);
             if (isCastle(move)) {
                 if (isChess960()) {
-                    return canCastle(src, dst, (dst < src) ? getKingsideCastleRookSrc() : getQueensideCastleRookSrc());
+                    return canCastle(src, dst, (dst < src) ? getKingsideCastleRookSrc() : getQueensideCastleRookSrc(),
+                                     (dst < src) ? CASTLE_ROOK_DST[us][CASTLE_KINGSIDE] : CASTLE_ROOK_DST[us][CASTLE_QUEENSIDE]);
                 }
                 else {
                     if (src > dst) {
