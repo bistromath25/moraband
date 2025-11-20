@@ -6,18 +6,12 @@
 #include "tune.h"
 #include "defs.h"
 #include "eval.h"
-#include "tt.h"
 #include <cmath>
 #include <fstream>
 #include <iostream>
 #include <string>
 #include <thread>
 #include <vector>
-
-std::vector<long double> diffs[MAX_THREADS];
-std::vector<std::string> input;
-long double k = 0.93L;
-int num_fens;
 
 struct Parameter {
     int *variable;
@@ -26,6 +20,15 @@ struct Parameter {
     bool increasing;
     int stability;
 };
+
+struct Input {
+    Position s;
+    long double result;
+};
+
+std::vector<long double> diffs[MAX_THREADS];
+std::vector<Input> input;
+long double k = 0.93L;
 
 void set_parameter(Parameter *p) {
     *p->variable = p->value;
@@ -118,7 +121,8 @@ void get_fen_info(std::string &s, std::vector<std::string> &v) {
 }
 
 inline long double sigmoid(long double x) {
-    return 1.0L / (1.0L + pow(10.0L, -k * x / 400.0L));
+    static const long double scale = (k * M_LN10) / 400.0L;
+    return 1.0L / (1.0L + expl(-scale * x));
 }
 
 inline long double kahan_sum() {
@@ -135,39 +139,19 @@ inline long double kahan_sum() {
 }
 
 void get_single_error(int thread_id) {
-    for (int i = thread_id; i < num_fens; i += MAX_THREADS) {
-        std::vector<std::string> info;
-        get_fen_info(input[i], info);
-
-        Position s(info[0]);
-        if (s.inCheck()) {
+    for (int i = thread_id; i < int(input.size()); i += MAX_THREADS) {
+        if (input[i].s.inCheck()) {
             continue;
         }
-
-        long double result;
-        if (info[1] == "1-0") {
-            result = 1.0L;
-        }
-        else if (info[1] == "0-1") {
-            result = 0.0L;
-        }
-        else if (info[1] == "1/2-1/2") {
-            result = 0.5L;
-        }
-        else {
-            result = -1.0L;
-            std::cerr << "invalid fen result " << info[0] << "; " << info[1] << "\n";
-            exit(1);
-        }
-
         SearchInfo si;
         si.infinite = true;
         global_info[thread_id].clear();
-        int q = qsearch(s, si, global_info[thread_id], 0, NEG_INF, POS_INF);
-        if (s.getOurColor() == Color::BLACK) {
+        int q = qsearch(input[i].s, si, global_info[thread_id], 0, NEG_INF, POS_INF);
+        if (input[i].s.getOurColor() == Color::BLACK) {
             q = -q;
         }
-        diffs[thread_id].push_back(pow(result - sigmoid((long double) q), 2.0L));
+        long double p = sigmoid((long double) q);
+        diffs[thread_id].push_back((input[i].result - p) * (input[i].result - p));
     }
 }
 
@@ -277,10 +261,30 @@ void tune(const std::string &fens_file) {
     std::ifstream fens(fens_file);
     std::string line;
     while (std::getline(fens, line)) {
-        input.push_back(line);
-        ++num_fens;
+        std::vector<std::string> info;
+        get_fen_info(line, info);
+
+        Input e;
+        e.s = Position(info[0]);
+
+        if (info[1] == "1-0") {
+            e.result = 1.0L;
+        }
+        else if (info[1] == "0-1") {
+            e.result = 0.0L;
+        }
+        else if (info[1] == "1/2-1/2") {
+            e.result = 0.5L;
+        }
+        else {
+            e.result = -1.0L;
+            std::cerr << "invalid fen result " << info[0] << "; " << info[1] << "\n";
+            exit(1);
+        }
+
+        input.push_back(e);
     }
-    std::cerr << "Read " << num_fens << " fens"
+    std::cerr << "Read " << input.size() << " fens"
               << "\n";
     fens.close();
 

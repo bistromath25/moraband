@@ -462,7 +462,7 @@ int search_root(const Position &s, SearchInfo &si, GlobalInfo &gi, int depth, in
 }
 
 /** Multi-threaded search driver */
-void parallel_search(const Position s, SearchInfo si, int depth, int alpha, int beta, int t) {
+void parallel_search(const Position &s, SearchInfo si, int depth, int alpha, int beta, int t) {
     auto &[value, valid] = results[t];
     auto &gi = global_info[t];
     valid = false;
@@ -510,7 +510,7 @@ Move iterative_deepening(const Position &s, SearchInfo &si) {
         THREAD_STOP = false;
         if (d > 4) {
             for (int i = 1; i < NUM_THREADS; ++i) {
-                threads[i] = std::thread{parallel_search, s, si, d + (i & 1), NEG_INF, POS_INF, i};
+                threads[i] = std::thread{parallel_search, std::cref(s), si, d + (i & 1), NEG_INF, POS_INF, i};
             }
 
             score = aspiration_window(s, si, d, score);
