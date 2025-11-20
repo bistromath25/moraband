@@ -145,32 +145,3 @@ void bb_init() {
     outpost_area[WHITE] = RANK_4 | RANK_5 | RANK_6;
     outpost_area[BLACK] = RANK_3 | RANK_4 | RANK_5;
 }
-
-/** Print a bitboard */
-void print_bb(U64 bb) {
-    constexpr U64 MSB = 0x8000000000000000ULL;
-    std::string res;
-    for (int i = 0; i < 64; ++i) {
-        if (i % 8 == 0) {
-            if (i != 0) {
-                res.append("\n");
-            }
-            for (int j = 0; j < 8; ++j) {
-                res.append("+-");
-            }
-            res.append("+\n|");
-        }
-        if (bb << i & MSB) {
-            res.append("1|");
-        }
-        else {
-            res.append("0|");
-        }
-    }
-    res.append("\n");
-    for (int j = 0; j < 8; ++j) {
-        res.append("+-");
-    }
-    res.append("+\n");
-    std::cout << res;
-}

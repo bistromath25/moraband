@@ -197,8 +197,6 @@ inline void move_bit(U64 &bb, int src, int dst) {
 }
 
 /** Bitboard fill algorithms for sliding piece attacks */
-void print_bb(U64);
-
 inline U64 north_fill(U64 gen) {
     gen |= (gen << 8);
     gen |= (gen << 16);
