@@ -38,17 +38,6 @@ constexpr int PLAYER_SIZE = 2;
 constexpr int PIECE_MAX = 10;
 const std::string START_FEN = "rnbqkbnr/pppppppp/8/8/8/8/PPPPPPPP/RNBQKBNR w KQkq";
 
-/** Castling rights lookup table */
-constexpr int CASTLE_RIGHTS[BOARD_SIZE] = {
-    14, 15, 15, 12, 15, 15, 15, 13,
-    15, 15, 15, 15, 15, 15, 15, 15,
-    15, 15, 15, 15, 15, 15, 15, 15,
-    15, 15, 15, 15, 15, 15, 15, 15,
-    15, 15, 15, 15, 15, 15, 15, 15,
-    15, 15, 15, 15, 15, 15, 15, 15,
-    15, 15, 15, 15, 15, 15, 15, 15,
-    11, 15, 15, 3, 15, 15, 15, 7};
-
 /** Game stage definitions */
 constexpr int GAMESTAGE_SIZE = 2;
 
@@ -178,14 +167,6 @@ inline Rank rank(Square s) {
     return Rank(s >> 3);
 }
 
-/** Castling rights bitmask */
-enum CASTLINGRIGHTS {
-    WHITE_KINGSIDE_CASTLE = 1,
-    WHITE_QUEENSIDE_CASTLE = 2,
-    BLACK_KINGSIDE_CASTLE = 4,
-    BLACK_QUEENSIDE_CASTLE = 8
-};
-
 /** Piece square table ordering */
 constexpr int SCORE[PIECE_TYPES_SIZE][PIECE_TYPES_SIZE] = {
     {26, 30, 31, 33, 36, 0},
@@ -246,6 +227,8 @@ inline Color operator!(const Color c) { return static_cast<Color>(!static_cast<b
 inline Square operator+(const Square s, const int i) { return static_cast<Square>(static_cast<int>(s) + i); }
 inline Square operator-(const Square s, const int i) { return static_cast<Square>(static_cast<int>(s) - i); }
 inline Square operator-(const Square s1, const Square s2) { return static_cast<Square>(static_cast<int>(s1) - static_cast<int>(s2)); }
+inline Square min(const Square s1, const Square s2) { return s1 < s2 ? s1 : s2; }
+inline Square max(const Square s1, const Square s2) { return s1 > s2 ? s1 : s2; }
 
 /** Utility functions for chess operations */
 inline int abs(int x) { return x >= 0 ? x : -x; }
@@ -276,7 +259,8 @@ inline std::string to_string(PieceType p) {
            : p == PIECETYPE_BISHOP ? "B"
            : p == PIECETYPE_ROOK   ? "R"
            : p == PIECETYPE_QUEEN  ? "Q"
-                                   : "K";
+           : p == PIECETYPE_KING   ? "K"
+                                   : " ";
 }
 
 #endif
