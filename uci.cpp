@@ -19,6 +19,7 @@
 int HASH_SIZE = DEFAULT_HASH_SIZE;
 int NUM_THREADS = 1;
 int MOVE_OVERHEAD = 500;
+bool IS_UCI_CHESS960 = false;
 
 /** Validate incoming UCI move */
 Move get_uci_move(std::string &token, Position &s) {
@@ -87,24 +88,24 @@ void go(std::istringstream &is, const Position &s) {
 void position(std::istringstream &is, Position &s) {
     std::string token, fen;
 
-    s = Position(START_FEN);
-    for (int i = 0; i < NUM_THREADS; ++i) {
-        global_info[i].history.push(std::make_pair(NULL_MOVE, s.getKey()));
-    }
-
     is >> token;
     if (token == "fen") {
         while (is >> token && token != "moves") {
             fen += token + " ";
         }
-        s = Position(fen);
     }
     else if (token == "startpos") {
+        fen = START_FEN;
         is >> token;
     }
     else {
         std::cout << "unknown command\n";
         return;
+    }
+
+    s = Position(fen, IS_UCI_CHESS960);
+    for (int i = 0; i < NUM_THREADS; ++i) {
+        global_info[i].history.push(std::make_pair(NULL_MOVE, s.getKey()));
     }
 
     while (is >> token) {
@@ -136,6 +137,9 @@ void set_option(std::string &name, std::string &value) {
     }
     else if (name == "Move Overhead") {
         MOVE_OVERHEAD = clamp(std::stoi(value), 0, 10000);
+    }
+    else if (name == "UCI_Chess960") {
+        IS_UCI_CHESS960 = value == "true";
     }
 }
 
@@ -247,7 +251,8 @@ void uci() {
                       << "id author " << ENGINE_AUTHOR << "\n"
                       << "option name Hash type spin default " << DEFAULT_HASH_SIZE << " min " << MIN_HASH_SIZE << " max " << MAX_HASH_SIZE << "\n"
                       << "option name Threads type spin default 1 min 1 max 16\n"
-                      << "option name Move Overhead type spin default 500 min 0 max 10000\n";
+                      << "option name Move Overhead type spin default 500 min 0 max 10000\n"
+                      << "option name UCI_Chess960 type check default false\n";
             std::cout << "uciok" << std::endl;
         }
         else if (token == "setoption") {
