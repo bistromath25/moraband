@@ -34,9 +34,9 @@ Position::Position() {}
 
 Position::Position(const Position &s)
     : us(s.us), them(s.them), fiftyMoveRule(s.fiftyMoveRule), castleRights(s.castleRights), phase(s.phase), chess960(s.chess960), key(s.key), pawnKey(s.pawnKey), checkers(s.checkers), enPassant(s.enPassant), previousMove(s.previousMove), checkSquares(s.checkSquares), pinned(s.pinned), occupancy(s.occupancy), pieceIndex(s.pieceIndex), board(s.board), pieces(s.pieces), pieceCounts(s.pieceCounts), pstScore(s.pstScore), pieceList(s.pieceList) {
-    for (int r = 0; r < 2; ++r) {
-        for (int c = 0; c < 2; ++c) {
-            castleRookSrc[r][c] = s.castleRookSrc[r][c];
+    for (auto c : {WHITE, BLACK}) {
+        for (auto side : {CASTLE_KINGSIDE, CASTLE_QUEENSIDE}) {
+            castleRookSrc[c][side] = s.castleRookSrc[c][side];
         }
     }
 }
@@ -63,9 +63,9 @@ Position &Position::operator=(const Position &s) {
         pieceCounts = s.pieceCounts;
         pstScore = s.pstScore;
         pieceList = s.pieceList;
-        for (int r = 0; r < 2; ++r) {
-            for (int c = 0; c < 2; ++c) {
-                castleRookSrc[r][c] = s.castleRookSrc[r][c];
+        for (auto c : {WHITE, BLACK}) {
+            for (auto side : {CASTLE_KINGSIDE, CASTLE_QUEENSIDE}) {
+                castleRookSrc[c][side] = s.castleRookSrc[c][side];
             }
         }
     }

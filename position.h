@@ -149,7 +149,7 @@ private:
     int castleRights;
     int phase;
     bool chess960 = false;
-    Square castleRookSrc[2][2];
+    Square castleRookSrc[PLAYER_SIZE][2];
     U64 key;
     U64 pawnKey;
     U64 checkers;
