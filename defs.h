@@ -167,15 +167,6 @@ inline Rank rank(Square s) {
     return Rank(s >> 3);
 }
 
-/** Piece square table ordering */
-constexpr int SCORE[PIECE_TYPES_SIZE][PIECE_TYPES_SIZE] = {
-    {26, 30, 31, 33, 36, 0},
-    {20, 25, 27, 29, 35, 0},
-    {19, 21, 24, 28, 34, 0},
-    {16, 17, 18, 23, 32, 0},
-    {12, 13, 14, 15, 22, 0},
-    {7, 8, 9, 10, 11, 0}};
-
 /** Direction enumeration for piece movement */
 enum Dir {
     N = 8,
