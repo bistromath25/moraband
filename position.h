@@ -338,12 +338,16 @@ inline U64 Position::getCheckersBB() const {
 }
 
 inline bool Position::canCastle(Square kingSrc, Square kingDst, Square rookSrc, Square rookDst) const {
-    U64 m = between_hor[min(min(kingSrc, kingDst), rookSrc)][max(max(kingSrc, kingDst), rookSrc)];
-    m &= ~(square_bb[kingSrc] | square_bb[rookSrc]);
-
-    if ((m | square_bb[rookDst]) & getOccupancyBB()) {
+    U64 kingOcc = (between_hor[kingSrc][kingDst] | square_bb[kingDst]) & ~(square_bb[kingSrc] | square_bb[rookSrc]);
+    if (kingOcc & getOccupancyBB()) {
         return false;
     }
+
+    U64 rookOcc = (between_hor[rookSrc][rookDst] | square_bb[rookDst]) & ~(square_bb[kingSrc] | square_bb[rookSrc]);
+    if (rookOcc & getOccupancyBB()) {
+        return false;
+    }
+
     for (Square s = min(kingSrc, kingDst); s <= max(kingSrc, kingDst); ++s) {
         if (attacked(s)) {
             return false;
