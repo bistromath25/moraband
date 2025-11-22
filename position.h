@@ -123,7 +123,7 @@ public:
 
     // NNUE
 #ifdef USE_NNUE
-    int evaluate();
+    int evaluate() const;
 #endif
 
     friend std::ostream &operator<<(std::ostream &os, const Position &s);

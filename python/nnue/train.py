@@ -21,13 +21,16 @@ logging.basicConfig(
 
 torch.set_float32_matmul_precision("high")
 
+BATCH_SIZE = 8192
+LEARNING_RATE = 3e-4
+DECAY = 1e-5
 MAX_CP = 1000
 INPUT_FEATURES = 768
 HIDDEN_FEATURES = 256
 DEVICE = torch.device("mps")
 
 
-def format_time(seconds: float) -> str:
+def format_time(seconds: float):
     minutes, sec = divmod(int(seconds), 60)
     return f"{minutes:02d}:{sec:02d}"
 
@@ -102,7 +105,7 @@ def save_nnue_weights(model):
     weights = np.concatenate(
         [fc1_w.T.flatten(), fc1_b.flatten(), fc2_w.flatten(), fc2_b.flatten()]
     ).astype(np.float32)
-    digest = hashlib.sha256(weights.tobytes()).hexdigest()[:12]
+    digest = hashlib.sha256(weights.tobytes()).hexdigest()[:6]
     filename = f"nn-{digest}.nnue"
     weights.tofile(filename)
     logging.info(f"Saved NNUE weights to {filename} ({weights.size} floats)")
@@ -110,10 +113,10 @@ def save_nnue_weights(model):
 
 def train_nnue(
     fen_eval_path,
-    batch_size=64,
+    batch_size=BATCH_SIZE,
     epochs=10,
-    learning_rate=1e-3,
-    weight_decay=1e-6,
+    learning_rate=LEARNING_RATE,
+    weight_decay=DECAY,
     resume=False,
 ):
     start_epoch = 1
@@ -129,6 +132,7 @@ def train_nnue(
         ).stdout.split()[0]
     )
     total_batches = math.ceil(total_samples / batch_size)
+    print_every = max(1, total_batches // 20)
 
     logging.info("Training Configuration")
     logging.info(f"Epochs:             {epochs}")
@@ -168,7 +172,7 @@ def train_nnue(
             total_loss += loss.item() * batch_inputs.size(0)
             total_samples_so_far += batch_inputs.size(0)
 
-            if batch_idx % 10000 == 0 or batch_idx == total_batches:
+            if batch_idx % print_every == 0 or batch_idx == total_batches:
                 elapsed = time.time() - start_time
                 batches_done = batch_idx
                 batches_left = total_batches - batches_done
@@ -196,6 +200,14 @@ def train_nnue(
                 "model_state": model.state_dict(),
                 "optimizer_state": optimizer.state_dict(),
             },
+            f"checkpoint-hidden{HIDDEN_FEATURES}-epoch{epoch}.pth",
+        )
+        torch.save(
+            {
+                "epoch": epoch,
+                "model_state": model.state_dict(),
+                "optimizer_state": optimizer.state_dict(),
+            },
             "checkpoint.pth",
         )
         logging.info(f"Checkpoint saved at epoch {epoch}")
@@ -214,10 +226,10 @@ def main():
     parser.add_argument(
         "--data", type=str, default="fens_evals.txt", help="Path to fens file"
     )
-    parser.add_argument("--batch-size", type=int, default=64)
+    parser.add_argument("--batch-size", type=int, default=BATCH_SIZE)
     parser.add_argument("--epochs", type=int, default=10)
-    parser.add_argument("--learning-rate", type=float, default=1e-3)
-    parser.add_argument("--decay", type=float, default=1e-6)
+    parser.add_argument("--learning-rate", type=float, default=LEARNING_RATE)
+    parser.add_argument("--decay", type=float, default=DECAY)
     parser.add_argument(
         "--resume", action="store_true", help="Resume training from checkpoint"
     )
