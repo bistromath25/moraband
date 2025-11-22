@@ -25,6 +25,29 @@ namespace NNUE {
 };
 #endif
 
+/** Castling rights bitmask */
+enum CASTLING_RIGHTS {
+    WHITE_KINGSIDE_CASTLE = 1,
+    WHITE_QUEENSIDE_CASTLE = 2,
+    BLACK_KINGSIDE_CASTLE = 4,
+    BLACK_QUEENSIDE_CASTLE = 8
+};
+
+enum CASTLING_SIDE {
+    CASTLE_KINGSIDE = 0,
+    CASTLE_QUEENSIDE = 1
+};
+
+constexpr Square CASTLE_KING_DST[PLAYER_SIZE][2] = {
+    {G1, C1},
+    {G8, C8},
+};
+
+constexpr Square CASTLE_ROOK_DST[PLAYER_SIZE][2] = {
+    {F1, D1},
+    {F8, D8},
+};
+
 /** Game phase calculation piece values */
 enum Phase {
     pawnPhase = 0,
@@ -39,10 +62,11 @@ enum Phase {
 class Position {
 public:
     Position();
-    Position(const std::string &fen);
+    Position(const std::string &fen, bool isChess960 = false);
     Position(const Position &s);
     Position &operator=(const Position &s);
-    void init();
+    void init(bool isChess960 = false);
+    inline bool isChess960() const;
 
     Color getOurColor() const;
     Color getTheirColor() const;
@@ -78,10 +102,15 @@ public:
     U64 getOccupancyBB(Color c) const;
     U64 getEmptyBB() const;
 
+    bool canCastle(Square kingSrc, Square kingDst, Square rookSrc, Square rookDst) const;
     bool canCastleKingside() const;
     bool canCastleKingside(Color c) const;
     bool canCastleQueenside() const;
     bool canCastleQueenside(Color c) const;
+    inline Square getKingsideCastleRookSrc() const;
+    inline Square getKingsideCastleRookSrc(Color c) const;
+    inline Square getQueensideCastleRookSrc() const;
+    inline Square getQueensideCastleRookSrc(Color c) const;
     bool isQuiet(Move move) const;
     bool isCapture(Move move) const;
     bool isEnPassant(Move m) const;
@@ -134,6 +163,8 @@ private:
     int fiftyMoveRule;
     int castleRights;
     int phase;
+    bool chess960 = false;
+    Square castleRookSrc[PLAYER_SIZE][2];
     U64 key;
     U64 pawnKey;
     U64 checkers;
@@ -152,6 +183,10 @@ private:
     NNUE::NNUE nnue;
 #endif
 };
+
+inline bool Position::isChess960() const {
+    return chess960;
+}
 
 inline Color Position::getOurColor() const {
     return us;
@@ -320,6 +355,25 @@ inline U64 Position::getCheckersBB() const {
     return checkers;
 }
 
+inline bool Position::canCastle(Square kingSrc, Square kingDst, Square rookSrc, Square rookDst) const {
+    U64 kingOcc = (between_hor[kingSrc][kingDst] | square_bb[kingDst]) & ~square_bb[rookSrc];
+    if (kingOcc & getOccupancyBB()) {
+        return false;
+    }
+
+    U64 rookOcc = (between_hor[rookSrc][rookDst] | square_bb[rookDst]) & ~square_bb[kingSrc];
+    if (rookOcc & getOccupancyBB()) {
+        return false;
+    }
+
+    for (Square s = min(kingSrc, kingDst); s <= max(kingSrc, kingDst); ++s) {
+        if (attacked(s)) {
+            return false;
+        }
+    }
+    return true;
+}
+
 inline bool Position::canCastleKingside() const {
     return us ? castleRights & BLACK_KINGSIDE_CASTLE : castleRights & WHITE_KINGSIDE_CASTLE;
 }
@@ -334,6 +388,22 @@ inline bool Position::canCastleQueenside() const {
 
 inline bool Position::canCastleQueenside(Color c) const {
     return c == WHITE ? castleRights & WHITE_QUEENSIDE_CASTLE : castleRights & BLACK_QUEENSIDE_CASTLE;
+}
+
+inline Square Position::getKingsideCastleRookSrc() const {
+    return castleRookSrc[us][CASTLE_KINGSIDE];
+}
+
+inline Square Position::getKingsideCastleRookSrc(Color c) const {
+    return castleRookSrc[c][CASTLE_KINGSIDE];
+}
+
+inline Square Position::getQueensideCastleRookSrc() const {
+    return castleRookSrc[us][CASTLE_QUEENSIDE];
+}
+
+inline Square Position::getQueensideCastleRookSrc(Color c) const {
+    return castleRookSrc[c][CASTLE_QUEENSIDE];
 }
 
 template<PieceType PIECETYPE_PAWN>
