@@ -527,6 +527,10 @@ void Position::makeMove(Move move) {
         removePiece(us, PIECETYPE_KING, src);
         addPiece(us, PIECETYPE_ROOK, rookDst);
         addPiece(us, PIECETYPE_KING, kingDst);
+#ifdef USE_NNUE
+        nnue.movePiece(us, PIECETYPE_ROOK, rookSrc, rookDst);
+        nnue.movePiece(us, PIECETYPE_KING, src, kingDst);
+#endif
     }
     else {
         movePiece(us, moved, src, dst);
