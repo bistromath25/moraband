@@ -342,12 +342,10 @@ inline bool Position::canCastle(Square kingSrc, Square kingDst, Square rookSrc, 
     if (kingOcc & getOccupancyBB()) {
         return false;
     }
-
     U64 rookOcc = (between_hor[rookSrc][rookDst] | square_bb[rookDst]) & ~(square_bb[kingSrc] | square_bb[rookSrc]);
     if (rookOcc & getOccupancyBB()) {
         return false;
     }
-
     for (Square s = min(kingSrc, kingDst); s <= max(kingSrc, kingDst); ++s) {
         if (attacked(s)) {
             return false;
