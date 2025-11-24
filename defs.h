@@ -11,23 +11,6 @@
 #include <string>
 #include <sys/time.h>
 
-/** Debugging and assertion macros */
-#ifndef DEBUG
-#define ASSERT(x)
-#define D(x)
-#else
-#define ASSERT(x)                                  \
-    if (!(x)) {                                    \
-        std::cout << "Error: " << #x;              \
-        std::cout << "Date: " << __DATE__ << '\n'; \
-        std::cout << "Time: " << __TIME__ << '\n'; \
-        std::cout << "File: " << __FILE__ << '\n'; \
-        std::cout << "Line: " << __LINE__ << '\n'; \
-        std::exit(0);                              \
-    }
-#define D(x) x
-#endif
-
 /** Bitboard type definition and constants */
 typedef unsigned long long U64;
 
@@ -36,7 +19,6 @@ constexpr int BOARD_SIZE = 64;
 constexpr int PIECE_TYPES_SIZE = 6;
 constexpr int PLAYER_SIZE = 2;
 constexpr int PIECE_MAX = 10;
-const std::string START_FEN = "rnbqkbnr/pppppppp/8/8/8/8/PPPPPPPP/RNBQKBNR w KQkq";
 
 /** Game stage definitions */
 constexpr int GAMESTAGE_SIZE = 2;
@@ -208,7 +190,6 @@ enum Prop : uint32_t {
 constexpr int NEG_INF = -50000;
 constexpr int POS_INF = 50000;
 constexpr int MAX_PLY = 50;
-constexpr int MAX_GAME_MOVES = 1024;
 
 /** Operator overloads for chess-related types */
 inline Square &operator++(Square &s) { return s = static_cast<Square>(static_cast<int>(s) + 1); }
