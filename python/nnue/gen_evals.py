@@ -119,11 +119,12 @@ def generate_fen_evals_slice(
         result_buffer = [None] * total
         start_time = time.time()
         completed = 0
+        print_every = max(1, total // 20)
 
         for idx, fen, score in results:
             result_buffer[idx] = (idx, fen, score)
             completed += 1
-            if completed % 10_000 == 0 or completed == total:
+            if completed % print_every == 0 or completed == total:
                 elapsed = time.time() - start_time
                 remaining = total - completed
                 eta_seconds = (elapsed / completed) * remaining if completed > 0 else 0
