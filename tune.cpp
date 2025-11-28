@@ -73,15 +73,18 @@ long double evaluate_error(const std::vector<Parameter> &P, long double k) {
 
         for (size_t i = tid; i < data.size(); i += NUM_THREADS) {
             auto &e = data[i];
-            if (e.s.inCheck()) continue;
+            if (e.s.inCheck()) {
+                continue;
+            }
 
             SearchInfo si;
             si.infinite = true;
             global_info[tid].clear();
 
             int q = qsearch(e.s, si, global_info[tid], 0, NEG_INF, POS_INF);
-            if (e.s.getOurColor() == Color::BLACK)
+            if (e.s.getOurColor() == Color::BLACK) {
                 q = -q;
+            }
 
             long double p = sigmoid(q, k);
             long double diff = p - e.result;
