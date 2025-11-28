@@ -7,12 +7,31 @@
 #include "defs.h"
 #include "eval.h"
 #include "search.h"
+#include <chrono>
 #include <cmath>
 #include <fstream>
 #include <iostream>
 #include <random>
 #include <thread>
 #include <vector>
+
+std::string current_time() {
+    auto now = std::chrono::system_clock::now();
+    std::time_t t_now = std::chrono::system_clock::to_time_t(now);
+    std::tm tm_now = *std::localtime(&t_now);
+    std::ostringstream oss;
+    oss << std::put_time(&tm_now, "%H:%M:%S");
+    return oss.str();
+}
+
+std::string format_time(double seconds) {
+    int mins = static_cast<int>(seconds) / 60;
+    int secs = static_cast<int>(seconds) % 60;
+    std::ostringstream oss;
+    oss << std::setw(2) << std::setfill('0') << mins
+        << ":" << std::setw(2) << std::setfill('0') << secs;
+    return oss.str();
+}
 
 struct Parameter {
     std::string name;
@@ -42,15 +61,15 @@ inline long double sigmoid(long double x, long double k) {
 
 long double evaluate_error(const std::vector<Parameter> &P, long double k) {
     for (auto &p : P) {
-        *p.ptr = (int) std::round(p.value);
+        *p.ptr = p.value;
     }
 
-    std::vector<long double> threadErr(NUM_THREADS, 0.0L);
-    std::vector<uint64_t> threadCount(NUM_THREADS, 0);
+    std::vector<long double> thread_error(NUM_THREADS, 0.0L);
+    std::vector<uint64_t> thread_count(NUM_THREADS, 0);
 
     auto worker = [&](int tid) {
-        long double localErr = 0.0L;
-        uint64_t localCount = 0;
+        long double local_error = 0.0L;
+        uint64_t local_count = 0;
 
         for (size_t i = tid; i < data.size(); i += NUM_THREADS) {
             auto &e = data[i];
@@ -65,49 +84,54 @@ long double evaluate_error(const std::vector<Parameter> &P, long double k) {
                 q = -q;
 
             long double p = sigmoid(q, k);
-            long double diff = (p - e.result);
-            localErr += diff * diff;
-            ++localCount;
+            long double diff = p - e.result;
+            local_error += diff * diff;
+            ++local_count;
         }
 
-        threadErr[tid] = localErr;
-        threadCount[tid] = localCount;
+        thread_error[tid] = local_error;
+        thread_count[tid] = local_count;
     };
 
-    std::vector<std::thread> pool;
+    std::vector<std::thread> threads;
     for (int t = 0; t < NUM_THREADS; ++t) {
-        pool.emplace_back(worker, t);
+        threads.emplace_back(worker, t);
     }
-    for (auto &t : pool) {
+    for (auto &t : threads) {
         t.join();
     }
 
-    long double totalErr = 0.0L;
-    uint64_t totalCount = 0;
+    long double total_error = 0.0L;
+    uint64_t total_count = 0;
     for (int t = 0; t < NUM_THREADS; ++t) {
-        totalErr += threadErr[t];
-        totalCount += threadCount[t];
+        total_error += thread_error[t];
+        total_count += thread_count[t];
     }
 
-    return totalCount ? totalErr / totalCount : 0.0L;
+    return total_count ? total_error / total_count : 0.0L;
 }
 
 void spsa_tune(std::vector<Parameter> &P, long double k) {
     const int N = P.size();
     std::mt19937_64 rng(123456);
 
-    const double a0 = 1.0;
-    const double c0 = 5.0;
+    const double a0 = 100.0;
+    const double c0 = 10.0;
     const double alpha = 0.602;
     const double gamma = 0.101;
+    const int num_iterations = 10000;
+    const int print_every = num_iterations / 20;
 
-    for (int iter = 1; iter <= 2000; ++iter) {
-        double a = a0 / std::pow(iter, alpha);
-        double c = c0 / std::pow(iter, gamma);
+    auto start_time = std::chrono::high_resolution_clock::now();
+
+    for (int i = 1; i <= num_iterations; ++i) {
+        double a = a0 / std::pow(i, alpha);
+        double c = c0 / std::pow(i, gamma);
 
         std::vector<int> delta(N);
-        for (int i = 0; i < N; ++i)
+        for (int i = 0; i < N; ++i) {
             delta[i] = (rng() & 1) ? 1 : -1;
+        }
 
         std::vector<Parameter> Pplus = P;
         std::vector<Parameter> Pminus = P;
@@ -117,26 +141,33 @@ void spsa_tune(std::vector<Parameter> &P, long double k) {
             Pminus[i].value = P[i].value - c * delta[i];
         }
 
-        long double errPlus = evaluate_error(Pplus, k);
-        long double errMinus = evaluate_error(Pminus, k);
+        long double errorPlus = evaluate_error(Pplus, k);
+        long double errorMinus = evaluate_error(Pminus, k);
 
         std::vector<double> g(N);
         for (int i = 0; i < N; ++i) {
-            g[i] = (double) (errPlus - errMinus) / (2.0 * c * delta[i]);
+            g[i] = (double) (errorPlus - errorMinus) / (2.0 * c * delta[i]);
         }
 
         for (int i = 0; i < N; ++i) {
             P[i].value -= a * g[i];
         }
 
-        if (iter % 20 == 0) {
+        if (i % print_every == 0 || i == num_iterations) {
             long double err = evaluate_error(P, k);
-            std::cerr << "[Iter " << iter << "] Error = " << err << "\n";
+            auto now = std::chrono::high_resolution_clock::now();
+            double elapsed = std::chrono::duration<double>(now - start_time).count();
+            double eta_sec = (elapsed / i) * (num_iterations - i);
+            std::cerr << "[" << current_time() << "] "
+                      << "[Iteration " << i << "/" << num_iterations << "] "
+                      << "Error = " << err
+                      << " - ETA: " << format_time(eta_sec)
+                      << "\n";
         }
     }
 }
 
-void build_param_list(std::vector<Parameter> &P) {
+void set_parameters(std::vector<Parameter> &P) {
     auto add = [&](int *ptr, const std::string &name) {
         P.push_back({name, ptr, (double) *ptr});
     };
@@ -218,7 +249,7 @@ void build_param_list(std::vector<Parameter> &P) {
     }
 }
 
-void tune(const std::string &fensFile, int numThreads) {
+void tune(const std::string &fensFile, int num_threads) {
     std::ifstream f(fensFile);
     std::string line;
     while (std::getline(f, line)) {
@@ -227,27 +258,30 @@ void tune(const std::string &fensFile, int numThreads) {
 
         Input e;
         e.s = Position(info[0]);
-        if (info[1] == "1.0") e.result = 1.0L;
-        else if (info[1] == "0.0")
+        if (info[1] == "1.0") {
+            e.result = 1.0L;
+        }
+        else if (info[1] == "0.0") {
             e.result = 0.0L;
-        else
+        }
+        else {
             e.result = 0.5L;
+        }
 
         data.push_back(e);
     }
     std::cerr << "Loaded " << data.size() << " positions\n";
 
-    NUM_THREADS = numThreads;
+    NUM_THREADS = num_threads;
     std::cerr << "Tuning with " << NUM_THREADS << " threads\n";
 
     std::vector<Parameter> P;
-    build_param_list(P);
+    set_parameters(P);
 
     long double k = 0.93L;
-
     spsa_tune(P, k);
 
-    std::ofstream out("tuning_log", std::ios::app);
+    std::ofstream out("tuning_output.txt", std::ios::app);
     for (auto &p : P) {
         *p.ptr = (int) std::round(p.value);
         out << p.name << " " << *p.ptr << "\n";
