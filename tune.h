@@ -6,9 +6,8 @@
 #ifndef TUNE_H
 #define TUNE_H
 
-#include "search.h"
 #include <string>
 
-void tune(const std::string &fen_file);
+void tune(const std::string &fen_file, int num_threads = 1);
 
 #endif

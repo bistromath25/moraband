@@ -305,7 +305,7 @@ void uci() {
 #ifdef TUNE
         else if (token == "tune") {
             is >> token;
-            tune(token);
+            tune(token, NUM_THREADS);
         }
 #endif
         else {

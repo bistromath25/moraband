@@ -6,19 +6,18 @@
 #include "tune.h"
 #include "defs.h"
 #include "eval.h"
+#include "search.h"
 #include <cmath>
 #include <fstream>
 #include <iostream>
-#include <string>
+#include <random>
 #include <thread>
 #include <vector>
 
 struct Parameter {
-    int *variable;
-    int value;
     std::string name;
-    bool increasing;
-    int stability;
+    int *ptr;
+    double value;
 };
 
 struct Input {
@@ -26,340 +25,231 @@ struct Input {
     long double result;
 };
 
-std::vector<long double> diffs[MAX_THREADS];
-std::vector<Input> input;
-long double k = 0.93L;
-
-void set_parameter(Parameter *p) {
-    *p->variable = p->value;
-}
-
-void set_material(std::vector<Parameter> &parameters) {
-    // parameters.push_back({&PAWN_WEIGHT.mg, PAWN_WEIGHT.mg, "PAWN_WEIGHT.mg", true, 1});
-    parameters.push_back({&PAWN_WEIGHT.eg, PAWN_WEIGHT.eg, "PAWN_WEIGHT.eg", true, 1});
-    parameters.push_back({&KNIGHT_WEIGHT.mg, KNIGHT_WEIGHT.mg, "KNIGHT_WEIGHT.mg", true, 1});
-    parameters.push_back({&KNIGHT_WEIGHT.eg, KNIGHT_WEIGHT.eg, "KNIGHT_WEIGHT.eg", true, 1});
-    parameters.push_back({&BISHOP_WEIGHT.mg, BISHOP_WEIGHT.mg, "BISHOP_WEIGHT.mg", true, 1});
-    parameters.push_back({&BISHOP_WEIGHT.eg, BISHOP_WEIGHT.eg, "BISHOP_WEIGHT.eg", true, 1});
-    parameters.push_back({&ROOK_WEIGHT.mg, ROOK_WEIGHT.mg, "ROOK_WEIGHT.mg", true, 1});
-    parameters.push_back({&ROOK_WEIGHT.eg, ROOK_WEIGHT.eg, "ROOK_WEIGHT.eg", true, 1});
-    parameters.push_back({&QUEEN_WEIGHT.mg, QUEEN_WEIGHT.mg, "QUEEN_WEIGHT.mg", true, 1});
-    parameters.push_back({&QUEEN_WEIGHT.eg, QUEEN_WEIGHT.eg, "QUEEN_WEIGHT.eg", true, 1});
-    parameters.push_back({&BISHOP_PAIR.mg, BISHOP_PAIR.mg, "BISHOP_PAIR.mg", true, 1});
-    parameters.push_back({&BISHOP_PAIR.eg, BISHOP_PAIR.eg, "BISHOP_PAIR.eg", true, 1});
-    parameters.push_back({&BAD_BISHOP.mg, BAD_BISHOP.mg, "BAD_BISHOP.mg", true, 1});
-    parameters.push_back({&BAD_BISHOP.eg, BAD_BISHOP.eg, "BAD_BISHOP.eg", true, 1});
-    parameters.push_back({&ROOK_OPEN_FILE.mg, ROOK_OPEN_FILE.mg, "ROOK_OPEN_FILE.mg", true, 1});
-    parameters.push_back({&ROOK_OPEN_FILE.eg, ROOK_OPEN_FILE.eg, "ROOK_OPEN_FILE.eg", true, 1});
-    parameters.push_back({&ROOK_ON_SEVENTH_RANK.mg, ROOK_ON_SEVENTH_RANK.mg, "ROOK_ON_SEVENTH_RANK.mg", true, 1});
-    parameters.push_back({&ROOK_ON_SEVENTH_RANK.eg, ROOK_ON_SEVENTH_RANK.eg, "ROOK_ON_SEVENTH_RANK.eg", true, 1});
-    parameters.push_back({&KNIGHT_OUTPOST.mg, KNIGHT_OUTPOST.mg, "KNIGHT_OUTPOST.mg", true, 1});
-    parameters.push_back({&KNIGHT_OUTPOST.eg, KNIGHT_OUTPOST.eg, "KNIGHT_OUTPOST.eg", true, 1});
-    parameters.push_back({&BISHOP_OUTPOST.mg, BISHOP_OUTPOST.mg, "BISHOP_OUTPOST.mg", true, 1});
-    parameters.push_back({&BISHOP_OUTPOST.eg, BISHOP_OUTPOST.eg, "BISHOP_OUTPOST.eg", true, 1});
-    for (int i = 0; i < 4; ++i) {
-        for (int j = 0; j < 7; ++j) {
-            parameters.push_back({&PAWN_PASSED[i][j].mg, PAWN_PASSED[i][j].mg, "PAWN_PASSED[" + std::to_string(i) + "][" + std::to_string(j) + "].mg", true, 1});
-            parameters.push_back({&PAWN_PASSED[i][j].eg, PAWN_PASSED[i][j].eg, "PAWN_PASSED[" + std::to_string(i) + "][" + std::to_string(j) + "].eg", true, 1});
-        }
-    }
-    parameters.push_back({&PAWN_PASSED_CANDIDATE.mg, PAWN_PASSED_CANDIDATE.mg, "PAWN_PASSED_CANDIDATE.mg", true, 1});
-    parameters.push_back({&PAWN_PASSED_CANDIDATE.eg, PAWN_PASSED_CANDIDATE.eg, "PAWN_PASSED_CANDIDATE.eg", true, 1});
-    parameters.push_back({&PAWN_CONNECTED.mg, PAWN_CONNECTED.mg, "PAWN_CONNECTED.mg", true, 1});
-    parameters.push_back({&PAWN_CONNECTED.eg, PAWN_CONNECTED.eg, "PAWN_CONNECTED.eg", true, 1});
-    parameters.push_back({&PAWN_ISOLATED.mg, PAWN_ISOLATED.mg, "PAWN_ISOLATED.mg", true, 1});
-    parameters.push_back({&PAWN_ISOLATED.eg, PAWN_ISOLATED.eg, "PAWN_ISOLATED.eg", true, 1});
-    parameters.push_back({&PAWN_DOUBLED.mg, PAWN_DOUBLED.mg, "PAWN_DOUBLED.mg", true, 1});
-    parameters.push_back({&PAWN_DOUBLED.eg, PAWN_DOUBLED.eg, "PAWN_DOUBLED.eg", true, 1});
-    parameters.push_back({&PAWN_FULL_BACKWARDS.mg, PAWN_FULL_BACKWARDS.mg, "PAWN_FULL_BACKWARDS.mg", true, 1});
-    parameters.push_back({&PAWN_FULL_BACKWARDS.eg, PAWN_FULL_BACKWARDS.eg, "PAWN_FULL_BACKWARDS.eg", true, 1});
-    parameters.push_back({&PAWN_BACKWARDS.mg, PAWN_BACKWARDS.mg, "PAWN_BACKWARDS.mg", true, 1});
-    parameters.push_back({&PAWN_BACKWARDS.eg, PAWN_BACKWARDS.eg, "PAWN_BACKWARDS.eg", true, 1});
-    parameters.push_back({&PAWN_SHIELD_CLOSE.mg, PAWN_SHIELD_CLOSE.mg, "PAWN_SHIELD_CLOSE.mg", true, 1});
-    parameters.push_back({&PAWN_SHIELD_CLOSE.eg, PAWN_SHIELD_CLOSE.eg, "PAWN_SHIELD_CLOSE.eg", true, 1});
-    parameters.push_back({&PAWN_SHIELD_FAR.mg, PAWN_SHIELD_FAR.mg, "PAWN_SHIELD_FAR.mg", true, 1});
-    parameters.push_back({&PAWN_SHIELD_FAR.eg, PAWN_SHIELD_FAR.eg, "PAWN_SHIELD_FAR.eg", true, 1});
-    parameters.push_back({&PAWN_SHIELD_MISSING.mg, PAWN_SHIELD_MISSING.mg, "PAWN_SHIELD_MISSING.mg", true, 1});
-    parameters.push_back({&PAWN_SHIELD_MISSING.eg, PAWN_SHIELD_MISSING.eg, "PAWN_SHIELD_MISSING.eg", true, 1});
-    parameters.push_back({&STRONG_PAWN_ATTACK.mg, STRONG_PAWN_ATTACK.mg, "STRONG_PAWN_ATTACK.mg", true, 1});
-    parameters.push_back({&STRONG_PAWN_ATTACK.eg, STRONG_PAWN_ATTACK.eg, "STRONG_PAWN_ATTACK.eg", true, 1});
-    parameters.push_back({&WEAK_PAWN_ATTACK.mg, WEAK_PAWN_ATTACK.mg, "WEAK_PAWN_ATTACK.mg", true, 1});
-    parameters.push_back({&WEAK_PAWN_ATTACK.eg, WEAK_PAWN_ATTACK.eg, "WEAK_PAWN_ATTACK.eg", true, 1});
-    parameters.push_back({&HANGING.mg, HANGING.mg, "HANGING.mg", true, 1});
-    parameters.push_back({&HANGING.eg, HANGING.eg, "HANGING.eg", true, 1});
-    parameters.push_back({&KNIGHT_PAWN_PENALTY.mg, KNIGHT_PAWN_PENALTY.mg, "KNIGHT_PAWN_PENALTY.mg", true, 1});
-    parameters.push_back({&KNIGHT_PAWN_PENALTY.eg, KNIGHT_PAWN_PENALTY.eg, "KNIGHT_PAWN_PENALTY.eg", true, 1});
-    parameters.push_back({&ROOK_PAWN_BONUS.mg, ROOK_PAWN_BONUS.mg, "ROOK_PAWN_BONUS.mg", true, 1});
-    parameters.push_back({&ROOK_PAWN_BONUS.eg, ROOK_PAWN_BONUS.eg, "ROOK_PAWN_BONUS.eg", true, 1});
-}
-
-void set_mobility(std::vector<Parameter> &parameters) {
-    for (int i = 0; i < 9; ++i) {
-        parameters.push_back({&KNIGHT_MOBILITY[i].mg, KNIGHT_MOBILITY[i].mg, "KNIGHT_MOBILITY[" + std::to_string(i) + "].mg", true, 1});
-        parameters.push_back({&KNIGHT_MOBILITY[i].eg, KNIGHT_MOBILITY[i].eg, "KNIGHT_MOBILITY[" + std::to_string(i) + "].eg", true, 1});
-    }
-    for (int i = 0; i < 14; ++i) {
-        parameters.push_back({&BISHOP_MOBILITY[i].mg, BISHOP_MOBILITY[i].mg, "BISHOP_MOBILITY[" + std::to_string(i) + "].mg", true, 1});
-        parameters.push_back({&BISHOP_MOBILITY[i].eg, BISHOP_MOBILITY[i].eg, "BISHOP_MOBILITY[" + std::to_string(i) + "].eg", true, 1});
-    }
-    for (int i = 0; i < 15; ++i) {
-        parameters.push_back({&ROOK_MOBILITY[i].mg, ROOK_MOBILITY[i].mg, "ROOK_MOBILITY[" + std::to_string(i) + "].mg", true, 1});
-        parameters.push_back({&ROOK_MOBILITY[i].eg, ROOK_MOBILITY[i].eg, "ROOK_MOBILITY[" + std::to_string(i) + "].eg", true, 1});
-    }
-    for (int i = 0; i < 28; ++i) {
-        parameters.push_back({&QUEEN_MOBILITY[i].mg, QUEEN_MOBILITY[i].mg, "QUEEN_MOBILITY[" + std::to_string(i) + "].mg", true, 1});
-        parameters.push_back({&QUEEN_MOBILITY[i].eg, QUEEN_MOBILITY[i].eg, "QUEEN_MOBILITY[" + std::to_string(i) + "].eg", true, 1});
-    }
-}
+static std::vector<Input> data;
 
 void get_fen_info(std::string &s, std::vector<std::string> &v) {
-    auto i = s.find("; ");
+    auto i = s.find_last_of(' ');
     if (i != std::string::npos) {
         v.push_back(s.substr(0, i));
-        v.push_back(s.substr(i + 2));
+        v.push_back(s.substr(i + 1));
     }
 }
 
-inline long double sigmoid(long double x) {
-    static const long double scale = (k * M_LN10) / 400.0L;
+inline long double sigmoid(long double x, long double k) {
+    long double scale = (k * M_LN10) / 400.0L;
     return 1.0L / (1.0L + expl(-scale * x));
 }
 
-inline long double kahan_sum() {
-    long double result = 0.0L, c = 0.0L, y, t;
-    for (int thread_id = 0; thread_id < MAX_THREADS; ++thread_id) {
-        for (int i = 0; i < int(diffs[thread_id].size()); ++i) {
-            y = diffs[thread_id][i] - c;
-            t = result + y;
-            c = (t - result) - y;
-            result = t;
-        }
+long double evaluate_error(const std::vector<Parameter> &P, long double k) {
+    for (auto &p : P) {
+        *p.ptr = (int) std::round(p.value);
     }
-    return result;
+
+    std::vector<long double> threadErr(NUM_THREADS, 0.0L);
+    std::vector<uint64_t> threadCount(NUM_THREADS, 0);
+
+    auto worker = [&](int tid) {
+        long double localErr = 0.0L;
+        uint64_t localCount = 0;
+
+        for (size_t i = tid; i < data.size(); i += NUM_THREADS) {
+            auto &e = data[i];
+            if (e.s.inCheck()) continue;
+
+            SearchInfo si;
+            si.infinite = true;
+            global_info[tid].clear();
+
+            int q = qsearch(e.s, si, global_info[tid], 0, NEG_INF, POS_INF);
+            if (e.s.getOurColor() == Color::BLACK)
+                q = -q;
+
+            long double p = sigmoid(q, k);
+            long double diff = (p - e.result);
+            localErr += diff * diff;
+            ++localCount;
+        }
+
+        threadErr[tid] = localErr;
+        threadCount[tid] = localCount;
+    };
+
+    std::vector<std::thread> pool;
+    for (int t = 0; t < NUM_THREADS; ++t) {
+        pool.emplace_back(worker, t);
+    }
+    for (auto &t : pool) {
+        t.join();
+    }
+
+    long double totalErr = 0.0L;
+    uint64_t totalCount = 0;
+    for (int t = 0; t < NUM_THREADS; ++t) {
+        totalErr += threadErr[t];
+        totalCount += threadCount[t];
+    }
+
+    return totalCount ? totalErr / totalCount : 0.0L;
 }
 
-void get_single_error(int thread_id) {
-    for (int i = thread_id; i < int(input.size()); i += MAX_THREADS) {
-        if (input[i].s.inCheck()) {
-            continue;
+void spsa_tune(std::vector<Parameter> &P, long double k) {
+    const int N = P.size();
+    std::mt19937_64 rng(123456);
+
+    const double a0 = 1.0;
+    const double c0 = 5.0;
+    const double alpha = 0.602;
+    const double gamma = 0.101;
+
+    for (int iter = 1; iter <= 2000; ++iter) {
+        double a = a0 / std::pow(iter, alpha);
+        double c = c0 / std::pow(iter, gamma);
+
+        std::vector<int> delta(N);
+        for (int i = 0; i < N; ++i)
+            delta[i] = (rng() & 1) ? 1 : -1;
+
+        std::vector<Parameter> Pplus = P;
+        std::vector<Parameter> Pminus = P;
+
+        for (int i = 0; i < N; ++i) {
+            Pplus[i].value = P[i].value + c * delta[i];
+            Pminus[i].value = P[i].value - c * delta[i];
         }
-        SearchInfo si;
-        si.infinite = true;
-        global_info[thread_id].clear();
-        int q = qsearch(input[i].s, si, global_info[thread_id], 0, NEG_INF, POS_INF);
-        if (input[i].s.getOurColor() == Color::BLACK) {
-            q = -q;
+
+        long double errPlus = evaluate_error(Pplus, k);
+        long double errMinus = evaluate_error(Pminus, k);
+
+        std::vector<double> g(N);
+        for (int i = 0; i < N; ++i) {
+            g[i] = (double) (errPlus - errMinus) / (2.0 * c * delta[i]);
         }
-        long double p = sigmoid((long double) q);
-        diffs[thread_id].push_back((input[i].result - p) * (input[i].result - p));
-    }
-}
 
-long double get_error(std::vector<Parameter> &parameters) {
-    for (int i = 0; i < int(parameters.size()); ++i) {
-        Parameter *p = &parameters[i];
-        set_parameter(p);
-    }
-    std::vector<std::thread> threads;
-    for (int i = 0; i < MAX_THREADS; ++i) {
-        diffs[i].clear();
-        threads.push_back(std::thread(get_single_error, i));
-    }
-    U64 t = 0;
-    for (int i = 0; i < MAX_THREADS; ++i) {
-        threads[i].join();
-        t += diffs[i].size();
-    }
-    return kahan_sum() / ((long double) t);
-}
-
-void get_best_k(std::vector<Parameter> &parameters) {
-    int min = 60, max = 150;
-    k = ((long double) min) / 100.0L;
-    long double min_error = get_error(parameters);
-    std::cerr << "k[" << min << "] " << min_error << "\n";
-    k = ((long double) max) / 100.0L;
-    long double max_error = get_error(parameters);
-    std::cerr << "k[" << max << "] " << max_error << "\n";
-    while (min < max) {
-        if (min_error < max_error) {
-            if (min == max - 1) {
-                k = ((long double) min) / 100.0L;
-                return;
-            }
-            else {
-                max = min + (max - min) / 2;
-                k = ((long double) max) / 100.0L;
-                max_error = get_error(parameters);
-                std::cerr << "k[" << max << "] " << max_error << "\n";
-            }
+        for (int i = 0; i < N; ++i) {
+            P[i].value -= a * g[i];
         }
-        else {
-            if (min == max - 1) {
-                k = ((long double) max) / 100.0L;
-                return;
-            }
-            else {
-                min = min + (max - min) / 2;
-                k = ((long double) min) / 100.0L;
-                min_error = get_error(parameters);
-                std::cerr << "k[" << min << "] " << min_error << "\n";
-            }
-        }
-    }
-}
 
-void tune(std::vector<Parameter> &parameters) {
-    for (int i = 0; i < int(parameters.size()); ++i) {
-        Parameter *p = &parameters[i];
-        int d = std::max(10, abs(p->value / 5));
-        int min = p->value - d, max = p->value + d;
-
-        p->value = min;
-        long double min_error = get_error(parameters);
-        std::cerr << p->name << " " << p->value << " " << min_error << "\n";
-        p->value = max;
-        long double max_error = get_error(parameters);
-        std::cerr << p->name << " " << p->value << " " << max_error << "\n";
-
-        while (min < max) {
-            if (min_error < max_error) {
-                if (min == max - 1) {
-                    p->value = min;
-                    set_parameter(p);
-                    std::cerr << p->name << " " << p->value << " best"
-                              << "\n";
-                    break;
-                }
-                else {
-                    max = min + (max - min) / 2;
-                    p->value = max;
-                    max_error = get_error(parameters);
-                    std::cerr << p->name << " " << p->value << " " << max_error << "\n";
-                }
-            }
-            else {
-                if (min == max - 1) {
-                    p->value = max;
-                    set_parameter(p);
-                    std::cerr << p->name << " " << p->value << " best"
-                              << "\n";
-                    break;
-                }
-                else {
-                    min = min + (max - min) / 2;
-                    p->value = min;
-                    min_error = get_error(parameters);
-                    std::cerr << p->name << " " << p->value << " " << min_error << "\n";
-                }
-            }
+        if (iter % 20 == 0) {
+            long double err = evaluate_error(P, k);
+            std::cerr << "[Iter " << iter << "] Error = " << err << "\n";
         }
     }
 }
 
-void tune(const std::string &fens_file) {
-    std::ifstream fens(fens_file);
+void build_param_list(std::vector<Parameter> &P) {
+    auto add = [&](int *ptr, const std::string &name) {
+        P.push_back({name, ptr, (double) *ptr});
+    };
+
+    // Material
+    // add(&PAWN_WEIGHT.mg, "PAWN_WEIGHT.mg");
+    add(&PAWN_WEIGHT.eg, "PAWN_WEIGHT.eg");
+    add(&KNIGHT_WEIGHT.mg, "KNIGHT_WEIGHT.mg");
+    add(&KNIGHT_WEIGHT.eg, "KNIGHT_WEIGHT.eg");
+    add(&BISHOP_WEIGHT.mg, "BISHOP_WEIGHT.mg");
+    add(&BISHOP_WEIGHT.eg, "BISHOP_WEIGHT.eg");
+    add(&ROOK_WEIGHT.mg, "ROOK_WEIGHT.mg");
+    add(&ROOK_WEIGHT.eg, "ROOK_WEIGHT.eg");
+    add(&QUEEN_WEIGHT.mg, "QUEEN_WEIGHT.mg");
+    add(&QUEEN_WEIGHT.eg, "QUEEN_WEIGHT.eg");
+    add(&BISHOP_PAIR.mg, "BISHOP_PAIR.mg");
+    add(&BISHOP_PAIR.eg, "BISHOP_PAIR.eg");
+    add(&BAD_BISHOP.mg, "BAD_BISHOP.mg");
+    add(&BAD_BISHOP.eg, "BAD_BISHOP.eg");
+    add(&ROOK_OPEN_FILE.mg, "ROOK_OPEN_FILE.mg");
+    add(&ROOK_OPEN_FILE.eg, "ROOK_OPEN_FILE.eg");
+    add(&ROOK_ON_SEVENTH_RANK.mg, "ROOK_ON_SEVENTH_RANK.mg");
+    add(&ROOK_ON_SEVENTH_RANK.eg, "ROOK_ON_SEVENTH_RANK.eg");
+    add(&KNIGHT_OUTPOST.mg, "KNIGHT_OUTPOST.mg");
+    add(&KNIGHT_OUTPOST.eg, "KNIGHT_OUTPOST.eg");
+    add(&BISHOP_OUTPOST.mg, "BISHOP_OUTPOST.mg");
+    add(&BISHOP_OUTPOST.eg, "BISHOP_OUTPOST.eg");
+    for (int i = 0; i < 4; ++i) {
+        for (int j = 0; j < 7; ++j) {
+            add(&PAWN_PASSED[i][j].mg, "PAWN_PASSED[" + std::to_string(i) + "][" + std::to_string(j) + "].mg");
+            add(&PAWN_PASSED[i][j].eg, "PAWN_PASSED[" + std::to_string(i) + "][" + std::to_string(j) + "].eg");
+        }
+    }
+    add(&PAWN_PASSED_CANDIDATE.mg, "PAWN_PASSED_CANDIDATE.mg");
+    add(&PAWN_PASSED_CANDIDATE.eg, "PAWN_PASSED_CANDIDATE.eg");
+    add(&PAWN_CONNECTED.mg, "PAWN_CONNECTED.mg");
+    add(&PAWN_CONNECTED.eg, "PAWN_CONNECTED.eg");
+    add(&PAWN_ISOLATED.mg, "PAWN_ISOLATED.mg");
+    add(&PAWN_ISOLATED.eg, "PAWN_ISOLATED.eg");
+    add(&PAWN_DOUBLED.mg, "PAWN_DOUBLED.mg");
+    add(&PAWN_DOUBLED.eg, "PAWN_DOUBLED.eg");
+    add(&PAWN_FULL_BACKWARDS.mg, "PAWN_FULL_BACKWARDS.mg");
+    add(&PAWN_FULL_BACKWARDS.eg, "PAWN_FULL_BACKWARDS.eg");
+    add(&PAWN_BACKWARDS.mg, "PAWN_BACKWARDS.mg");
+    add(&PAWN_BACKWARDS.eg, "PAWN_BACKWARDS.eg");
+    add(&PAWN_SHIELD_CLOSE.mg, "PAWN_SHIELD_CLOSE.mg");
+    add(&PAWN_SHIELD_CLOSE.eg, "PAWN_SHIELD_CLOSE.eg");
+    add(&PAWN_SHIELD_FAR.mg, "PAWN_SHIELD_FAR.mg");
+    add(&PAWN_SHIELD_FAR.eg, "PAWN_SHIELD_FAR.eg");
+    add(&PAWN_SHIELD_MISSING.mg, "PAWN_SHIELD_MISSING.mg");
+    add(&PAWN_SHIELD_MISSING.eg, "PAWN_SHIELD_MISSING.eg");
+    add(&STRONG_PAWN_ATTACK.mg, "STRONG_PAWN_ATTACK.mg");
+    add(&STRONG_PAWN_ATTACK.eg, "STRONG_PAWN_ATTACK.eg");
+    add(&WEAK_PAWN_ATTACK.mg, "WEAK_PAWN_ATTACK.mg");
+    add(&WEAK_PAWN_ATTACK.eg, "WEAK_PAWN_ATTACK.eg");
+    add(&HANGING.mg, "HANGING.mg");
+    add(&HANGING.eg, "HANGING.eg");
+    add(&KNIGHT_PAWN_PENALTY.mg, "KNIGHT_PAWN_PENALTY.mg");
+    add(&KNIGHT_PAWN_PENALTY.eg, "KNIGHT_PAWN_PENALTY.eg");
+    add(&ROOK_PAWN_BONUS.mg, "ROOK_PAWN_BONUS.mg");
+    add(&ROOK_PAWN_BONUS.eg, "ROOK_PAWN_BONUS.eg");
+
+    // Mobility
+    for (int i = 0; i < 9; ++i) {
+        add(&KNIGHT_MOBILITY[i].mg, "KNIGHT_MOBILITY[" + std::to_string(i) + "].mg");
+        add(&KNIGHT_MOBILITY[i].eg, "KNIGHT_MOBILITY[" + std::to_string(i) + "].eg");
+    }
+    for (int i = 0; i < 14; ++i) {
+        add(&BISHOP_MOBILITY[i].mg, "BISHOP_MOBILITY[" + std::to_string(i) + "].mg");
+        add(&BISHOP_MOBILITY[i].eg, "BISHOP_MOBILITY[" + std::to_string(i) + "].eg");
+    }
+    for (int i = 0; i < 15; ++i) {
+        add(&ROOK_MOBILITY[i].mg, "ROOK_MOBILITY[" + std::to_string(i) + "].mg");
+        add(&ROOK_MOBILITY[i].eg, "ROOK_MOBILITY[" + std::to_string(i) + "].eg");
+    }
+    for (int i = 0; i < 28; ++i) {
+        add(&QUEEN_MOBILITY[i].mg, "QUEEN_MOBILITY[" + std::to_string(i) + "].mg");
+        add(&QUEEN_MOBILITY[i].eg, "QUEEN_MOBILITY[" + std::to_string(i) + "].eg");
+    }
+}
+
+void tune(const std::string &fensFile, int numThreads) {
+    std::ifstream f(fensFile);
     std::string line;
-    while (std::getline(fens, line)) {
+    while (std::getline(f, line)) {
         std::vector<std::string> info;
         get_fen_info(line, info);
 
         Input e;
         e.s = Position(info[0]);
-
-        if (info[1] == "1-0") {
-            e.result = 1.0L;
-        }
-        else if (info[1] == "0-1") {
+        if (info[1] == "1.0") e.result = 1.0L;
+        else if (info[1] == "0.0")
             e.result = 0.0L;
-        }
-        else if (info[1] == "1/2-1/2") {
+        else
             e.result = 0.5L;
-        }
-        else {
-            e.result = -1.0L;
-            std::cerr << "invalid fen result " << info[0] << "; " << info[1] << "\n";
-            exit(1);
-        }
 
-        input.push_back(e);
+        data.push_back(e);
     }
-    std::cerr << "Read " << input.size() << " fens"
-              << "\n";
-    fens.close();
+    std::cerr << "Loaded " << data.size() << " positions\n";
 
-    std::cerr << "Tuning with " << MAX_THREADS << " threads"
-              << "\n";
+    NUM_THREADS = numThreads;
+    std::cerr << "Tuning with " << NUM_THREADS << " threads\n";
 
-    std::vector<Parameter> best;
-    set_material(best);
-    set_mobility(best);
+    std::vector<Parameter> P;
+    build_param_list(P);
 
-    get_best_k(best);
-    std::cerr << "k best " << k << "\n";
-    long double best_error = get_error(best);
-    std::cerr << "best error " << best_error << "\n";
+    long double k = 0.93L;
 
-    for (int i = 0; i < 2; ++i) {
-        for (int j = 0; j < int(best.size()); ++j) {
-            best[j].stability = 1;
-        }
+    spsa_tune(P, k);
 
-        tune(best);
-        bool improving = true;
-        while (improving) {
-            improving = false;
-            for (int b = 0; b < int(best.size()); ++b) {
-                if (best[b].stability >= 3) {
-                    continue;
-                }
-
-                std::vector<Parameter> cur = best;
-                cur[b].value += best[b].increasing ? 1 : -1;
-                long double cur_error = get_error(cur);
-                if (cur_error < best_error) {
-                    best = cur;
-                    best_error = cur_error;
-                    improving = true;
-                    std::cerr << cur[b].name << " " << cur[b].value << " " << cur_error << " best"
-                              << "\n";
-                    best[b].stability = 1;
-                    continue;
-                }
-                else {
-                    std::cerr << cur[b].name << " " << cur[b].value << " " << cur_error << "\n";
-                }
-
-                cur[b].value -= best[b].increasing ? 2 : -2;
-                cur_error = get_error(cur);
-                if (cur_error < best_error) {
-                    best = cur;
-                    best_error = cur_error;
-                    best[b].increasing = !best[b].increasing;
-                    improving = true;
-                    std::cerr << cur[b].name << " " << cur[b].value << " " << cur_error << " best"
-                              << "\n";
-                    best[b].stability = 1;
-                    continue;
-                }
-                else {
-                    std::cerr << cur[b].name << " " << cur[b].value << " " << cur_error << "\n";
-                    ++best[b].stability;
-                }
-            }
-
-            for (int b = 0; b < int(best.size()); ++b) {
-                Parameter *p = &best[b];
-                std::cerr << "best " << p->name << " " << p->value << "\n";
-            }
-        }
+    std::ofstream out("tuning_log", std::ios::app);
+    for (auto &p : P) {
+        *p.ptr = (int) std::round(p.value);
+        out << p.name << " " << *p.ptr << "\n";
     }
-
-    std::ofstream tuning_log("tuning_log", std::ios_base::app);
-    for (int b = 0; b < int(best.size()); ++b) {
-        Parameter *p = &best[b];
-        std::cerr << "best " << p->name << " " << p->value << "\n";
-        tuning_log << "best " << p->name << " " << p->value << "\n";
-    }
-    tuning_log.close();
 }

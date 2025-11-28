@@ -41,7 +41,7 @@ elseif(CMAKE_BUILD_TYPE STREQUAL "Tune")
     list(APPEND MAIN_SOURCES tune.cpp)
     set_source_files_properties(tune.cpp PROPERTIES COMPILE_DEFINITIONS "TUNE")
     target_sources(Moraband PRIVATE tune.cpp)
-    target_compile_options(Moraband PRIVATE -O3 -march=native -Wall -Wextra -Wpedantic)
+    target_compile_options(Moraband PRIVATE -O3 -DNDEBUG -march=native -Wall -Wextra -Wpedantic)
 endif()
 
 if(NOT CMAKE_CROSSCOMPILING AND NOT CMAKE_BUILD_TYPE STREQUAL "Debug")

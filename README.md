@@ -54,13 +54,12 @@ cmake --build build --parallel
 ```
 
 ## Tune
-Tune material values using [Texel's method](https://www.chessprogramming.org/Texel%27s_Tuning_Method). Provide a `fens` file containing one FEN per line like below
+Tune material values using [SPSA](https://www.chessprogramming.org/SPSA). Provide a `fens` file containing one FEN per line like below
 ```
-// FEN; result
-r1bqk2r/2p2ppp/2p5/p3pn2/1bB5/2NP2P1/PPP1NP1P/R1B1K2R w KQkq -; 0-1
-8/8/4kp2/8/5K2/6p1/6P1/8 b - -; 1/2-1/2
-r4rk1/3p2pp/p7/1pq2p2/2n2P2/P2Q3P/2P1NRP1/R5K1 w - -; 1/2-1/2
-2rqk1n1/p6p/1p1pp3/8/4P3/P1b5/R2N1PPP/3QR1K1 w - -; 1-0
+// FEN result
+r6r/ppk1b1pp/2p1bn2/4Np2/1PP1pP2/P1N1P1P1/4BK1P/2R4R b - - 0 24 0.5
+rn1qkbnr/1ppb1ppp/4p3/p2p4/P7/1PP2N2/1B1PPPPP/RN1QKB1R b KQkq - 1 2 1.0
+3rr1k1/1p3p1p/2pp2p1/p4PP1/Pn2Pn2/1PN4P/2PR1KB1/3R4 w - - 1 53 0.0
 ```
 and tune via `tune fens`.
 

@@ -34,17 +34,12 @@ int main(int argc, char *argv[]) {
 
     if (argc > 1) {
         if (std::string(argv[1]) == "bench") {
-            if (argc > 2) {
-                bench(std::stoi(argv[2]));
-            }
-            else {
-                bench();
-            }
+            bench(argc > 2 ? std::stoi(argv[2]) : 16);
         }
 #ifdef TUNE
         else if (std::string(argv[1]) == "tune") {
             if (argc > 2) {
-                tune(argv[2]);
+                tune(argv[2], argc > 3 ? std::stoi(argv[3]) : 1);
             }
         }
 #endif
