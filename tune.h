@@ -6,7 +6,6 @@
 #ifndef TUNE_H
 #define TUNE_H
 
-#include "search.h"
 #include <string>
 
 void tune(const std::string &fen_file);

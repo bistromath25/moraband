@@ -8,9 +8,9 @@
 
 #define ENGINE_NAME "Moraband"
 #ifdef TUNE
-#define ENGINE_VERSION "1.2-Tune"
+#define ENGINE_VERSION "1.3-Tune"
 #else
-#define ENGINE_VERSION "1.2"
+#define ENGINE_VERSION "1.3"
 #endif
 #define ENGINE_AUTHOR "Brighten Zhang"
 
