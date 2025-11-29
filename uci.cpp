@@ -20,6 +20,7 @@ int HASH_SIZE = DEFAULT_HASH_SIZE;
 int NUM_THREADS = 1;
 int MOVE_OVERHEAD = 500;
 bool IS_UCI_CHESS960 = false;
+const std::string START_FEN = "rnbqkbnr/pppppppp/8/8/8/8/PPPPPPPP/RNBQKBNR w KQkq 0 1";
 
 /** Validate incoming UCI move */
 Move get_uci_move(std::string &token, Position &s) {
