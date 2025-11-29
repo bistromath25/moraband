@@ -8,7 +8,6 @@
 
 #include "defs.h"
 #include <chrono>
-#include <sys/time.h>
 
 constexpr int MIN_SEARCH_TIME = 500; // Absolute minimum time to spend searching
 constexpr int ONE_MINUTE = 60000;    // 1000 * 60
@@ -22,7 +21,7 @@ public:
         time = std::chrono::high_resolution_clock::now();
     }
     template<typename T>
-    int64_t elapsed() {
+    const int64_t elapsed() {
         std::chrono::high_resolution_clock::time_point now = std::chrono::high_resolution_clock::now();
         return std::chrono::duration_cast<T>(now - time).count();
     }
