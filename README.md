@@ -49,20 +49,9 @@ uciok
 ## Compile
 Compile via `cmake`
 ```
-cmake -B build -S . -DCMAKE_BUILD_TYPE=Release # Release, Tune
+cmake -B build -S . -DCMAKE_BUILD_TYPE=Release
 cmake --build build --parallel
 ```
-
-## Tune
-Tune material values using [Texel's method](https://www.chessprogramming.org/Texel%27s_Tuning_Method). Provide a `fens` file containing one FEN per line like below
-```
-// FEN; result
-r1bqk2r/2p2ppp/2p5/p3pn2/1bB5/2NP2P1/PPP1NP1P/R1B1K2R w KQkq -; 0-1
-8/8/4kp2/8/5K2/6p1/6P1/8 b - -; 1/2-1/2
-r4rk1/3p2pp/p7/1pq2p2/2n2P2/P2Q3P/2P1NRP1/R5K1 w - -; 1/2-1/2
-2rqk1n1/p6p/1p1pp3/8/4P3/P1b5/R2N1PPP/3QR1K1 w - -; 1-0
-```
-and tune via `tune fens`.
 
 ## Credit and Resources
 - [Vice chess engine tutorial](https://www.chessprogramming.org/Vice)
