@@ -156,6 +156,10 @@ void spsa_tune(std::vector<Parameter> &P, long double k) {
             P[i].value -= a * g[i];
         }
 
+        for (auto &p : P) {
+            *p.ptr = p.value;
+        }
+
         if (i % print_every == 0 || i == num_iterations) {
             long double err = evaluate_error(P, k);
             auto now = std::chrono::high_resolution_clock::now();
