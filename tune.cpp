@@ -163,18 +163,6 @@ void dump_tuned_values(std::ostream &os) {
     print_score("ROOK_WEIGHT", ROOK_WEIGHT);
     print_score("QUEEN_WEIGHT", QUEEN_WEIGHT);
 
-    os << "\nconst Score KING_WEIGHT = S(32767, 32767);\n\n";
-
-    os << "const Score PIECE_VALUE[7] = {\n";
-    os << "    PAWN_WEIGHT,\n"
-       << "    KNIGHT_WEIGHT,\n"
-       << "    BISHOP_WEIGHT,\n"
-       << "    ROOK_WEIGHT,\n"
-       << "    QUEEN_WEIGHT,\n"
-       << "    KING_WEIGHT,\n"
-       << "    S(0, 0)\n";
-    os << "};\n\n";
-
     print_array(KNIGHT_MOBILITY, 9, "KNIGHT_MOBILITY");
     print_array(BISHOP_MOBILITY, 14, "BISHOP_MOBILITY");
     print_array(ROOK_MOBILITY, 15, "ROOK_MOBILITY");
@@ -256,12 +244,7 @@ void get_single_error_batch(int thread_id) {
     }
 }
 
-long double get_error_batch(std::vector<Parameter> &parameters) {
-    for (int i = 0; i < int(parameters.size()); ++i) {
-        Parameter *p = &parameters[i];
-        set_parameter(p);
-    }
-
+void sample_batch() {
     static std::mt19937 rng(std::random_device{}());
     std::uniform_int_distribution<int> dist(0, input.size() - 1);
 
@@ -272,11 +255,18 @@ long double get_error_batch(std::vector<Parameter> &parameters) {
     for (size_t i = 0; i < actual_batch_size; ++i) {
         current_batch.push_back(dist(rng));
     }
+}
+
+long double get_error_on_batch(std::vector<Parameter> &parameters) {
+    for (int i = 0; i < int(parameters.size()); ++i) {
+        Parameter *p = &parameters[i];
+        set_parameter(p);
+    }
 
     std::vector<std::thread> threads;
     for (int i = 0; i < MAX_THREADS; ++i) {
         diffs[i].clear();
-        diffs[i].reserve((actual_batch_size / MAX_THREADS) + 1);
+        diffs[i].reserve((current_batch.size() / MAX_THREADS) + 1);
         threads.push_back(std::thread(get_single_error_batch, i));
     }
 
@@ -407,10 +397,11 @@ void tune_spsa(std::vector<Parameter> &parameters, int iterations) {
             params_minus[i].value = base_val - (int_step * (int) delta[i]);
         }
 
-        long double error_plus = get_error_batch(params_plus);
-        long double error_minus = get_error_batch(params_minus);
+        sample_batch();
+        long double error_plus = get_error_on_batch(params_plus);
+        long double error_minus = get_error_on_batch(params_minus);
 
-        double gradient_multiplier = (error_plus - error_minus) / (2.0 * c_k);
+        double gradient_multiplier = (error_plus - error_minus) / (2.0 * int_step);
 
         for (size_t i = 0; i < parameters.size(); ++i) {
             double g_i = gradient_multiplier / delta[i];

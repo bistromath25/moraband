@@ -46,11 +46,6 @@ inline int reverse_futility_pruning_margin(int depth, bool improving) {
 
 /** Check if search should be stopped */
 bool stop_search(SearchInfo &si) {
-    // Not enough time left for search
-    if (U64(si.clock.elapsed<std::chrono::milliseconds>()) >= si.moveTime) {
-        si.quit = true;
-        return true;
-    }
     // Incoming quit command
     if (input_waiting()) {
         std::string command(get_input());
@@ -59,6 +54,15 @@ bool stop_search(SearchInfo &si) {
             THREAD_STOP = true;
             return true;
         }
+    }
+    // Infinite search: only stop on explicit quit/stop command
+    if (si.infinite) {
+        return false;
+    }
+    // Not enough time left for search
+    if (U64(si.clock.elapsed<std::chrono::milliseconds>()) >= si.moveTime) {
+        si.quit = true;
+        return true;
     }
     return false;
 }
