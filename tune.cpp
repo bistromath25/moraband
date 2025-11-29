@@ -59,7 +59,7 @@ inline long double sigmoid(long double x, long double k) {
     return 1.0L / (1.0L + expl(-scale * x));
 }
 
-long double evaluate_error(const std::vector<Parameter> &P, long double k) {
+long double evaluate_error(const std::vector<Parameter> &P, long double k, size_t batch_size = 100000) {
     for (auto &p : P) {
         *p.ptr = p.value;
     }
@@ -67,26 +67,25 @@ long double evaluate_error(const std::vector<Parameter> &P, long double k) {
     std::vector<long double> thread_error(NUM_THREADS, 0.0L);
     std::vector<uint64_t> thread_count(NUM_THREADS, 0);
 
+    std::mt19937_64 rng(123456);
+    std::uniform_int_distribution<size_t> dist(0, data.size() - 1);
+
     auto worker = [&](int tid) {
         long double local_error = 0.0L;
         uint64_t local_count = 0;
 
-        for (size_t i = tid; i < data.size(); i += NUM_THREADS) {
-            auto &e = data[i];
+        size_t per_thread = batch_size / NUM_THREADS;
+        for (size_t i = 0; i < per_thread; ++i) {
+            size_t idx = dist(rng);
+            auto &e = data[idx];
             if (e.s.inCheck()) {
                 continue;
             }
 
-            SearchInfo si;
-            si.infinite = true;
-            global_info[tid].clear();
+            Evaluate evaluate(e.s);
+            int score = evaluate.getScore();
 
-            int q = qsearch(e.s, si, global_info[tid], 0, NEG_INF, POS_INF);
-            if (e.s.getOurColor() == Color::BLACK) {
-                q = -q;
-            }
-
-            long double p = sigmoid(q, k);
+            long double p = sigmoid(score / 400.0L, k);
             long double diff = p - e.result;
             local_error += diff * diff;
             ++local_count;
@@ -118,11 +117,11 @@ void spsa_tune(std::vector<Parameter> &P, long double k) {
     const int N = P.size();
     std::mt19937_64 rng(123456);
 
-    const double a0 = 100.0;
-    const double c0 = 10.0;
+    const double a0 = 500.0;
+    const double c0 = 50.0;
     const double alpha = 0.602;
     const double gamma = 0.101;
-    const int num_iterations = 10000;
+    const int num_iterations = 1000;
     const int print_every = num_iterations / 20;
 
     auto start_time = std::chrono::high_resolution_clock::now();
@@ -172,6 +171,24 @@ void spsa_tune(std::vector<Parameter> &P, long double k) {
                       << "\n";
         }
     }
+}
+
+long double find_best_k(const std::vector<Parameter> &P, double k_min = 0.5, double k_max = 1.5, double step = 0.05, size_t sample_size = 100000) {
+    long double best_k = k_min;
+    long double best_err = std::numeric_limits<long double>::max();
+
+    for (double k = k_min; k <= k_max; k += step) {
+        long double err = evaluate_error(P, k, sample_size);
+        std::cerr << "[" << current_time() << "] "
+                  << "Test k = " << k << ", Error = " << err << "\n";
+        if (err < best_err) {
+            best_err = err;
+            best_k = k;
+        }
+    }
+
+    std::cerr << "[" << current_time() << "] Best k found: " << best_k << " with error = " << best_err << "\n";
+    return best_k;
 }
 
 void set_parameters(std::vector<Parameter> &P) {
@@ -285,7 +302,7 @@ void tune(const std::string &fensFile, int num_threads) {
     std::vector<Parameter> P;
     set_parameters(P);
 
-    long double k = 0.93L;
+    long double k = find_best_k(P);
     spsa_tune(P, k);
 
     std::ofstream out("tuning_output.txt", std::ios::app);
