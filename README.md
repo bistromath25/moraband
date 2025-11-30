@@ -57,6 +57,9 @@ cmake -B build -S . -DCMAKE_BUILD_TYPE=Release # Release-NNUE
 cmake --build build --parallel
 ```
 
+## NNUE
+Moraband includes support for NNUE (Efficiently Updatable Neural Network) evaluation, using a `768 -> 256 -> 1` two-layer feedforward model with clipped ReLU activation producing a single scalar output. The input features consist of a 768-dimensional one-hot encoding of all 12 piece types across 64 squares from White’s perspective. Inference is accelerated with Apple NEON intrinsics on ARM64 (Apple Silicon) CPUs, with a scalar fallback for other platforms.
+
 ## Credit and Resources
 - [Vice chess engine tutorial](https://www.chessprogramming.org/Vice)
 - [Chess programming wiki](https://www.chessprogramming.org/Main_Page)

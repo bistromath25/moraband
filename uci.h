@@ -7,8 +7,11 @@
 #define UCI_H
 
 #define ENGINE_NAME "Moraband"
-#ifdef TUNE
+#define ENGINE_AUTHOR "Brighten Zhang"
+#if defined(TUNE)
 #define ENGINE_VERSION "1.3-Tune"
+#elif defined(USE_NNUE)
+#define ENGINE_VERSION "1.3-NNUE"
 #else
 #define ENGINE_VERSION "1.3"
 #endif
