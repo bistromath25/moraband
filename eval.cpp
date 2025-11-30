@@ -127,8 +127,10 @@ Evaluate::Evaluate(const Position &s) : position(s), mobility{}, king_safety{}, 
 
     evalPieces(WHITE);
     evalPieces(BLACK);
-    evalPawnShield(WHITE);
-    evalPawnShield(BLACK);
+    if (!position.isChess960()) {
+        evalPawnShield(WHITE);
+        evalPawnShield(BLACK);
+    }
     evalAttacks(WHITE);
     evalAttacks(BLACK);
     score = mobility[c] - mobility[!c] + king_safety[c] - king_safety[!c] + pawn_structure[c] - pawn_structure[!c] + material[c] - material[!c] + attacks[c] - attacks[!c];

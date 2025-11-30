@@ -485,14 +485,14 @@ void parallel_search(const Position &s, SearchInfo si, int depth, int alpha, int
 }
 
 /** Aspiration window search */
-int aspiration_window(const Position &s, SearchInfo &si, int depth, int prev_score) {
+int aspiration_window(const Position &s, SearchInfo &si, int depth, int score) {
     if (depth <= 4) {
         return search_root(s, si, global_info[0], depth, 0, NEG_INF, POS_INF);
     }
 
     int window = ASPIRATION_WINDOW;
-    int alpha = prev_score - window;
-    int beta = prev_score + window;
+    int alpha = score - window;
+    int beta = score + window;
     while (true) {
         int score = search_root(s, si, global_info[0], depth, 0, alpha, beta);
         if (score <= alpha) {
@@ -513,7 +513,7 @@ int aspiration_window(const Position &s, SearchInfo &si, int depth, int prev_sco
 Move iterative_deepening(const Position &s, SearchInfo &si) {
     Move best_move = NULL_MOVE;
     int score = 0;
-    for (int d = 1; !si.quit && d < MAX_PLY; ++d) {
+    for (int d = 1; d < MAX_PLY && !si.quit; ++d) {
         for (int i = 0; i < NUM_THREADS; ++i) {
             global_info[i].variation.clearPv();
         }

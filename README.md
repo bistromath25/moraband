@@ -15,7 +15,7 @@ Moraband, known in antiquity as Korriban, was an
  Outer Rim planet that was home to the ancient Sith
 
 uci
-id name Moraband 1.2
+id name Moraband 1.3
 id author Brighten Zhang
 option name Hash type spin default 256 min 1 max 65536
 option name Threads type spin default 1 min 1 max 16
@@ -53,23 +53,9 @@ uciok
 ## Compile
 Compile via `cmake`
 ```
-cmake -B build -S . -DCMAKE_BUILD_TYPE=Release # Release, Release-NNUE, Tune
+cmake -B build -S . -DCMAKE_BUILD_TYPE=Release # Release-NNUE
 cmake --build build --parallel
 ```
-
-## Tune
-Tune material values using [Texel's method](https://www.chessprogramming.org/Texel%27s_Tuning_Method). Provide a `fens` file containing one FEN per line like below
-```
-// FEN; result
-r1bqk2r/2p2ppp/2p5/p3pn2/1bB5/2NP2P1/PPP1NP1P/R1B1K2R w KQkq -; 0-1
-8/8/4kp2/8/5K2/6p1/6P1/8 b - -; 1/2-1/2
-r4rk1/3p2pp/p7/1pq2p2/2n2P2/P2Q3P/2P1NRP1/R5K1 w - -; 1/2-1/2
-2rqk1n1/p6p/1p1pp3/8/4P3/P1b5/R2N1PPP/3QR1K1 w - -; 1-0
-```
-and tune via `tune fens`.
-
-## NNUE
-Moraband includes support for NNUE (Efficiently Updatable Neural Network) evaluation, using a `768 -> 256 -> 1` two-layer feedforward model with clipped ReLU activation producing a single scalar output. The input features consist of a 768-dimensional one-hot encoding of all 12 piece types across 64 squares from White’s perspective. Inference is accelerated with Apple NEON intrinsics on ARM64 (Apple Silicon) CPUs, with a scalar fallback for other platforms.
 
 ## Credit and Resources
 - [Vice chess engine tutorial](https://www.chessprogramming.org/Vice)
