@@ -36,7 +36,7 @@ std::string format_time(double seconds) {
 struct Parameter {
     std::string name;
     int *ptr;
-    double value;
+    int value;
 };
 
 struct Input {
@@ -59,40 +59,44 @@ inline long double sigmoid(long double x, long double k) {
     return 1.0L / (1.0L + expl(-scale * x));
 }
 
-long double evaluate_error(const std::vector<Parameter> &P, long double k, size_t batch_size = 100000) {
+long double evaluate_error(const std::vector<Parameter> &P, long double k, const std::vector<const Input *> &batch) {
     for (auto &p : P) {
         *p.ptr = p.value;
     }
 
     std::vector<long double> thread_error(NUM_THREADS, 0.0L);
-    std::vector<uint64_t> thread_count(NUM_THREADS, 0);
-
-    std::mt19937_64 rng(123456);
-    std::uniform_int_distribution<size_t> dist(0, data.size() - 1);
+    std::vector<uint64_t> thread_cnt(NUM_THREADS, 0);
 
     auto worker = [&](int tid) {
-        long double local_error = 0.0L;
-        uint64_t local_count = 0;
+        size_t n = batch.size();
+        size_t start = (n * tid) / NUM_THREADS;
+        size_t end = (n * (tid + 1)) / NUM_THREADS;
 
-        size_t per_thread = batch_size / NUM_THREADS;
-        for (size_t i = 0; i < per_thread; ++i) {
-            size_t idx = dist(rng);
-            auto &e = data[idx];
-            if (e.s.inCheck()) {
+        long double error = 0.0L;
+        uint64_t cnt = 0;
+
+        for (size_t i = start; i < end; ++i) {
+            const Input *e = batch[i];
+            if (e->s.inCheck()) {
                 continue;
             }
 
-            Evaluate evaluate(e.s);
-            int score = evaluate.getScore();
+            SearchInfo si;
+            si.infinite = true;
+            global_info[tid].clear();
+            int score = qsearch(e->s, si, global_info[tid], 0, NEG_INF, POS_INF);
+            if (e->s.getOurColor() == BLACK) {
+                score = -score;
+            }
 
-            long double p = sigmoid(score / 400.0L, k);
-            long double diff = p - e.result;
-            local_error += diff * diff;
-            ++local_count;
+            long double p = sigmoid(score / 100.0L, k);
+            long double d = p - e->result;
+            error += d * d;
+            ++cnt;
         }
 
-        thread_error[tid] = local_error;
-        thread_count[tid] = local_count;
+        thread_error[tid] = error;
+        thread_cnt[tid] = cnt;
     };
 
     std::vector<std::thread> threads;
@@ -103,33 +107,38 @@ long double evaluate_error(const std::vector<Parameter> &P, long double k, size_
         t.join();
     }
 
-    long double total_error = 0.0L;
-    uint64_t total_count = 0;
+    long double error = 0.0L;
+    uint64_t cnt = 0;
     for (int t = 0; t < NUM_THREADS; ++t) {
-        total_error += thread_error[t];
-        total_count += thread_count[t];
+        error += thread_error[t];
+        cnt += thread_cnt[t];
     }
 
-    return total_count ? total_error / total_count : 0.0L;
+    return cnt ? error / cnt : 0.0L;
+}
+
+std::vector<const Input *> make_batch(size_t batch_size, uint64_t seed) {
+    std::mt19937_64 rng(seed);
+    std::uniform_int_distribution<size_t> dist(0, data.size() - 1);
+    std::vector<const Input *> batch;
+    batch.reserve(batch_size);
+    for (size_t i = 0; i < batch_size; ++i) {
+        batch.push_back(&data[dist(rng)]);
+    }
+    return batch;
 }
 
 void spsa_tune(std::vector<Parameter> &P, long double k) {
     const int N = P.size();
     std::mt19937_64 rng(123456);
 
-    const double a0 = 500.0;
-    const double c0 = 50.0;
-    const double alpha = 0.602;
-    const double gamma = 0.101;
-    const int num_iterations = 1000;
+    const int c = 2;
+    const int num_iterations = 4000;
     const int print_every = num_iterations / 20;
 
     auto start_time = std::chrono::high_resolution_clock::now();
 
     for (int i = 1; i <= num_iterations; ++i) {
-        double a = a0 / std::pow(i, alpha);
-        double c = c0 / std::pow(i, gamma);
-
         std::vector<int> delta(N);
         for (int i = 0; i < N; ++i) {
             delta[i] = (rng() & 1) ? 1 : -1;
@@ -143,16 +152,15 @@ void spsa_tune(std::vector<Parameter> &P, long double k) {
             Pminus[i].value = P[i].value - c * delta[i];
         }
 
-        long double errorPlus = evaluate_error(Pplus, k);
-        long double errorMinus = evaluate_error(Pminus, k);
-
-        std::vector<double> g(N);
-        for (int i = 0; i < N; ++i) {
-            g[i] = (double) (errorPlus - errorMinus) / (2.0 * c * delta[i]);
-        }
+        auto batch = make_batch(10000, rng());
+        long double errorPlus = evaluate_error(Pplus, k, batch);
+        long double errorMinus = evaluate_error(Pminus, k, batch);
 
         for (int i = 0; i < N; ++i) {
-            P[i].value -= a * g[i];
+            int ak = std::max(1, int(8.0 / std::sqrt(i)));
+            int grad = (errorPlus > errorMinus) ? 1 : -1;
+            grad *= delta[i];
+            P[i].value -= ak * grad;
         }
 
         for (auto &p : P) {
@@ -160,40 +168,41 @@ void spsa_tune(std::vector<Parameter> &P, long double k) {
         }
 
         if (i % print_every == 0 || i == num_iterations) {
-            long double err = evaluate_error(P, k);
+            long double error = (errorPlus + errorMinus) / 2;
             auto now = std::chrono::high_resolution_clock::now();
             double elapsed = std::chrono::duration<double>(now - start_time).count();
             double eta_sec = (elapsed / i) * (num_iterations - i);
             std::cerr << "[" << current_time() << "] "
                       << "[Iteration " << i << "/" << num_iterations << "] "
-                      << "Error = " << err
+                      << "Error = " << error
                       << " - ETA: " << format_time(eta_sec)
                       << "\n";
         }
     }
 }
 
-long double find_best_k(const std::vector<Parameter> &P, double k_min = 0.5, double k_max = 1.5, double step = 0.05, size_t sample_size = 100000) {
+long double find_best_k(const std::vector<Parameter> &P, double k_min = 0.5, double k_max = 1.5, double step = 0.05) {
     long double best_k = k_min;
-    long double best_err = std::numeric_limits<long double>::max();
+    long double best_error = std::numeric_limits<long double>::max();
 
+    auto batch = make_batch(10000, 1);
     for (double k = k_min; k <= k_max; k += step) {
-        long double err = evaluate_error(P, k, sample_size);
+        long double error = evaluate_error(P, k, batch);
         std::cerr << "[" << current_time() << "] "
-                  << "Test k = " << k << ", Error = " << err << "\n";
-        if (err < best_err) {
-            best_err = err;
+                  << "Test k = " << k << ", Error = " << error << "\n";
+        if (error < best_error) {
+            best_error = error;
             best_k = k;
         }
     }
 
-    std::cerr << "[" << current_time() << "] Best k found: " << best_k << " with error = " << best_err << "\n";
+    std::cerr << "[" << current_time() << "] Best k found: " << best_k << " with error = " << best_error << "\n";
     return best_k;
 }
 
 void set_parameters(std::vector<Parameter> &P) {
     auto add = [&](int *ptr, const std::string &name) {
-        P.push_back({name, ptr, (double) *ptr});
+        P.push_back({name, ptr, *ptr});
     };
 
     // Material
@@ -307,7 +316,7 @@ void tune(const std::string &fensFile, int num_threads) {
 
     std::ofstream out("tuning_output.txt", std::ios::app);
     for (auto &p : P) {
-        *p.ptr = (int) std::round(p.value);
+        *p.ptr = p.value;
         out << p.name << " " << *p.ptr << "\n";
     }
 }
