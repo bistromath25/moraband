@@ -7,24 +7,32 @@ from concurrent.futures import ThreadPoolExecutor, as_completed
 
 from tqdm import tqdm
 
-DEFAULT_MOVETIME = 5000
-
 
 class TestPosition:
-    def __init__(self, id="", fen="", best_moves=None):
+    def __init__(
+        self, id="", fen="", best_moves=None, is_best_move=True, is_chess960=False
+    ):
         self.id = id
         self.fen = fen
         self.best_moves = best_moves or []
+        self.is_best_move = is_best_move
+        self.is_chess960 = is_chess960
 
 
 def parse(line):
     parts = line.split(";")
-    fen_and_bm = parts[0].strip()
+    fen_and_cmd = parts[0].strip()
     id_part = parts[1].strip() if len(parts) > 1 else ""
 
-    tokens = fen_and_bm.split(" bm ")
-    fen = tokens[0].strip()
-    uci_moves = tokens[1].split()
+    if " bm " in fen_and_cmd:
+        fen, moves = fen_and_cmd.split(" bm ")
+        is_best = True
+    elif " am " in fen_and_cmd:
+        fen, moves = fen_and_cmd.split(" am ")
+        is_best = False
+
+    fen = fen.strip()
+    uci_moves = moves.split()
 
     test_id = ""
     if id_part.startswith("id "):
@@ -33,14 +41,17 @@ def parse(line):
         if start != -1 and end != -1 and end > start:
             test_id = id_part[start + 1 : end]
 
-    return TestPosition(test_id, fen, uci_moves)
+    if test_id.startswith("chess960."):
+        is_chess960 = True
+    else:
+        is_chess960 = False
+
+    return TestPosition(test_id, fen, uci_moves, is_best, is_chess960)
 
 
 class EngineWorker:
-    def __init__(self, engine_path, move_time=DEFAULT_MOVETIME, depth=None):
+    def __init__(self, engine_path):
         self.engine_path = engine_path
-        self.move_time = move_time
-        self.depth = depth
 
         self.proc = subprocess.Popen(
             self.engine_path,
@@ -60,28 +71,42 @@ class EngineWorker:
         with self.lock:
             self.proc.stdin.write("ucinewgame\n")
             self.proc.stdin.flush()
+
             self.proc.stdin.write("isready\n")
             self.proc.stdin.flush()
+            self.proc.stdout.readline()
+
+            if test_position.is_chess960:
+                self.proc.stdin.write("setoption name UCI_Chess960 value true\n")
+                self.proc.stdin.flush()
+
             self.proc.stdin.write(f"position fen {test_position.fen}\n")
-
-            go_cmd = f"go movetime {self.move_time}"
-            if self.depth is not None:
-                go_cmd += f" depth {self.depth}"
-
-            self.proc.stdin.write(go_cmd + "\n")
             self.proc.stdin.flush()
 
-            engine_out = []
-            while True:
-                line = self.proc.stdout.readline().strip()
-                if line:
-                    engine_out.append(line)
-                if "bestmove" in line:
-                    break
+            self.proc.stdin.write("moves\n")
+            self.proc.stdin.flush()
 
-            engine_best_move = engine_out[-1].split("bestmove ")[1]
-            success = engine_best_move in test_position.best_moves
-            return (test_position, engine_best_move, success, engine_out)
+            line = self.proc.stdout.readline().strip()
+            num_moves = int(line.split()[0])
+            engine_moves = [
+                self.proc.stdout.readline().strip() for _ in range(num_moves)
+            ]
+
+            success = True
+            if test_position.is_best_move:
+                # All bm moves must be present
+                for mv in test_position.best_moves:
+                    if mv not in engine_moves:
+                        success = False
+                        break
+            else:
+                # All am moves must be absent
+                for mv in test_position.best_moves:
+                    if mv in engine_moves:
+                        success = False
+                        break
+
+            return (test_position, engine_moves, success)
 
     def quit(self):
         self.proc.stdin.write("quit\n")
@@ -93,10 +118,6 @@ def main():
     parser = argparse.ArgumentParser(description="Test Moraband")
     parser.add_argument("engine", type=str, help="path to Moraband")
     parser.add_argument("test_positions_file", type=str, help="test positions file")
-    parser.add_argument(
-        "--move_time", type=int, help="move time in ms", default=DEFAULT_MOVETIME
-    )
-    parser.add_argument("--depth", type=int, help="search depth", default=None)
     parser.add_argument(
         "--workers", type=int, help="parallel engine processes", default=4
     )
@@ -113,15 +134,8 @@ def main():
     print("Moraband Win-at-Chess 1.1")
     print(f"Positions: {total}")
     print(f"Workers:   {args.workers}")
-    if args.move_time is not None:
-        print(f"Movetime:  {(args.move_time / 1000):.2f} s")
-    if args.depth is not None:
-        print(f"Depth:     {args.depth}")
 
-    engines = [
-        EngineWorker(args.engine, args.move_time, args.depth)
-        for _ in range(args.workers)
-    ]
+    engines = [EngineWorker(args.engine) for _ in range(args.workers)]
 
     passed = 0
     failed = 0
@@ -140,18 +154,18 @@ def main():
             unit="test",
             bar_format="{desc}: {n}/{total}",
         ):
-            test_position, engine_best_move, success, engine_out = future.result()
+            test_position, engine_moves, success = future.result(timeout=5.0)
             if success:
                 passed += 1
             else:
                 failed += 1
                 if args.verbose:
                     print(f"FAILED: id {test_position.id} fen {test_position.fen}")
-                    if len(engine_out) > 1:
-                        print(f"\t{engine_out[-2].split(' pv')[0]}")
-                    print(
-                        f"\tfound {engine_best_move} expected {test_position.best_moves}"
-                    )
+                    if test_position.is_best_move:
+                        print(f"Include: {test_position.best_moves}")
+                    else:
+                        print(f"Exclude: {test_position.best_moves}")
+                    print(f"Found: {engine_moves}")
 
     elapsed = time.perf_counter() - start_time
 

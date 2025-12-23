@@ -11,7 +11,6 @@
 #include "uci.h"
 #include "zobrist.h"
 #include <iostream>
-#include <sstream>
 #include <string>
 
 int main(int argc, char *argv[]) {

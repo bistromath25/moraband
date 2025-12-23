@@ -7,6 +7,7 @@
 #include "eval.h"
 #include "zobrist.h"
 #include <algorithm>
+#include <sstream>
 
 /** Castling rights lookup table */
 constexpr int CASTLE_RIGHTS[BOARD_SIZE] = {
@@ -75,21 +76,25 @@ Position &Position::operator=(const Position &s) {
 Position::Position(const std::string &fen, bool isChess960) {
     init(isChess960);
 
-    std::string::const_iterator it = fen.begin();
+    std::array<std::string, 6> parts;
+    std::istringstream ss(fen);
+    for (int i = 0; i < 6; ++i) {
+        ss >> parts[i];
+    }
+
     int position = 0;
-    for (; it != fen.end() && *it != ' '; ++it) {
-        if (isdigit(*it)) {
-            position += *it - '0';
+    for (char x : parts[0]) {
+        if (isdigit(x)) {
+            position += x - '0';
         }
-        else if (isalpha(*it)) {
-            Color c = isupper(*it) ? WHITE : BLACK;
-            char t = tolower(*it);
-            PieceType p = t == 'p'   ? PIECETYPE_PAWN
-                          : t == 'n' ? PIECETYPE_KNIGHT
-                          : t == 'b' ? PIECETYPE_BISHOP
-                          : t == 'r' ? PIECETYPE_ROOK
-                          : t == 'q' ? PIECETYPE_QUEEN
-                                     : PIECETYPE_KING;
+        else if (isalpha(x)) {
+            Color c = isupper(x) ? WHITE : BLACK;
+            char t = towlower(x);
+            PieceType p = (t == 'p') ? PIECETYPE_PAWN : (t == 'n') ? PIECETYPE_KNIGHT
+                                                    : (t == 'b')   ? PIECETYPE_BISHOP
+                                                    : (t == 'r')   ? PIECETYPE_ROOK
+                                                    : (t == 'q')   ? PIECETYPE_QUEEN
+                                                                   : PIECETYPE_KING;
             Square s = last_sq - position;
             addPiece(c, p, s);
             key ^= Zobrist::key(c, p, s);
@@ -98,13 +103,12 @@ Position::Position(const std::string &fen, bool isChess960) {
             }
             ++position;
         }
-        else if (*it == '/') {
+        else if (x == '/') {
             continue;
         }
     }
 
-    ++it;
-    if (*it == 'w') {
+    if (parts[1] == "w") {
         us = WHITE;
         them = BLACK;
     }
@@ -114,47 +118,41 @@ Position::Position(const std::string &fen, bool isChess960) {
         key ^= Zobrist::key();
     }
 
-    ++it;
-    ++it;
     if (isChess960) {
-        for (; it != fen.end() && *it != ' '; ++it) {
-            if (isalpha(*it)) {
-                Color c = isupper(*it) ? WHITE : BLACK;
-                int f = 7 - (towlower(*it) - 'a');
-                auto side = file(getKingSquare(c)) > f ? CASTLE_KINGSIDE : CASTLE_QUEENSIDE;
-                castleRookSrc[c][side] = static_cast<Square>(((c == WHITE) ? 0 : 7) * 8 + f);
-                castleRights |= (c == WHITE)
-                                    ? (side == CASTLE_KINGSIDE ? WHITE_KINGSIDE_CASTLE : WHITE_QUEENSIDE_CASTLE)
-                                    : (side == CASTLE_KINGSIDE ? BLACK_KINGSIDE_CASTLE : BLACK_QUEENSIDE_CASTLE);
-            }
+        for (char x : parts[2]) {
+            Color c = isupper(x) ? WHITE : BLACK;
+            int f = 7 - (towlower(x) - 'a');
+            auto side = file(getKingSquare(c)) > f ? CASTLE_KINGSIDE : CASTLE_QUEENSIDE;
+            castleRookSrc[c][side] = static_cast<Square>(((c == WHITE) ? 0 : 7) * 8 + f);
+            castleRights |= (c == WHITE)
+                                ? (side == CASTLE_KINGSIDE ? WHITE_KINGSIDE_CASTLE : WHITE_QUEENSIDE_CASTLE)
+                                : (side == CASTLE_KINGSIDE ? BLACK_KINGSIDE_CASTLE : BLACK_QUEENSIDE_CASTLE);
         }
     }
     else {
-        for (; it != fen.end() && *it != ' '; ++it) {
-            if (*it == 'K') {
+        for (char x : parts[2]) {
+            if (x == 'K') {
                 castleRights |= WHITE_KINGSIDE_CASTLE;
             }
-            else if (*it == 'Q') {
+            else if (x == 'Q') {
                 castleRights |= WHITE_QUEENSIDE_CASTLE;
             }
-            else if (*it == 'k') {
+            else if (x == 'k') {
                 castleRights |= BLACK_KINGSIDE_CASTLE;
             }
-            else if (*it == 'q') {
+            else if (x == 'q') {
                 castleRights |= BLACK_QUEENSIDE_CASTLE;
             }
         }
     }
     key ^= Zobrist::key(castleRights);
 
-    ++it;
-    if (it != fen.end() && *it != '-') {
-        int f = *it - 'a';
-        ++it;
-        int r = *it - '1';
-        enPassant = square_bb[r * 8 + f];
+    if (parts[3] != "-") {
+        enPassant = square_bb[(parts[3][1] - '1') * 8 + (parts[3][0] - 'a')];
         key ^= Zobrist::key(get_file(enPassant));
     }
+
+    fiftyMoveRule = std::stoi(parts[4]);
 
     previousMove = NULL_MOVE;
     setPins(WHITE);

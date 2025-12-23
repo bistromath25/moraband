@@ -15,7 +15,7 @@ Moraband, known in antiquity as Korriban, was an
  Outer Rim planet that was home to the ancient Sith
 
 uci
-id name Moraband 1.2
+id name Moraband 1.3
 id author Brighten Zhang
 option name Hash type spin default 256 min 1 max 65536
 option name Threads type spin default 1 min 1 max 16
@@ -49,19 +49,9 @@ uciok
 ## Compile
 Compile via `cmake`
 ```
-cmake -B build -S . -DCMAKE_BUILD_TYPE=Release # Release, Tune
+cmake -B build -S . -DCMAKE_BUILD_TYPE=Release
 cmake --build build --parallel
 ```
-
-## Tune
-Tune material values using [SPSA](https://www.chessprogramming.org/SPSA). Provide a `fens` file containing one FEN per line like below
-```
-// FEN result
-r6r/ppk1b1pp/2p1bn2/4Np2/1PP1pP2/P1N1P1P1/4BK1P/2R4R b - - 0 24 0.5
-rn1qkbnr/1ppb1ppp/4p3/p2p4/P7/1PP2N2/1B1PPPPP/RN1QKB1R b KQkq - 1 2 1.0
-3rr1k1/1p3p1p/2pp2p1/p4PP1/Pn2Pn2/1PN4P/2PR1KB1/3R4 w - - 1 53 0.0
-```
-and tune via `tune fens`.
 
 ## Credit and Resources
 - [Vice chess engine tutorial](https://www.chessprogramming.org/Vice)

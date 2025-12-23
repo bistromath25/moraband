@@ -31,7 +31,7 @@ add_executable(Moraband ${MAIN_SOURCES})
 
 if(CMAKE_BUILD_TYPE STREQUAL "Debug")
     message(STATUS "Debug build")
-    target_compile_options(Moraband PRIVATE -O0 -g -Wall -Wextra -Wpedantic)
+    target_compile_options(Moraband PRIVATE -O0 -ggdb -fno-inline -fno-omit-frame-pointer -Wall -Wextra -Wpedantic)
 elseif(CMAKE_BUILD_TYPE STREQUAL "Release")
     message(STATUS "Release build")
     target_compile_options(Moraband PRIVATE -O3 -DNDEBUG -Wall -Wextra -Wpedantic)
