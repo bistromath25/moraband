@@ -1,0 +1,35 @@
+name: Tests
+
+on:
+  push:
+    branches: [ "main" ]
+  pull_request:
+    branches: [ "main" ]
+
+jobs:
+  test:
+    runs-on: ubuntu-latest
+
+    env:
+      CC: clang
+      CXX: clang++
+
+    steps:
+      - name: Checkout repository
+        uses: actions/checkout@v3
+
+      - name: CMake and Clang versions
+        run: |
+          cmake --version
+          $CC --version
+          $CXX --version
+
+      - name: Configure
+        run: cmake -B build -S . -DCMAKE_BUILD_TYPE=Release
+
+      - name: Build tests
+        run: cmake --build build --target tests --parallel
+
+      - name: Test
+        working-directory: build
+        run: ctest --output-on-failure

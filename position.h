@@ -53,8 +53,8 @@ class Position {
 public:
     Position();
     Position(const std::string &fen, bool isChess960 = false);
-    Position(const Position &s);
-    Position &operator=(const Position &s);
+    Position(const Position &s) = default;
+    Position &operator=(const Position &s) = default;
     void init(bool isChess960 = false);
     inline bool isChess960() const;
 
@@ -149,7 +149,7 @@ private:
     int castleRights;
     int phase;
     bool chess960 = false;
-    Square castleRookSrc[PLAYER_SIZE][2];
+    std::array<std::array<Square, 2>, PLAYER_SIZE> castleRookSrc;
     U64 key;
     U64 pawnKey;
     U64 checkers;
