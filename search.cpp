@@ -7,6 +7,9 @@
 #include "eval.h"
 #include "io.h"
 #include "tt.h"
+#ifdef USE_NNUE
+#include "nnue.h"
+#endif
 #include <atomic>
 #include <string>
 #include <thread>
@@ -83,8 +86,13 @@ int qsearch(const Position &s, SearchInfo &si, GlobalInfo &gi, int ply, int alph
         return alpha;
     }
 
+#ifdef USE_NNUE
+    int staticEval = s.evaluate();
+#else
     Evaluate evaluate(s);
     int staticEval = evaluate.getScore();
+#endif
+
     if (!s.inCheck()) {
         if (staticEval >= beta) {
             return beta;
@@ -96,7 +104,6 @@ int qsearch(const Position &s, SearchInfo &si, GlobalInfo &gi, int ply, int alph
 
     // Probe tt
     Move tt_move = NULL_MOVE;
-#ifndef TUNE
     int tt_score = NEG_INF;
     int tt_flag = -1;
     TTEntry tt_entry = tt.probe(s.getKey());
@@ -108,7 +115,6 @@ int qsearch(const Position &s, SearchInfo &si, GlobalInfo &gi, int ply, int alph
             return tt_score;
         }
     }
-#endif
 
     // Generate moves and create the movelist.
     MoveList moveList(s, tt_move, &gi.history, ply, true);
@@ -133,7 +139,6 @@ int qsearch(const Position &s, SearchInfo &si, GlobalInfo &gi, int ply, int alph
 
         Position c(s);
         c.makeMove(m);
-
         gi.history.push(std::make_pair(m, c.getKey()));
         score = -qsearch(c, si, gi, ply + 1, -beta, -alpha);
         gi.history.pop();
@@ -173,8 +178,12 @@ int search(const Position &s, SearchInfo &si, GlobalInfo &gi, int depth, int ply
         return DRAW;
     }
 
+#ifdef USE_NNUE
+    int staticEval = s.evaluate();
+#else
     Evaluate evaluate(s);
     int staticEval = evaluate.getScore();
+#endif
 
     if (ply >= MAX_PLY) {
         return staticEval;

@@ -9,8 +9,8 @@
 #include "perft.h"
 #include "search.h"
 #include "tt.h"
-#ifdef TUNE
-#include "tune.h"
+#ifdef USE_NNUE
+#include "nnue.h"
 #endif
 #include <algorithm>
 #include <array>
@@ -283,8 +283,13 @@ void uci() {
             std::cout << root.getFen() << std::endl;
         }
         else if (token == "eval") {
+#ifdef USE_NNUE
+            NNUE::NNUE nnue(root);
+            std::cout << nnue.evaluate(root.getOurColor()) << std::endl;
+#else
             Evaluate evaluate(root);
             std::cout << evaluate << std::endl;
+#endif
         }
         else if (token == "perft") {
             is >> token;
@@ -303,12 +308,6 @@ void uci() {
             tt.clear();
             bench(std::stoi(token));
         }
-#ifdef TUNE
-        else if (token == "tune") {
-            is >> token;
-            tune(token);
-        }
-#endif
         else {
             std::cout << "unknown command" << std::endl;
         }

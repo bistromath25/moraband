@@ -5,11 +5,11 @@
 
 #include "eval.h"
 #include "movegen.h"
-#ifdef TUNE
-#include "tune.h"
-#endif
 #include "uci.h"
 #include "zobrist.h"
+#ifdef USE_NNUE
+#include "nnue.h"
+#endif
 #include <iostream>
 #include <string>
 
@@ -30,6 +30,9 @@ int main(int argc, char *argv[]) {
     Zobrist::init();
     bb_init();
     initKingRing();
+#ifdef USE_NNUE
+    NNUE::load_weights();
+#endif
 
     if (argc > 1) {
         if (std::string(argv[1]) == "bench") {
@@ -40,13 +43,6 @@ int main(int argc, char *argv[]) {
                 bench();
             }
         }
-#ifdef TUNE
-        else if (std::string(argv[1]) == "tune") {
-            if (argc > 2) {
-                tune(argv[2]);
-            }
-        }
-#endif
     }
     else {
         uci();

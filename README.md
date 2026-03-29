@@ -49,7 +49,7 @@ uciok
 ## Compile
 Compile via `cmake`
 ```
-cmake -B build -S . -DCMAKE_BUILD_TYPE=Release
+cmake -B build -S . -DCMAKE_BUILD_TYPE=Release # Release-NNUE
 cmake --build build --parallel
 ```
 

@@ -34,7 +34,13 @@ int CASTLE_RIGHTS_CHESS960[BOARD_SIZE] = {
 Position::Position() {}
 
 Position::Position(const Position &s)
-    : us(s.us), them(s.them), fiftyMoveRule(s.fiftyMoveRule), castleRights(s.castleRights), phase(s.phase), chess960(s.chess960), key(s.key), pawnKey(s.pawnKey), checkers(s.checkers), enPassant(s.enPassant), previousMove(s.previousMove), checkSquares(s.checkSquares), pinned(s.pinned), occupancy(s.occupancy), pieceIndex(s.pieceIndex), board(s.board), pieces(s.pieces), pieceCounts(s.pieceCounts), pstScore(s.pstScore), pieceList(s.pieceList) {
+    : us(s.us), them(s.them), fiftyMoveRule(s.fiftyMoveRule), castleRights(s.castleRights), phase(s.phase), chess960(s.chess960), key(s.key), pawnKey(s.pawnKey), checkers(s.checkers), enPassant(s.enPassant), previousMove(s.previousMove), checkSquares(s.checkSquares), pinned(s.pinned), occupancy(s.occupancy), pieceIndex(s.pieceIndex), board(s.board), pieces(s.pieces), pieceCounts(s.pieceCounts), pstScore(s.pstScore), pieceList(s.pieceList)
+#ifdef USE_NNUE
+      ,
+      nnue(s.nnue)
+#endif
+{
+
     for (auto c : {WHITE, BLACK}) {
         for (auto side : {CASTLE_KINGSIDE, CASTLE_QUEENSIDE}) {
             castleRookSrc[c][side] = s.castleRookSrc[c][side];
@@ -69,6 +75,9 @@ Position &Position::operator=(const Position &s) {
                 castleRookSrc[c][side] = s.castleRookSrc[c][side];
             }
         }
+#ifdef USE_NNUE
+        nnue = s.nnue;
+#endif
     }
     return *this;
 }
@@ -97,6 +106,9 @@ Position::Position(const std::string &fen, bool isChess960) {
                                                                    : PIECETYPE_KING;
             Square s = last_sq - position;
             addPiece(c, p, s);
+#ifdef USE_NNUE
+            nnue.addPiece(c, p, s);
+#endif
             key ^= Zobrist::key(c, p, s);
             if (p == PIECETYPE_PAWN) {
                 pawnKey ^= Zobrist::key(c, PIECETYPE_PAWN, s);
@@ -495,6 +507,9 @@ void Position::makeMove(Move move) {
     if (captured != PIECETYPE_NONE && !isCastle(move)) {
         fiftyMoveRule = 0;
         removePiece(them, captured, dst);
+#ifdef USE_NNUE
+        nnue.removePiece(them, captured, dst);
+#endif
         if (captured == PIECETYPE_PAWN) {
             pawnKey ^= Zobrist::key(them, PIECETYPE_PAWN, dst);
         }
@@ -510,9 +525,16 @@ void Position::makeMove(Move move) {
         removePiece(us, PIECETYPE_KING, src);
         addPiece(us, PIECETYPE_ROOK, rookDst);
         addPiece(us, PIECETYPE_KING, kingDst);
+#ifdef USE_NNUE
+        nnue.movePiece(us, PIECETYPE_ROOK, rookSrc, rookDst);
+        nnue.movePiece(us, PIECETYPE_KING, src, kingDst);
+#endif
     }
     else {
         movePiece(us, moved, src, dst);
+#ifdef USE_NNUE
+        nnue.movePiece(us, moved, src, dst);
+#endif
     }
 
     if (moved == PIECETYPE_PAWN) {
@@ -529,12 +551,19 @@ void Position::makeMove(Move move) {
             pawnKey ^= Zobrist::key(us, PIECETYPE_PAWN, dst);
             removePiece(us, PIECETYPE_PAWN, dst);
             addPiece(us, getPiecePromotion(move), dst);
+#ifdef USE_NNUE
+            nnue.removePiece(us, PIECETYPE_PAWN, dst);
+            nnue.addPiece(us, getPiecePromotion(move), dst);
+#endif
             gamePhase = true;
         }
         else if (enPassant & square_bb[dst]) {
             Square epCapture = (us == WHITE) ? dst - 8 : dst + 8;
             pawnKey ^= Zobrist::key(them, PIECETYPE_PAWN, epCapture);
             removePiece(them, PIECETYPE_PAWN, epCapture);
+#ifdef USE_NNUE
+            nnue.removePiece(them, PIECETYPE_PAWN, epCapture);
+#endif
             gamePhase = true;
         }
     }
@@ -721,6 +750,12 @@ std::string Position::getFen() const {
 
     return fen;
 }
+
+#ifdef USE_NNUE
+int Position::evaluate() const {
+    return nnue.evaluate(getOurColor());
+}
+#endif
 
 std::ostream &operator<<(std::ostream &os, const Position &s) {
     std::string W_pawn = "\u2659";
