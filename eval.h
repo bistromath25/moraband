@@ -170,7 +170,7 @@ struct PawnHashTable {
         delete[] table;
     }
     void clear() {
-        for (int i = 0; i < PAWN_HASH_SIZE; ++i) {
+        for (int i = 0; i < size; ++i) {
             table[i].clear();
         }
     }
