@@ -12,6 +12,8 @@ endif()
 set(AVAILABLE_BUILD_TYPES Debug Release Tune)
 set_property(CACHE CMAKE_BUILD_TYPE PROPERTY STRINGS ${AVAILABLE_BUILD_TYPES})
 
+option(BUILD_TESTS "Build tests" OFF)
+
 set(MAIN_SOURCES
     main.cpp
     MagicMoves.cpp
@@ -31,17 +33,26 @@ add_executable(Moraband ${MAIN_SOURCES})
 
 if(CMAKE_BUILD_TYPE STREQUAL "Debug")
     message(STATUS "Debug build")
-    target_compile_options(Moraband PRIVATE -O0 -ggdb -fno-inline -fno-omit-frame-pointer -Wall -Wextra -Wpedantic)
+    target_compile_options(Moraband PRIVATE
+        -O0 -ggdb -fno-inline -fno-omit-frame-pointer
+        -Wall -Wextra -Wpedantic
+    )
+
 elseif(CMAKE_BUILD_TYPE STREQUAL "Release")
     message(STATUS "Release build")
-    target_compile_options(Moraband PRIVATE -O3 -DNDEBUG -Wall -Wextra -Wpedantic)
+    target_compile_options(Moraband PRIVATE
+        -O3 -DNDEBUG
+        -Wall -Wextra -Wpedantic
+    )
+
 elseif(CMAKE_BUILD_TYPE STREQUAL "Tune")
     message(STATUS "Tuning build")
     target_compile_definitions(Moraband PRIVATE TUNE)
-    list(APPEND MAIN_SOURCES tune.cpp)
-    set_source_files_properties(tune.cpp PROPERTIES COMPILE_DEFINITIONS "TUNE")
     target_sources(Moraband PRIVATE tune.cpp)
-    target_compile_options(Moraband PRIVATE -O3 -march=native -Wall -Wextra -Wpedantic)
+    target_compile_options(Moraband PRIVATE
+        -O3 -march=native
+        -Wall -Wextra -Wpedantic
+    )
 endif()
 
 if(NOT CMAKE_CROSSCOMPILING AND NOT CMAKE_BUILD_TYPE STREQUAL "Debug")
@@ -50,65 +61,72 @@ endif()
 
 target_compile_definitions(Moraband PRIVATE NAME=\"Moraband\")
 
-# Testing setup with Google Test
-enable_testing()
+if(BUILD_TESTS)
+    message(STATUS "Building tests enabled")
 
-# Include Google Test using FetchContent
-include(FetchContent)
-FetchContent_Declare(
-  googletest
-  GIT_REPOSITORY https://github.com/google/googletest.git
-  GIT_TAG        v1.14.0
-)
-FetchContent_MakeAvailable(googletest)
+    # Testing setup with Google Test
+    enable_testing()
 
-# Test sources
-set(TEST_SOURCES
-    tests/test_movegen.cpp
-    tests/test_position.cpp
-    tests/test_castle.cpp
-    tests/test_utils.cpp
-)
+    # Include Google Test using FetchContent
+    include(FetchContent)
+    FetchContent_Declare(
+        googletest
+        GIT_REPOSITORY https://github.com/google/googletest.git
+        GIT_TAG v1.14.0
+    )
+    FetchContent_MakeAvailable(googletest)
 
-# Create test executable (exclude main.cpp)
-set(TEST_MAIN_SOURCES ${MAIN_SOURCES})
-list(REMOVE_ITEM TEST_MAIN_SOURCES main.cpp)
+    # Test sources
+    set(TEST_SOURCES
+        tests/test_movegen.cpp
+        tests/test_position.cpp
+        tests/test_castle.cpp
+        tests/test_utils.cpp
+    )
 
-add_executable(tests ${TEST_SOURCES} ${TEST_MAIN_SOURCES})
+    # Reuse engine sources but exclude main.cpp
+    set(TEST_MAIN_SOURCES ${MAIN_SOURCES})
+    list(REMOVE_ITEM TEST_MAIN_SOURCES main.cpp)
 
-# Link test executable with Google Test
-target_link_libraries(tests PRIVATE 
-    GTest::gtest 
-    GTest::gtest_main
-)
+    add_executable(tests ${TEST_SOURCES} ${TEST_MAIN_SOURCES})
 
-# Include directories
-target_include_directories(tests PRIVATE ${CMAKE_CURRENT_SOURCE_DIR})
+    target_link_libraries(tests PRIVATE
+        GTest::gtest
+        GTest::gtest_main
+    )
 
-# Test-specific compile options
-target_compile_options(tests PRIVATE -O0 -ggdb -Wall -Wextra -Wpedantic)
+    target_include_directories(tests PRIVATE ${CMAKE_CURRENT_SOURCE_DIR})
 
-# Register tests
-add_test(NAME MoveGenTests COMMAND tests --gtest_filter=MoveGenTest.*)
-add_test(NAME PositionTests COMMAND tests --gtest_filter=PositionTest.*)
-add_test(NAME CastleTests COMMAND tests --gtest_filter=CastleTest.*)
+    # Always debug-friendly tests
+    target_compile_options(tests PRIVATE
+        -O0 -ggdb
+        -Wall -Wextra -Wpedantic
+    )
+
+    add_test(NAME MoveGenTests COMMAND tests --gtest_filter=MoveGenTest.*)
+    add_test(NAME PositionTests COMMAND tests --gtest_filter=PositionTest.*)
+    add_test(NAME CastleTests COMMAND tests --gtest_filter=CastleTest.*)
+endif()
 
 # Convenience targets for different build types
 # These reconfigure and build in the specified mode
 add_custom_target(release
-    COMMAND ${CMAKE_COMMAND} -B ${CMAKE_BINARY_DIR} -S ${CMAKE_SOURCE_DIR} -DCMAKE_BUILD_TYPE=Release
+    COMMAND ${CMAKE_COMMAND} -B ${CMAKE_BINARY_DIR} -S ${CMAKE_SOURCE_DIR}
+            -DCMAKE_BUILD_TYPE=Release -DBUILD_TESTS=OFF
     COMMAND ${CMAKE_COMMAND} --build ${CMAKE_BINARY_DIR} --target Moraband --parallel
-    COMMENT "Configuring and building in Release mode"
+    COMMENT "Configuring and building Release"
 )
 
 add_custom_target(debug
-    COMMAND ${CMAKE_COMMAND} -B ${CMAKE_BINARY_DIR} -S ${CMAKE_SOURCE_DIR} -DCMAKE_BUILD_TYPE=Debug
-    COMMAND ${CMAKE_COMMAND} --build ${CMAKE_BINARY_DIR} --target Moraband --parallel
-    COMMENT "Configuring and building in Debug mode"
+    COMMAND ${CMAKE_COMMAND} -B ${CMAKE_BINARY_DIR} -S ${CMAKE_SOURCE_DIR}
+            -DCMAKE_BUILD_TYPE=Debug -DBUILD_TESTS=ON
+    COMMAND ${CMAKE_COMMAND} --build ${CMAKE_BINARY_DIR} --parallel
+    COMMENT "Configuring and building Debug"
 )
 
 add_custom_target(tune
-    COMMAND ${CMAKE_COMMAND} -B ${CMAKE_BINARY_DIR} -S ${CMAKE_SOURCE_DIR} -DCMAKE_BUILD_TYPE=Tune
+    COMMAND ${CMAKE_COMMAND} -B ${CMAKE_BINARY_DIR} -S ${CMAKE_SOURCE_DIR}
+            -DCMAKE_BUILD_TYPE=Tune -DBUILD_TESTS=OFF
     COMMAND ${CMAKE_COMMAND} --build ${CMAKE_BINARY_DIR} --target Moraband --parallel
-    COMMENT "Configuring and building in Tune mode"
+    COMMENT "Configuring and building Tune"
 )

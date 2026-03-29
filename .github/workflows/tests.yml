@@ -25,10 +25,10 @@ jobs:
           $CXX --version
 
       - name: Configure
-        run: cmake -B build -S . -DCMAKE_BUILD_TYPE=Release
+        run: cmake -B build -S . -DCMAKE_BUILD_TYPE=Debug -DBUILD_TESTS=ON
 
       - name: Build tests
-        run: cmake --build build --target tests --parallel
+        run: cmake --build build --parallel
 
       - name: Test
         working-directory: build
