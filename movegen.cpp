@@ -107,10 +107,9 @@ template<MoveType T, PieceType P>
 void MoveList::pushMoves() {
     Color c = position.getOurColor();
 
-    for (Square src : position.getPieceList<P>(c)) {
-        if (src == no_sq) {
-            break;
-        }
+    U64 pieces = position.getPieceBB<P>(c);
+    while (pieces) {
+        Square src = pop_lsb(pieces);
         U64 m = position.getAttackBB<P>(src) & valid;
 
         if (T == MoveType::QuietChecks) {
