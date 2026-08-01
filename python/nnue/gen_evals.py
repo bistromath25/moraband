@@ -162,7 +162,7 @@ def main():
         timestamp = time.strftime("%Y%m%d_%H%M%S")
         args.output_dir = f"convert-{timestamp}"
 
-    output_dir = Path(output_dir).mkdir(parents=True, exist_ok=True)
+    output_dir = Path(output_dir)
     output_dir.mkdir(parents=True, exist_ok=True)
 
     logging.basicConfig(

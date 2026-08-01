@@ -61,7 +61,7 @@ def encode_fen(fen):
             if c.isdigit():
                 file += int(c)
             else:
-                sq = rank * 8 + file
+                sq = rank * 8 + (7 - file)
                 idx = sq * 12 + PIECE_TO_IDX[c]
                 x[idx] = 1.0
                 file += 1
