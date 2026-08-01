@@ -8,6 +8,7 @@
 #include "io.h"
 #include "tt.h"
 #include <atomic>
+#include <cmath>
 #include <string>
 #include <thread>
 
@@ -15,6 +16,16 @@ std::atomic<bool> THREAD_STOP{false};
 std::array<std::thread, MAX_THREADS> threads;
 std::array<GlobalInfo, MAX_THREADS> global_info;
 std::array<std::pair<int, bool>, MAX_THREADS> results;
+
+int lmr_table[LMR_TABLE_MAX][LMR_TABLE_MAX];
+
+void init_lmr_table() {
+    for (int d = 0; d < LMR_TABLE_MAX; ++d) {
+        for (int m = 0; m < LMR_TABLE_MAX; ++m) {
+            lmr_table[d][m] = int(std::log(d + 1) * std::log(m + 1) / 1.5);
+        }
+    }
+}
 
 constexpr int value_to_tt(int value, int ply) {
     if (value >= CHECKMATE_BOUND) {
@@ -278,6 +289,7 @@ int search(const Position &s, SearchInfo &si, GlobalInfo &gi, int depth, int ply
 
     int score = 0;
     int bestScore = NEG_INF;
+    const std::pair<Move, Move> &killers = gi.history.getKiller(ply);
 
     int legalMoves = 0;
     int oldAlpha = alpha;
@@ -296,8 +308,13 @@ int search(const Position &s, SearchInfo &si, GlobalInfo &gi, int depth, int ply
                 continue;
             }
             // Late move reduction
-            if (depth >= LATE_MOVE_REDUCTION_DEPTH && legalMoves > (isPv ? 5 : 3) + !improving && !s.isCapture(m)) {
-                d -= 1 + !isPv + (legalMoves > 8);
+            if (depth >= LMR_DEPTH && legalMoves > (isPv ? 5 : 3) + !improving && !s.isCapture(m)) {
+                int r = lmr_table[std::min(depth, LMR_TABLE_MAX - 1)][std::min(legalMoves, LMR_TABLE_MAX - 1)];
+                r -= improving;
+                r -= (m == killers.first || m == killers.second);
+                r -= gi.history.getHistoryScore(m) / LMR_HISTORY_DIVISOR;
+                r += !isPv;    
+                d -= std::clamp(r, 0, depth - 2);
                 d = std::max(1, d);
             }
         }

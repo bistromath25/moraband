@@ -8,6 +8,7 @@
 #ifdef TUNE
 #include "tune.h"
 #endif
+#include "search.h"
 #include "uci.h"
 #include "zobrist.h"
 #include <iostream>
@@ -30,6 +31,7 @@ int main(int argc, char *argv[]) {
     Zobrist::init();
     bb_init();
     initKingRing();
+    init_lmr_table();
 
     if (argc > 1) {
         if (std::string(argv[1]) == "bench") {

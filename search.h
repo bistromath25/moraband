@@ -13,7 +13,9 @@
 #include <array>
 
 constexpr int LMR_COUNT = 3;
-constexpr int LMR_DEPTH = 2;
+constexpr int LMR_DEPTH = 3;
+constexpr int LMR_HISTORY_DIVISOR = 256;
+constexpr int LMR_TABLE_MAX = 64;
 constexpr int NULL_MOVE_COUNT = 3;
 constexpr int NULL_MOVE_DEPTH = 4;
 constexpr int NULL_MOVE_MARGIN = 100; // NMP pruning margin
@@ -22,7 +24,6 @@ constexpr int REVERSE_FUTILITY_MARGIN = 200;
 constexpr int FUTILITY_DEPTH = 7;
 constexpr int RAZOR_DEPTH = 2;
 constexpr int RAZOR_MARGIN = 300;
-constexpr int LATE_MOVE_REDUCTION_DEPTH = 3;
 constexpr int ASPIRATION_WINDOW = 30;
 
 /** Search information */
@@ -62,6 +63,9 @@ struct GlobalInfo {
 constexpr int MAX_THREADS = 64;
 extern int NUM_THREADS;
 extern std::array<GlobalInfo, MAX_THREADS> global_info;
+
+extern int lmr_table[LMR_TABLE_MAX][LMR_TABLE_MAX];
+void init_lmr_table();
 
 #ifdef TUNE
 int qsearch(const Position &s, SearchInfo &si, GlobalInfo &gi, int ply, int alpha, int beta);
