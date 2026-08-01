@@ -20,16 +20,6 @@ constexpr int CASTLE_RIGHTS[BOARD_SIZE] = {
     15, 15, 15, 15, 15, 15, 15, 15,
     11, 15, 15, 3, 15, 15, 15, 7};
 
-int CASTLE_RIGHTS_CHESS960[BOARD_SIZE] = {
-    15, 15, 15, 15, 15, 15, 15, 15,
-    15, 15, 15, 15, 15, 15, 15, 15,
-    15, 15, 15, 15, 15, 15, 15, 15,
-    15, 15, 15, 15, 15, 15, 15, 15,
-    15, 15, 15, 15, 15, 15, 15, 15,
-    15, 15, 15, 15, 15, 15, 15, 15,
-    15, 15, 15, 15, 15, 15, 15, 15,
-    15, 15, 15, 15, 15, 15, 15, 15};
-
 /** Board position and related functions */
 Position::Position() {}
 
@@ -159,15 +149,6 @@ Position::Position(const std::string &fen, bool isChess960) {
     setPins(BLACK);
     setCheckers();
     setGamePhase();
-
-    if (isChess960) {
-        CASTLE_RIGHTS_CHESS960[getKingSquare(WHITE)] &= ~(WHITE_KINGSIDE_CASTLE | WHITE_QUEENSIDE_CASTLE);
-        CASTLE_RIGHTS_CHESS960[getKingsideCastleRookSrc(WHITE)] &= ~WHITE_KINGSIDE_CASTLE;
-        CASTLE_RIGHTS_CHESS960[getQueensideCastleRookSrc(WHITE)] &= ~WHITE_QUEENSIDE_CASTLE;
-        CASTLE_RIGHTS_CHESS960[getKingSquare(BLACK)] &= ~(BLACK_KINGSIDE_CASTLE | BLACK_QUEENSIDE_CASTLE);
-        CASTLE_RIGHTS_CHESS960[getKingsideCastleRookSrc(BLACK)] &= ~BLACK_KINGSIDE_CASTLE;
-        CASTLE_RIGHTS_CHESS960[getQueensideCastleRookSrc(BLACK)] &= ~BLACK_QUEENSIDE_CASTLE;
-    }
 }
 
 void Position::init(bool isChess960) {
@@ -547,8 +528,8 @@ void Position::makeMove(Move move) {
     }
 
     if (isChess960()) {
-        castleRights &= CASTLE_RIGHTS_CHESS960[src];
-        castleRights &= CASTLE_RIGHTS_CHESS960[dst];
+        castleRights &= chess960CastleMask(src);
+        castleRights &= chess960CastleMask(dst);
     }
     else {
         castleRights &= CASTLE_RIGHTS[src];

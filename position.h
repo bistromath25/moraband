@@ -101,6 +101,7 @@ public:
     inline Square getKingsideCastleRookSrc(Color c) const;
     inline Square getQueensideCastleRookSrc() const;
     inline Square getQueensideCastleRookSrc(Color c) const;
+    inline int chess960CastleMask(Square sq) const;
     bool isQuiet(Move move) const;
     bool isCapture(Move move) const;
     bool isEnPassant(Move m) const;
@@ -384,6 +385,28 @@ inline Square Position::getQueensideCastleRookSrc() const {
 
 inline Square Position::getQueensideCastleRookSrc(Color c) const {
     return castleRookSrc[c][CASTLE_QUEENSIDE];
+}
+
+inline int Position::chess960CastleMask(Square sq) const {
+    if (sq == getKingSquare(WHITE)) {
+        return 15 & ~(WHITE_KINGSIDE_CASTLE | WHITE_QUEENSIDE_CASTLE);
+    }
+    if (sq == getKingsideCastleRookSrc(WHITE)) {
+        return 15 & ~WHITE_KINGSIDE_CASTLE;
+    }
+    if (sq == getQueensideCastleRookSrc(WHITE)) {
+        return 15 & ~WHITE_QUEENSIDE_CASTLE;
+    }
+    if (sq == getKingSquare(BLACK)) {
+        return 15 & ~(BLACK_KINGSIDE_CASTLE | BLACK_QUEENSIDE_CASTLE);
+    }
+    if (sq == getKingsideCastleRookSrc(BLACK)) {
+        return 15 & ~BLACK_KINGSIDE_CASTLE;
+    }
+    if (sq == getQueensideCastleRookSrc(BLACK)) {
+        return 15 & ~BLACK_QUEENSIDE_CASTLE;
+    }
+    return 15;
 }
 
 template<PieceType PIECETYPE_PAWN>
