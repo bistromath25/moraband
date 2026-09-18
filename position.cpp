@@ -467,11 +467,12 @@ void Position::makeMove(Move move, StateInfo &st) {
     st.fiftyMoveRule = fiftyMoveRule;
     st.phase = phase;
     st.previousMove = previousMove;
-    st.pinned[0] = pinned[0];
-    st.pinned[1] = pinned[1];
+    for (auto c : {WHITE, BLACK}) {
+        st.pinned[c] = pinned[c];    
+    }
     st.checkSquares = checkSquares;
-    for (int i = 0; i < 2; ++i) {
-        for (int j = 0; j < 2; ++j) {
+    for (int i = 0; i < PLAYER_SIZE; ++i) {
+        for (int j = 0; j < GAMESTAGE_SIZE; ++j) {
             st.pstScore[i][j] = pstScore[i][j];
         }
     }
@@ -601,11 +602,12 @@ void Position::undoMove(Move move, const StateInfo &st) {
     fiftyMoveRule = st.fiftyMoveRule;
     phase = st.phase;
     previousMove = st.previousMove;
-    pinned[0] = st.pinned[0];
-    pinned[1] = st.pinned[1];
+    for (auto c : {WHITE, BLACK}) {
+        pinned[c] = st.pinned[c];    
+    }
     checkSquares = st.checkSquares;
-    for (int i = 0; i < 2; ++i) {
-        for (int j = 0; j < 2; ++j) {
+    for (int i = 0; i < PLAYER_SIZE; ++i) {
+        for (int j = 0; j < GAMESTAGE_SIZE; ++j) {
             pstScore[i][j] = st.pstScore[i][j];
         }
     }
