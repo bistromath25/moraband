@@ -23,44 +23,6 @@ constexpr int CASTLE_RIGHTS[BOARD_SIZE] = {
 /** Board position and related functions */
 Position::Position() {}
 
-Position::Position(const Position &s)
-    : us(s.us), them(s.them), fiftyMoveRule(s.fiftyMoveRule), castleRights(s.castleRights), phase(s.phase), chess960(s.chess960), key(s.key), pawnKey(s.pawnKey), checkers(s.checkers), enPassant(s.enPassant), previousMove(s.previousMove), checkSquares(s.checkSquares), pinned(s.pinned), occupancy(s.occupancy), board(s.board), pieces(s.pieces), pieceCounts(s.pieceCounts), pstScore(s.pstScore) {
-    for (auto c : {WHITE, BLACK}) {
-        for (auto side : {CASTLE_KINGSIDE, CASTLE_QUEENSIDE}) {
-            castleRookSrc[c][side] = s.castleRookSrc[c][side];
-        }
-    }
-}
-
-Position &Position::operator=(const Position &s) {
-    if (this != &s) {
-        us = s.us;
-        them = s.them;
-        fiftyMoveRule = s.fiftyMoveRule;
-        castleRights = s.castleRights;
-        phase = s.phase;
-        chess960 = s.chess960;
-        key = s.key;
-        pawnKey = s.pawnKey;
-        checkers = s.checkers;
-        enPassant = s.enPassant;
-        previousMove = s.previousMove;
-        checkSquares = s.checkSquares;
-        pinned = s.pinned;
-        occupancy = s.occupancy;
-        board = s.board;
-        pieces = s.pieces;
-        pieceCounts = s.pieceCounts;
-        pstScore = s.pstScore;
-        for (auto c : {WHITE, BLACK}) {
-            for (auto side : {CASTLE_KINGSIDE, CASTLE_QUEENSIDE}) {
-                castleRookSrc[c][side] = s.castleRookSrc[c][side];
-            }
-        }
-    }
-    return *this;
-}
-
 Position::Position(const std::string &fen, bool isChess960) {
     init(isChess960);
 
@@ -640,32 +602,20 @@ void Position::undoNull(const StateInfo &st) {
 }
 
 bool Position::insufficientMaterial() const {
-    bool res = false;
-
-    if (getPieceCount<PIECETYPE_PAWN>() + getPieceCount<PIECETYPE_ROOK>() + getPieceCount<PIECETYPE_QUEEN>() == 0) {
-        switch (getPieceCount<PIECETYPE_KNIGHT>()) {
-            case 0:
-                if ((getPieceBB<PIECETYPE_BISHOP>() & DARK_SQUARES) == getPieceBB<PIECETYPE_BISHOP>() || (getPieceBB<PIECETYPE_BISHOP>() & LIGHT_SQUARES) == getPieceBB<PIECETYPE_BISHOP>()) {
-                    res = true;
-                }
-                break;
-
-            case 1:
-                if (!getPieceCount<PIECETYPE_BISHOP>()) {
-                    res = true;
-                }
-                break;
-
-            case 2:
-                if (getPieceCount<PIECETYPE_KNIGHT>(WHITE) && getPieceCount<PIECETYPE_KNIGHT>(BLACK) && !getPieceCount<PIECETYPE_BISHOP>())
-                    res = true;
-                break;
-
-            default:
-                break;
-        }
+    if (getPieceCount<PIECETYPE_PAWN>() + getPieceCount<PIECETYPE_ROOK>() + getPieceCount<PIECETYPE_QUEEN>() != 0) {
+        return false;
     }
-    return res;
+
+    switch (getPieceCount<PIECETYPE_KNIGHT>()) {
+        case 0:
+            return (getPieceBB<PIECETYPE_BISHOP>() & DARK_SQUARES) == getPieceBB<PIECETYPE_BISHOP>() || (getPieceBB<PIECETYPE_BISHOP>() & LIGHT_SQUARES) == getPieceBB<PIECETYPE_BISHOP>();
+        case 1:
+            return !getPieceCount<PIECETYPE_BISHOP>();
+        case 2:
+            return getPieceCount<PIECETYPE_KNIGHT>(WHITE) && getPieceCount<PIECETYPE_KNIGHT>(BLACK) && !getPieceCount<PIECETYPE_BISHOP>();
+        default:
+            return false;
+    }
 }
 
 std::string Position::getFen() const {

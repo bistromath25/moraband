@@ -32,8 +32,6 @@ enum MoveStage {
     QBestMove,
     QAttacksGen,
     QAttacks,
-    QQuietChecksGen,
-    QQuietChecks,
     EvadeBestMove,
     EvadeMovesGen,
     Evade,
