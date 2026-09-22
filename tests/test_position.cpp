@@ -23,8 +23,8 @@ TEST_F(PositionTest, MakeMove) {
 
     U64 originalKey = pos.getKey();
     Move e4 = makeMove(E2, E4);
-
-    pos.makeMove(e4);
+    StateInfo st;
+    pos.makeMove(e4, st);
 
     EXPECT_NE(pos.getKey(), originalKey) << "Position key should change after move";
     EXPECT_EQ(pos.getOurColor(), BLACK) << "Should be black's turn after move";

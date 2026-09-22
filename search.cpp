@@ -64,7 +64,7 @@ bool stop_search(SearchInfo &si) {
 }
 
 /** Quiescence search */
-int qsearch(const Position &s, SearchInfo &si, GlobalInfo &gi, int ply, int alpha, int beta) {
+int qsearch(Position &s, SearchInfo &si, GlobalInfo &gi, int ply, int alpha, int beta) {
     ++si.nodes;
     assert(ply <= MAX_PLY);
 
@@ -131,12 +131,13 @@ int qsearch(const Position &s, SearchInfo &si, GlobalInfo &gi, int ply, int alph
             }
         }
 
-        Position c(s);
-        c.makeMove(m);
+        StateInfo st;
+        s.makeMove(m, st);
 
-        gi.history.push(std::make_pair(m, c.getKey()));
-        score = -qsearch(c, si, gi, ply + 1, -beta, -alpha);
+        gi.history.push(std::make_pair(m, s.getKey()));
+        score = -qsearch(s, si, gi, ply + 1, -beta, -alpha);
         gi.history.pop();
+        s.undoMove(m, st);
         if (!(si.nodes & 2047) && (si.quit || stop_search(si) || THREAD_STOP)) {
             return 0;
         }
@@ -159,7 +160,7 @@ int qsearch(const Position &s, SearchInfo &si, GlobalInfo &gi, int ply, int alph
 }
 
 /** Main search */
-int search(const Position &s, SearchInfo &si, GlobalInfo &gi, int depth, int ply, int alpha, int beta, bool isPv, bool isNull) {
+int search(Position &s, SearchInfo &si, GlobalInfo &gi, int depth, int ply, int alpha, int beta, bool isPv, bool isNull) {
     assert(depth >= 0);
 
     if (depth == 0 || ply > MAX_PLY) { // Perform qsearch when regular search is completed
@@ -241,11 +242,12 @@ int search(const Position &s, SearchInfo &si, GlobalInfo &gi, int depth, int ply
         // Null move pruning
         // Make a null move and search to a reduced depth
         if (!isNull && depth >= NULL_MOVE_DEPTH && staticEval + NULL_MOVE_MARGIN >= beta) {
-            Position n(s);
-            n.makeNull();
-            gi.history.push(std::make_pair(NULL_MOVE, n.getKey()));
-            int nullScore = -search(n, si, gi, std::max(1, depth - null_move_pruning_reduction(depth, staticEval, beta)), ply + 1, -beta, -beta + 1, false, true);
+            StateInfo nullSt;
+            s.makeNull(nullSt);
+            gi.history.push(std::make_pair(NULL_MOVE, s.getKey()));
+            int nullScore = -search(s, si, gi, std::max(1, depth - null_move_pruning_reduction(depth, staticEval, beta)), ply + 1, - beta, - beta + 1, false, true);
             gi.history.pop();
+            s.undoNull(nullSt);
             if (nullScore >= beta) {
                 if (nullScore >= CHECKMATE_BOUND) {
                     nullScore = beta;
@@ -302,30 +304,31 @@ int search(const Position &s, SearchInfo &si, GlobalInfo &gi, int depth, int ply
             }
         }
 
-        Position c(s);
-        c.makeMove(m);                                  // Make move on new position
-        gi.history.push(std::make_pair(m, c.getKey())); // Add move to history
+        StateInfo st;
+        s.makeMove(m, st);
+        gi.history.push(std::make_pair(m, s.getKey()));
 
-        if (c.inCheck() && depth == 1) {
+        if (s.inCheck() && depth == 1) {
             ++d;
         }
 
         // Search PV move
         if (legalMoves == 1) {
             best_move = m;
-            score = -search(c, si, gi, d, ply + 1, -beta, -alpha, isPv, isNull);
+            score = -search(s, si, gi, d, ply + 1, -beta, -alpha, isPv, isNull);
         }
         else {
-            score = -search(c, si, gi, d, ply + 1, -alpha - 1, -alpha, false, isNull);
+            score = -search(s, si, gi, d, ply + 1, -alpha - 1, -alpha, false, isNull);
             if (score > alpha) {
-                score = -search(c, si, gi, std::max(d, depth - 1), ply + 1, -alpha - 1, -alpha, false, isNull);
+                score = -search(s, si, gi, std::max(d, depth - 1), ply + 1, -alpha - 1, -alpha, false, isNull);
             }
             if (alpha < score && score < beta) {
-                score = -search(c, si, gi, d, ply + 1, -beta, -alpha, true, isNull);
+                score = -search(s, si, gi, d, ply + 1, -beta, -alpha, true, isNull);
             }
         }
 
-        gi.history.pop(); // Pop move from history
+        gi.history.pop();
+        s.undoMove(m, st);
 
         if (!(si.nodes & 2047) && (si.quit || stop_search(si) || THREAD_STOP)) {
             return 0;
@@ -368,7 +371,7 @@ int search(const Position &s, SearchInfo &si, GlobalInfo &gi, int depth, int ply
 }
 
 /** Root search */
-int search_root(const Position &s, SearchInfo &si, GlobalInfo &gi, int depth, int ply, int alpha, int beta) {
+int search_root(Position &s, SearchInfo &si, GlobalInfo &gi, int depth, int ply, int alpha, int beta) {
     assert(depth >= 0);
 
     ++si.nodes;
@@ -397,29 +400,30 @@ int search_root(const Position &s, SearchInfo &si, GlobalInfo &gi, int depth, in
         int d = depth - 1;
         ++legalMoves;
 
-        Position c(s);
-        c.makeMove(m);
-        gi.history.push(std::make_pair(m, c.getKey()));
+        StateInfo st;
+        s.makeMove(m, st);
+        gi.history.push(std::make_pair(m, s.getKey()));
 
-        if (c.inCheck() && depth == 1) {
+        if (s.inCheck() && depth == 1) {
             ++d;
         }
 
         if (legalMoves == 1) {
             best_move = m;
-            score = -search(c, si, gi, d, ply + 1, -beta, -alpha, true, false);
+            score = -search(s, si, gi, d, ply + 1, -beta, -alpha, true, false);
         }
         else {
-            score = -search(c, si, gi, d, ply + 1, -alpha - 1, -alpha, false, false);
+            score = -search(s, si, gi, d, ply + 1, -alpha - 1, -alpha, false, false);
             if (score > alpha) {
-                score = -search(c, si, gi, std::max(d, depth - 1), ply + 1, -alpha - 1, -alpha, false, false);
+                score = -search(s, si, gi, std::max(d, depth - 1), ply + 1, -alpha - 1, -alpha, false, false);
             }
             if (alpha < score && score < beta) {
-                score = -search(c, si, gi, d, ply + 1, -beta, -alpha, true, false);
+                score = -search(s, si, gi, d, ply + 1, -beta, -alpha, true, false);
             }
         }
 
         gi.history.pop();
+        s.undoMove(m, st);
 
         if (!(si.nodes & 2047) && (si.quit || stop_search(si) || THREAD_STOP)) {
             return 0;
@@ -462,7 +466,7 @@ int search_root(const Position &s, SearchInfo &si, GlobalInfo &gi, int depth, in
 }
 
 /** Multi-threaded search driver */
-void parallel_search(const Position &s, SearchInfo si, int depth, int alpha, int beta, int t) {
+void parallel_search(Position s, SearchInfo si, int depth, int alpha, int beta, int t) {
     auto &[value, valid] = results[t];
     auto &gi = global_info[t];
     valid = false;
@@ -474,7 +478,7 @@ void parallel_search(const Position &s, SearchInfo si, int depth, int alpha, int
 }
 
 /** Aspiration window search */
-int aspiration_window(const Position &s, SearchInfo &si, int depth, int score) {
+int aspiration_window(Position &s, SearchInfo &si, int depth, int score) {
     if (depth <= 4) {
         return search_root(s, si, global_info[0], depth, 0, NEG_INF, POS_INF);
     }
@@ -499,7 +503,7 @@ int aspiration_window(const Position &s, SearchInfo &si, int depth, int score) {
 }
 
 /** Iterative deepening framework */
-Move iterative_deepening(const Position &s, SearchInfo &si) {
+Move iterative_deepening(Position &s, SearchInfo &si) {
     Move best_move = NULL_MOVE;
     int score = 0;
     for (int d = 1; d < MAX_PLY && !si.quit; ++d) {
@@ -510,7 +514,7 @@ Move iterative_deepening(const Position &s, SearchInfo &si) {
         THREAD_STOP = false;
         if (d > 4) {
             for (int i = 1; i < NUM_THREADS; ++i) {
-                threads[i] = std::thread{parallel_search, std::cref(s), si, d + (i & 1), NEG_INF, POS_INF, i};
+                threads[i] = std::thread{parallel_search, s, si, d + (i & 1), NEG_INF, POS_INF, i};
             }
 
             score = aspiration_window(s, si, d, score);
@@ -563,7 +567,7 @@ Move iterative_deepening(const Position &s, SearchInfo &si) {
 }
 
 /** Search driver */
-Move search(const Position &s, SearchInfo &si) {
+Move search(Position &s, SearchInfo &si) {
     for (int i = 0; i < NUM_THREADS; ++i) {
         global_info[i].clear();
         results[i].first = 0;

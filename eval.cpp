@@ -145,10 +145,9 @@ int Evaluate::getScore() const {
 
 /** Evaluate outpost squares for knights and bishops */
 void Evaluate::evalOutposts(const Color c) {
-    for (Square p : position.getPieceList<PIECETYPE_KNIGHT>(c)) {
-        if (p == no_sq) {
-            break;
-        }
+    U64 knights = position.getPieceBB<PIECETYPE_KNIGHT>(c);
+    while (knights) {
+        Square p = pop_lsb(knights);
         if (!(p & outpost_area[c]) || !(pawn_attacks[!c][p] & position.getPieceBB<PIECETYPE_PAWN>(c)) || in_front[c][p] & adj_files[p] & position.getPieceBB<PIECETYPE_PAWN>(!c)) {
             continue;
         }
@@ -157,10 +156,9 @@ void Evaluate::evalOutposts(const Color c) {
             material[c] += KNIGHT_OUTPOST;
         }
     }
-    for (Square p : position.getPieceList<PIECETYPE_BISHOP>(c)) {
-        if (p == no_sq) {
-            break;
-        }
+    U64 bishops = position.getPieceBB<PIECETYPE_BISHOP>(c);
+    while (bishops) {
+        Square p = pop_lsb(bishops);
         if (!(p & outpost_area[c]) || !(pawn_attacks[!c][p] & position.getPieceBB<PIECETYPE_PAWN>(c)) || in_front[c][p] & adj_files[p] & position.getPieceBB<PIECETYPE_PAWN>(!c)) {
             continue;
         }
@@ -175,10 +173,9 @@ void Evaluate::evalOutposts(const Color c) {
 void Evaluate::evalPawns(const Color c) {
     const int dir = c == WHITE ? 8 : -8;
 
-    for (Square p : position.getPieceList<PIECETYPE_PAWN>(c)) {
-        if (p == no_sq) {
-            break;
-        }
+    U64 pawns = position.getPieceBB<PIECETYPE_PAWN>(c);
+    while (pawns) {
+        Square p = pop_lsb(pawns);
         int r = c == WHITE ? rank(p) : 7 - rank(p);
 
         material[c] += PAWN_WEIGHT;
@@ -242,10 +239,9 @@ void Evaluate::evalPieces(const Color c) {
 
     U64 pins = position.getPinsBB(c);
 
-    for (Square p : position.getPieceList<PIECETYPE_KNIGHT>(c)) {
-        if (p == no_sq) {
-            break;
-        }
+    U64 knights = position.getPieceBB<PIECETYPE_KNIGHT>(c);
+    while (knights) {
+        Square p = pop_lsb(knights);
         material[c] += KNIGHT_WEIGHT;
         if (square_bb[p] & pins) {
             mobility[c] += KNIGHT_MOBILITY[0];
@@ -261,10 +257,9 @@ void Evaluate::evalPieces(const Color c) {
         }
     }
 
-    for (Square p : position.getPieceList<PIECETYPE_BISHOP>(c)) {
-        if (p == no_sq) {
-            break;
-        }
+    U64 bishops = position.getPieceBB<PIECETYPE_BISHOP>(c);
+    while (bishops) {
+        Square p = pop_lsb(bishops);
         material[c] += BISHOP_WEIGHT;
         U64 moves = position.getAttackBB<PIECETYPE_BISHOP>(p);
         if (square_bb[p] & pins) {
@@ -279,10 +274,9 @@ void Evaluate::evalPieces(const Color c) {
         }
     }
 
-    for (Square p : position.getPieceList<PIECETYPE_ROOK>(c)) {
-        if (p == no_sq) {
-            break;
-        }
+    U64 rooks = position.getPieceBB<PIECETYPE_ROOK>(c);
+    while (rooks) {
+        Square p = pop_lsb(rooks);
         material[c] += ROOK_WEIGHT;
         U64 moves = position.getAttackBB<PIECETYPE_ROOK>(p);
         if (square_bb[p] & pins) {
@@ -297,10 +291,9 @@ void Evaluate::evalPieces(const Color c) {
         }
     }
 
-    for (Square p : position.getPieceList<PIECETYPE_QUEEN>(c)) {
-        if (p == no_sq) {
-            break;
-        }
+    U64 queens = position.getPieceBB<PIECETYPE_QUEEN>(c);
+    while (queens) {
+        Square p = pop_lsb(queens);
         material[c] += QUEEN_WEIGHT;
         U64 moves = position.getAttackBB<PIECETYPE_QUEEN>(p);
         if (square_bb[p] & pins) {
