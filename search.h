@@ -68,8 +68,8 @@ extern int lmr_table[LMR_TABLE_MAX][LMR_TABLE_MAX];
 void init_lmr_table();
 
 #ifdef TUNE
-int qsearch(const Position &s, SearchInfo &si, GlobalInfo &gi, int ply, int alpha, int beta);
+int qsearch(Position &s, SearchInfo &si, GlobalInfo &gi, int ply, int alpha, int beta);
 #endif
-Move search(const Position &s, SearchInfo &si);
+Move search(Position &s, SearchInfo &si);
 
 #endif

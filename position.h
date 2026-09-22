@@ -23,6 +23,23 @@ enum CASTLING_RIGHTS {
     BLACK_QUEENSIDE_CASTLE = 8
 };
 
+/** Undo info for a single move */
+struct StateInfo {
+    U64 key;
+    U64 pawnKey;
+    U64 checkers;
+    U64 enPassant;
+    int castleRights;
+    int fiftyMoveRule;
+    int phase;
+    Move previousMove;
+    U64 pinned[PLAYER_SIZE];
+    std::array<U64, PIECE_TYPES_SIZE> checkSquares;
+    int pstScore[PLAYER_SIZE][GAMESTAGE_SIZE];
+    PieceType captured;
+    Square capturedSq;
+};
+
 enum CASTLING_SIDE {
     CASTLE_KINGSIDE = 0,
     CASTLE_QUEENSIDE = 1
@@ -53,8 +70,8 @@ class Position {
 public:
     Position();
     Position(const std::string &fen, bool isChess960 = false);
-    Position(const Position &s);
-    Position &operator=(const Position &s);
+    Position(const Position &s) = default;
+    Position &operator=(const Position &s) = default;
     void init(bool isChess960 = false);
     inline bool isChess960() const;
 
@@ -74,8 +91,6 @@ public:
     std::string getFen() const;
     Move getPreviousMove() const;
 
-    template<PieceType P>
-    const std::array<Square, PIECE_MAX> &getPieceList(Color c) const;
     template<PieceType P>
     U64 getPieceBB(Color c) const;
     template<PieceType P>
@@ -101,14 +116,17 @@ public:
     inline Square getKingsideCastleRookSrc(Color c) const;
     inline Square getQueensideCastleRookSrc() const;
     inline Square getQueensideCastleRookSrc(Color c) const;
+    inline int chess960CastleMask(Square sq) const;
     bool isQuiet(Move move) const;
     bool isCapture(Move move) const;
     bool isEnPassant(Move m) const;
     bool isValid(Move move, U64 validMoves) const;
     bool givesCheck(Move move) const;
 
-    void makeMove(Move m);
-    void makeNull();
+    void makeMove(Move m, StateInfo &st);
+    void undoMove(Move m, const StateInfo &st);
+    void makeNull(StateInfo &st);
+    void undoNull(const StateInfo &st);
     void addPiece(Color c, PieceType p, Square sq);
     void movePiece(Color c, PieceType p, Square src, Square dst);
     void removePiece(Color c, PieceType p, Square sq);
@@ -149,7 +167,7 @@ private:
     int castleRights;
     int phase;
     bool chess960 = false;
-    Square castleRookSrc[PLAYER_SIZE][2];
+    std::array<std::array<Square, 2>, PLAYER_SIZE> castleRookSrc;
     U64 key;
     U64 pawnKey;
     U64 checkers;
@@ -158,12 +176,10 @@ private:
     std::array<U64, PIECE_TYPES_SIZE> checkSquares;
     std::array<U64, PLAYER_SIZE> pinned;
     std::array<U64, PLAYER_SIZE> occupancy;
-    std::array<int, BOARD_SIZE> pieceIndex;
     std::array<PieceType, BOARD_SIZE> board;
     std::array<std::array<U64, PIECE_TYPES_SIZE>, PLAYER_SIZE> pieces;
     std::array<std::array<int, PIECE_TYPES_SIZE>, PLAYER_SIZE> pieceCounts;
     std::array<std::array<int, GAMESTAGE_SIZE>, PLAYER_SIZE> pstScore;
-    std::array<std::array<std::array<Square, PIECE_MAX>, PIECE_TYPES_SIZE>, PLAYER_SIZE> pieceList;
 };
 
 inline bool Position::isChess960() const {
@@ -223,17 +239,11 @@ inline bool Position::isEnPassant(Move move) const {
     return onSquare(getSrc(move)) == PIECETYPE_PAWN && (square_bb[getDst(move)] & enPassant);
 }
 
-template<PieceType P>
-inline const std::array<Square, PIECE_MAX> &Position::getPieceList(Color c) const {
-    return pieceList[c][P];
-}
-
 inline void Position::addPiece(Color c, PieceType p, Square sq) {
     pieces[c][p] |= square_bb[sq];
     occupancy[c] |= square_bb[sq];
     board[sq] = p;
-    pieceIndex[sq] = pieceCounts[c][p]++;
-    pieceList[c][p][pieceIndex[sq]] = sq;
+    ++pieceCounts[c][p];
 
     pstScore[c][MIDDLEGAME] += PieceSquareTable::getScore(p, MIDDLEGAME, c, sq);
     pstScore[c][ENDGAME] += PieceSquareTable::getScore(p, ENDGAME, c, sq);
@@ -246,8 +256,6 @@ inline void Position::movePiece(Color c, PieceType p, Square src, Square dst) {
     occupancy[c] ^= square_bb[src] | square_bb[dst];
     board[dst] = p;
     board[src] = PIECETYPE_NONE;
-    pieceIndex[dst] = pieceIndex[src];
-    pieceList[c][p][pieceIndex[dst]] = dst;
 
     pstScore[c][MIDDLEGAME] -= PieceSquareTable::getScore(p, MIDDLEGAME, c, src);
     pstScore[c][ENDGAME] -= PieceSquareTable::getScore(p, ENDGAME, c, src);
@@ -258,16 +266,10 @@ inline void Position::movePiece(Color c, PieceType p, Square src, Square dst) {
 }
 
 inline void Position::removePiece(Color c, PieceType p, Square sq) {
-    pieces[c][p] &= ~(square_bb[sq]);
-    occupancy[c] &= ~(square_bb[sq]);
+    pieces[c][p] &= ~square_bb[sq];
+    occupancy[c] &= ~square_bb[sq];
     board[sq] = PIECETYPE_NONE;
-
-    int pieceCount = --pieceCounts[c][p];
-
-    Square swap = pieceList[c][p][pieceCount];
-    pieceIndex[swap] = pieceIndex[sq];
-    pieceList[c][p][pieceIndex[swap]] = swap;
-    pieceList[c][p][pieceCount] = no_sq;
+    --pieceCounts[c][p];
 
     pstScore[c][MIDDLEGAME] -= PieceSquareTable::getScore(p, MIDDLEGAME, c, sq);
     pstScore[c][ENDGAME] -= PieceSquareTable::getScore(p, ENDGAME, c, sq);
@@ -310,7 +312,7 @@ inline int Position::getNonPawnPieceCount() const {
 }
 
 inline Square Position::getKingSquare(Color c) const {
-    return pieceList[c][PIECETYPE_KING][0];
+    return get_lsb(getPieceBB<PIECETYPE_KING>(c));
 }
 
 inline int Position::getPstScore(GameStage g) const {
@@ -384,6 +386,28 @@ inline Square Position::getQueensideCastleRookSrc() const {
 
 inline Square Position::getQueensideCastleRookSrc(Color c) const {
     return castleRookSrc[c][CASTLE_QUEENSIDE];
+}
+
+inline int Position::chess960CastleMask(Square sq) const {
+    if (sq == getKingSquare(WHITE)) {
+        return 15 & ~(WHITE_KINGSIDE_CASTLE | WHITE_QUEENSIDE_CASTLE);
+    }
+    if (sq == getKingsideCastleRookSrc(WHITE)) {
+        return 15 & ~WHITE_KINGSIDE_CASTLE;
+    }
+    if (sq == getQueensideCastleRookSrc(WHITE)) {
+        return 15 & ~WHITE_QUEENSIDE_CASTLE;
+    }
+    if (sq == getKingSquare(BLACK)) {
+        return 15 & ~(BLACK_KINGSIDE_CASTLE | BLACK_QUEENSIDE_CASTLE);
+    }
+    if (sq == getKingsideCastleRookSrc(BLACK)) {
+        return 15 & ~BLACK_KINGSIDE_CASTLE;
+    }
+    if (sq == getQueensideCastleRookSrc(BLACK)) {
+        return 15 & ~BLACK_QUEENSIDE_CASTLE;
+    }
+    return 15;
 }
 
 template<PieceType PIECETYPE_PAWN>
