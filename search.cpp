@@ -316,7 +316,7 @@ int search(Position &s, SearchInfo &si, GlobalInfo &gi, int depth, int ply, int 
                 r -= (m == killers.first || m == killers.second);
                 r -= gi.history.getHistoryScore(m) / LMR_HISTORY_DIVISOR;
                 r += !isPv;    
-                d -= std::clamp(r, 0, depth - 2);
+                d -= clamp(r, 0, depth - 2);
                 d = std::max(1, d);
             }
         }
