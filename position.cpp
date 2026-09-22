@@ -20,16 +20,6 @@ constexpr int CASTLE_RIGHTS[BOARD_SIZE] = {
     15, 15, 15, 15, 15, 15, 15, 15,
     11, 15, 15, 3, 15, 15, 15, 7};
 
-int CASTLE_RIGHTS_CHESS960[BOARD_SIZE] = {
-    15, 15, 15, 15, 15, 15, 15, 15,
-    15, 15, 15, 15, 15, 15, 15, 15,
-    15, 15, 15, 15, 15, 15, 15, 15,
-    15, 15, 15, 15, 15, 15, 15, 15,
-    15, 15, 15, 15, 15, 15, 15, 15,
-    15, 15, 15, 15, 15, 15, 15, 15,
-    15, 15, 15, 15, 15, 15, 15, 15,
-    15, 15, 15, 15, 15, 15, 15, 15};
-
 /** Board position and related functions */
 Position::Position() {}
 
@@ -119,15 +109,6 @@ Position::Position(const std::string &fen, bool isChess960) {
     setPins(BLACK);
     setCheckers();
     setGamePhase();
-
-    if (isChess960) {
-        CASTLE_RIGHTS_CHESS960[getKingSquare(WHITE)] &= ~(WHITE_KINGSIDE_CASTLE | WHITE_QUEENSIDE_CASTLE);
-        CASTLE_RIGHTS_CHESS960[getKingsideCastleRookSrc(WHITE)] &= ~WHITE_KINGSIDE_CASTLE;
-        CASTLE_RIGHTS_CHESS960[getQueensideCastleRookSrc(WHITE)] &= ~WHITE_QUEENSIDE_CASTLE;
-        CASTLE_RIGHTS_CHESS960[getKingSquare(BLACK)] &= ~(BLACK_KINGSIDE_CASTLE | BLACK_QUEENSIDE_CASTLE);
-        CASTLE_RIGHTS_CHESS960[getKingsideCastleRookSrc(BLACK)] &= ~BLACK_KINGSIDE_CASTLE;
-        CASTLE_RIGHTS_CHESS960[getQueensideCastleRookSrc(BLACK)] &= ~BLACK_QUEENSIDE_CASTLE;
-    }
 }
 
 void Position::init(bool isChess960) {
@@ -144,16 +125,10 @@ void Position::init(bool isChess960) {
     checkSquares.fill({});
     pinned.fill({});
     occupancy.fill({});
-    pieceIndex.fill({});
     board.fill(PIECETYPE_NONE);
     pieces.fill({});
     pieceCounts.fill({});
     pstScore.fill({});
-    for (auto &color : pieceList) {
-        for (auto &piece : color) {
-            piece.fill(no_sq);
-        }
-    }
     castleRookSrc[WHITE][CASTLE_KINGSIDE] = isChess960 ? no_sq : H1;
     castleRookSrc[WHITE][CASTLE_QUEENSIDE] = isChess960 ? no_sq : A1;
     castleRookSrc[BLACK][CASTLE_KINGSIDE] = isChess960 ? no_sq : H8;
@@ -432,7 +407,7 @@ int Position::see(Move move) const {
     return gain[0];
 }
 
-void Position::makeMove(Move move) {
+void Position::makeMove(Move move, StateInfo &st) {
     assert(move != NULL_MOVE);
     assert(getSrc(move) < no_sq);
     assert(getDst(move) < no_sq);
@@ -445,6 +420,27 @@ void Position::makeMove(Move move) {
     assert(moved != PIECETYPE_NONE);
     PieceType captured = onSquare(dst);
     assert(captured != PIECETYPE_KING);
+
+    st.key = key;
+    st.pawnKey = pawnKey;
+    st.checkers = checkers;
+    st.enPassant = enPassant;
+    st.castleRights = castleRights;
+    st.fiftyMoveRule = fiftyMoveRule;
+    st.phase = phase;
+    st.previousMove = previousMove;
+    for (auto c : {WHITE, BLACK}) {
+        st.pinned[c] = pinned[c];    
+    }
+    st.checkSquares = checkSquares;
+    for (int i = 0; i < PLAYER_SIZE; ++i) {
+        for (int j = 0; j < GAMESTAGE_SIZE; ++j) {
+            st.pstScore[i][j] = pstScore[i][j];
+        }
+    }
+    st.captured = captured;
+    st.capturedSq = dst;
+
     ++fiftyMoveRule;
 
     if (enPassant) {
@@ -496,6 +492,8 @@ void Position::makeMove(Move move) {
             pawnKey ^= Zobrist::key(them, PIECETYPE_PAWN, epCapture);
             removePiece(them, PIECETYPE_PAWN, epCapture);
             gamePhase = true;
+            st.captured = PIECETYPE_PAWN;
+            st.capturedSq = epCapture;
         }
     }
 
@@ -507,8 +505,8 @@ void Position::makeMove(Move move) {
     }
 
     if (isChess960()) {
-        castleRights &= CASTLE_RIGHTS_CHESS960[src];
-        castleRights &= CASTLE_RIGHTS_CHESS960[dst];
+        castleRights &= chess960CastleMask(src);
+        castleRights &= chess960CastleMask(dst);
     }
     else {
         castleRights &= CASTLE_RIGHTS[src];
@@ -526,8 +524,63 @@ void Position::makeMove(Move move) {
     setCheckers();
 }
 
-void Position::makeNull() {
+void Position::undoMove(Move move, const StateInfo &st) {
+    swapTurn();
+
+    Square src = getSrc(move);
+    Square dst = getDst(move);
+
+    if (isCastle(move)) {
+        auto side = dst < src ? CASTLE_KINGSIDE : CASTLE_QUEENSIDE;
+        Square rookSrc = side == CASTLE_KINGSIDE ? getKingsideCastleRookSrc() : getQueensideCastleRookSrc();
+        Square rookDst = CASTLE_ROOK_DST[us][side];
+        Square kingDst = CASTLE_KING_DST[us][side];
+        removePiece(us, PIECETYPE_ROOK, rookDst);
+        removePiece(us, PIECETYPE_KING, kingDst);
+        addPiece(us, PIECETYPE_ROOK, rookSrc);
+        addPiece(us, PIECETYPE_KING, src);
+    }
+    else if (getPiecePromotion(move)) {
+        PieceType promo = getPiecePromotion(move);
+        removePiece(us, promo, dst);
+        addPiece(us, PIECETYPE_PAWN, src);
+        if (st.captured != PIECETYPE_NONE) {
+            addPiece(them, st.captured, st.capturedSq);
+        }
+    }
+    else {
+        PieceType moved = onSquare(dst);
+        movePiece(us, moved, dst, src);
+        if (st.captured != PIECETYPE_NONE) {
+            addPiece(them, st.captured, st.capturedSq);
+        }
+    }
+
+    key = st.key;
+    pawnKey = st.pawnKey;
+    checkers = st.checkers;
+    enPassant = st.enPassant;
+    castleRights = st.castleRights;
+    fiftyMoveRule = st.fiftyMoveRule;
+    phase = st.phase;
+    previousMove = st.previousMove;
+    for (auto c : {WHITE, BLACK}) {
+        pinned[c] = st.pinned[c];    
+    }
+    checkSquares = st.checkSquares;
+    for (int i = 0; i < PLAYER_SIZE; ++i) {
+        for (int j = 0; j < GAMESTAGE_SIZE; ++j) {
+            pstScore[i][j] = st.pstScore[i][j];
+        }
+    }
+}
+
+void Position::makeNull(StateInfo &st) {
     assert(checkers == 0);
+    st.key = key;
+    st.enPassant = enPassant;
+    st.checkSquares = checkSquares;
+
     if (enPassant) {
         key ^= Zobrist::key(get_file(enPassant));
     }
@@ -539,6 +592,13 @@ void Position::makeNull() {
     checkSquares[PIECETYPE_BISHOP] = getAttackBB<PIECETYPE_BISHOP>(getKingSquare(them));
     checkSquares[PIECETYPE_ROOK] = getAttackBB<PIECETYPE_ROOK>(getKingSquare(them));
     checkSquares[PIECETYPE_QUEEN] = checkSquares[PIECETYPE_BISHOP] | checkSquares[PIECETYPE_ROOK];
+}
+
+void Position::undoNull(const StateInfo &st) {
+    swapTurn();
+    key = st.key;
+    enPassant = st.enPassant;
+    checkSquares = st.checkSquares;
 }
 
 bool Position::insufficientMaterial() const {
@@ -655,7 +715,9 @@ std::string Position::getFen() const {
 
     bool enpass = false;
     if (moved == PIECETYPE_PAWN && int(std::max(src, dst)) - int(std::min(src, dst)) == 16) {
-        for (Square p : getPieceList<PIECETYPE_PAWN>(us)) {
+        U64 pawns = getPieceBB<PIECETYPE_PAWN>(us);
+        while (pawns) {
+            Square p = pop_lsb(pawns);
             if (rank(p) == rank(dst) && std::max(file(p), file(dst)) - std::min(file(p), file(dst)) == 1) {
                 fen += SQUARE_TO_STRING[dst + (us == WHITE ? 8 : -8)];
                 enpass = true;

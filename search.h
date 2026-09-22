@@ -64,8 +64,8 @@ extern int NUM_THREADS;
 extern std::array<GlobalInfo, MAX_THREADS> global_info;
 
 #ifdef TUNE
-int qsearch(const Position &s, SearchInfo &si, GlobalInfo &gi, int ply, int alpha, int beta);
+int qsearch(Position &s, SearchInfo &si, GlobalInfo &gi, int ply, int alpha, int beta);
 #endif
-Move search(const Position &s, SearchInfo &si);
+Move search(Position &s, SearchInfo &si);
 
 #endif

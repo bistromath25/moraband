@@ -143,7 +143,8 @@ TEST_F(MoveGenTest, MoveGenerationAfterMakeMove) {
     Position pos("rnbqkbnr/pppppppp/8/8/8/8/PPPPPPPP/RNBQKBNR w KQkq - 0 1");
 
     Move e4 = makeMove(E2, E4);
-    pos.makeMove(e4);
+    StateInfo st;
+    pos.makeMove(e4, st);
 
     MoveList moveList(pos);
     int moveCount = moveList.size();

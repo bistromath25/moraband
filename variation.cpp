@@ -57,7 +57,8 @@ void Variation::checkPv(const Position &s) {
         }
         MoveList moveList(c);
         if (moveList.contains(nextMove)) {
-            c.makeMove(nextMove);
+            StateInfo st;
+            c.makeMove(nextMove, st);
         }
         else {
             sz = i;

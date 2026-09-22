@@ -37,7 +37,7 @@ Move get_uci_move(std::string &token, Position &s) {
 }
 
 /** UCI go command */
-void go(std::istringstream &is, const Position &s) {
+void go(std::istringstream &is, Position &s) {
     std::string token;
     SearchInfo search_info;
 
@@ -116,7 +116,8 @@ void position(std::istringstream &is, Position &s) {
             return;
         }
         else {
-            s.makeMove(m);
+            StateInfo st;
+            s.makeMove(m, st);
             for (int i = 0; i < NUM_THREADS; ++i) {
                 global_info[i].history.push(std::make_pair(m, s.getKey()));
             }
