@@ -249,7 +249,7 @@ int search(Position &s, SearchInfo &si, GlobalInfo &gi, int depth, int ply, int 
             StateInfo nullSt;
             s.makeNull(nullSt);
             gi.history.push(std::make_pair(NULL_MOVE, s.getKey()));
-            int nullScore = -search(s, si, gi, std::max(1, depth - null_move_pruning_reduction(depth, staticEval, beta)), ply + 1, - beta, - beta + 1, false, true);
+            int nullScore = -search(s, si, gi, std::max(1, depth - null_move_pruning_reduction(depth, staticEval, beta)), ply + 1, -beta, -beta + 1, false, true);
             gi.history.pop();
             s.undoNull(nullSt);
             if (nullScore >= beta) {
