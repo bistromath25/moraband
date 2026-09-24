@@ -303,8 +303,14 @@ int search(Position &s, SearchInfo &si, GlobalInfo &gi, int depth, int ply, int 
             }
             // Late move reduction
             if (depth >= LATE_MOVE_REDUCTION_DEPTH && legalMoves > (isPv ? 5 : 3) + !improving && !s.isCapture(m)) {
-                d -= 1 + !isPv + (legalMoves > 8);
-                d = std::max(1, d);
+                int r = 1 + std::log(depth) * std::log(legalMoves) / 3;
+                if (!isPv) {
+                    ++r;
+                }
+                if (!improving) {
+                    ++r;
+                }
+                d = std::max(1, d - r);
             }
         }
 
