@@ -12,13 +12,9 @@
 #include "variation.h"
 #include <array>
 
-constexpr int LMR_COUNT = 3;
-constexpr int LMR_DEPTH = 2;
-constexpr int NULL_MOVE_COUNT = 3;
 constexpr int NULL_MOVE_DEPTH = 4;
 constexpr int NULL_MOVE_MARGIN = 100; // NMP pruning margin
 constexpr int REVERSE_FUTILITY_DEPTH = 2;
-constexpr int REVERSE_FUTILITY_MARGIN = 200;
 constexpr int FUTILITY_DEPTH = 7;
 constexpr int RAZOR_DEPTH = 2;
 constexpr int RAZOR_MARGIN = 300;

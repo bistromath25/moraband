@@ -429,13 +429,11 @@ void Position::makeMove(Move move, StateInfo &st) {
     st.fiftyMoveRule = fiftyMoveRule;
     st.phase = phase;
     st.previousMove = previousMove;
-    for (auto c : {WHITE, BLACK}) {
-        st.pinned[c] = pinned[c];    
-    }
     st.checkSquares = checkSquares;
-    for (int i = 0; i < PLAYER_SIZE; ++i) {
-        for (int j = 0; j < GAMESTAGE_SIZE; ++j) {
-            st.pstScore[i][j] = pstScore[i][j];
+    for (auto c : {WHITE, BLACK}) {
+        st.pinned[c] = pinned[c];
+        for (int i = 0; i < GAMESTAGE_SIZE; ++i) {
+            st.pstScore[c][i] = pstScore[c][i];
         }
     }
     st.captured = captured;
@@ -564,13 +562,11 @@ void Position::undoMove(Move move, const StateInfo &st) {
     fiftyMoveRule = st.fiftyMoveRule;
     phase = st.phase;
     previousMove = st.previousMove;
-    for (auto c : {WHITE, BLACK}) {
-        pinned[c] = st.pinned[c];    
-    }
     checkSquares = st.checkSquares;
-    for (int i = 0; i < PLAYER_SIZE; ++i) {
-        for (int j = 0; j < GAMESTAGE_SIZE; ++j) {
-            pstScore[i][j] = st.pstScore[i][j];
+    for (auto c : {WHITE, BLACK}) {
+        pinned[c] = st.pinned[c];
+        for (int i = 0; i < GAMESTAGE_SIZE; ++i) {
+            pstScore[c][i] = st.pstScore[c][i];
         }
     }
 }
