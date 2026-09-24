@@ -8,6 +8,7 @@
 #include "io.h"
 #include "tt.h"
 #include <atomic>
+#include <cmath>
 #include <string>
 #include <thread>
 
