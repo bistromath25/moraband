@@ -233,7 +233,7 @@ bool Position::isValid(Move move, U64 validMoves) const {
     if (isCastle(move) && onSquare(src) != PIECETYPE_KING) {
         return false;
     }
-    if (!(square_bb[src] & getOccupancyBB(us)) || (square_bb[dst] & getOccupancyBB(us)) || dst == getKingSquare(them)) {
+    if (!(square_bb[src] & getOccupancyBB(us)) || (!isCastle(move) && square_bb[dst] & getOccupancyBB(us)) || dst == getKingSquare(them)) {
         return false;
     }
 
@@ -276,8 +276,18 @@ bool Position::isValid(Move move, U64 validMoves) const {
             Square k = getKingSquare(us);
             if (isCastle(move)) {
                 if (isChess960()) {
-                    return canCastle(src, dst, (dst < src) ? getKingsideCastleRookSrc() : getQueensideCastleRookSrc(),
-                                     (dst < src) ? CASTLE_ROOK_DST[us][CASTLE_KINGSIDE] : CASTLE_ROOK_DST[us][CASTLE_QUEENSIDE]);
+                    if (src > dst) {
+                        if (!canCastleKingside() || dst != getKingsideCastleRookSrc(us)) {
+                            return false;
+                        }
+                        return canCastle(src, CASTLE_KING_DST[us][CASTLE_KINGSIDE], dst, CASTLE_ROOK_DST[us][CASTLE_KINGSIDE]);
+                    }
+                    else {
+                        if (!canCastleQueenside() || dst != getQueensideCastleRookSrc(us)) {
+                            return false;
+                        }
+                        return canCastle(src, CASTLE_KING_DST[us][CASTLE_QUEENSIDE], dst, CASTLE_ROOK_DST[us][CASTLE_QUEENSIDE]);
+                    }
                 }
                 else {
                     if (src > dst) {
