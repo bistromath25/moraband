@@ -71,7 +71,7 @@ Position::Position(const std::string &fen, bool isChess960) {
     if (isChess960) {
         for (char x : parts[2]) {
             Color c = isupper(x) ? WHITE : BLACK;
-            int f = 7 - (towlower(x) - 'a');
+            int f = 'h' - towlower(x);
             auto side = file(getKingSquare(c)) > f ? CASTLE_KINGSIDE : CASTLE_QUEENSIDE;
             castleRookSrc[c][side] = static_cast<Square>(((c == WHITE) ? 0 : 7) * 8 + f);
             castleRights |= (c == WHITE)
@@ -98,7 +98,7 @@ Position::Position(const std::string &fen, bool isChess960) {
     key ^= Zobrist::key(castleRights);
 
     if (parts[3] != "-") {
-        enPassant = square_bb[(parts[3][1] - '1') * 8 + (parts[3][0] - 'a')];
+        enPassant = square_bb[(parts[3][1] - '1') * 8 + ('h' - parts[3][0])];
         key ^= Zobrist::key(get_file(enPassant));
     }
 

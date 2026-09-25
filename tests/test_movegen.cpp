@@ -138,14 +138,8 @@ TEST_F(MoveGenTest, PromotionMoves) {
 TEST_F(MoveGenTest, EnPassantMoves) {
     Position pos("rnbqkbnr/ppp1pppp/8/3pP3/8/8/PPPP1PPP/RNBQKBNR w KQkq d6 0 3");
 
-    bool hasEnPassant = false;
-    std::vector<Move> moves = TestUtils::getAllMoves(pos);
-    for (const Move &move : moves) {
-        if (pos.isEnPassant(move)) {
-            hasEnPassant = true;
-            break;
-        }
-    }
+    std::set<std::string> moves = TestUtils::getAllMovesAsStrings(pos);
+    bool hasEnPassant = moves.count("e5d6") > 0;
 
     EXPECT_TRUE(hasEnPassant) << "Should have en passant move";
 }
