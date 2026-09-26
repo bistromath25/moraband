@@ -17,7 +17,7 @@ int Variation::size() const {
 }
 
 void Variation::pushToPv(Move move, U64 key, int ply, int score) {
-    isMatingLine = std::abs(score) >= CHECKMATE_BOUND ? true : false;
+    isMatingLine = abs(score) >= CHECKMATE_BOUND ? true : false;
     int copyTo = getIndex(ply);
     int copyFromStart = getIndex(ply + 1);
     int copyFromEnd = copyFromStart + MAX_PLY - ply - 1;
