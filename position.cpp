@@ -71,7 +71,7 @@ Position::Position(const std::string &fen, bool isChess960) {
     if (isChess960) {
         for (char x : parts[2]) {
             Color c = isupper(x) ? WHITE : BLACK;
-            int f = 7 - (towlower(x) - 'a');
+            int f = 'h' - towlower(x);
             auto side = file(getKingSquare(c)) > f ? CASTLE_KINGSIDE : CASTLE_QUEENSIDE;
             castleRookSrc[c][side] = static_cast<Square>(((c == WHITE) ? 0 : 7) * 8 + f);
             castleRights |= (c == WHITE)
@@ -98,7 +98,7 @@ Position::Position(const std::string &fen, bool isChess960) {
     key ^= Zobrist::key(castleRights);
 
     if (parts[3] != "-") {
-        enPassant = square_bb[(parts[3][1] - '1') * 8 + (parts[3][0] - 'a')];
+        enPassant = square_bb[(parts[3][1] - '1') * 8 + ('h' - parts[3][0])];
         key ^= Zobrist::key(get_file(enPassant));
     }
 
@@ -233,7 +233,7 @@ bool Position::isValid(Move move, U64 validMoves) const {
     if (isCastle(move) && onSquare(src) != PIECETYPE_KING) {
         return false;
     }
-    if (!(square_bb[src] & getOccupancyBB(us)) || (square_bb[dst] & getOccupancyBB(us)) || dst == getKingSquare(them)) {
+    if (!(square_bb[src] & getOccupancyBB(us)) || (!isCastle(move) && square_bb[dst] & getOccupancyBB(us)) || dst == getKingSquare(them)) {
         return false;
     }
 
@@ -276,8 +276,18 @@ bool Position::isValid(Move move, U64 validMoves) const {
             Square k = getKingSquare(us);
             if (isCastle(move)) {
                 if (isChess960()) {
-                    return canCastle(src, dst, (dst < src) ? getKingsideCastleRookSrc() : getQueensideCastleRookSrc(),
-                                     (dst < src) ? CASTLE_ROOK_DST[us][CASTLE_KINGSIDE] : CASTLE_ROOK_DST[us][CASTLE_QUEENSIDE]);
+                    if (src > dst) {
+                        if (!canCastleKingside() || dst != getKingsideCastleRookSrc(us)) {
+                            return false;
+                        }
+                        return canCastle(src, CASTLE_KING_DST[us][CASTLE_KINGSIDE], dst, CASTLE_ROOK_DST[us][CASTLE_KINGSIDE]);
+                    }
+                    else {
+                        if (!canCastleQueenside() || dst != getQueensideCastleRookSrc(us)) {
+                            return false;
+                        }
+                        return canCastle(src, CASTLE_KING_DST[us][CASTLE_QUEENSIDE], dst, CASTLE_ROOK_DST[us][CASTLE_QUEENSIDE]);
+                    }
                 }
                 else {
                     if (src > dst) {

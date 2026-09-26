@@ -29,49 +29,40 @@ bool MoveList::contains(Move move) const {
 
 template<MoveType T>
 void MoveList::pushPromotion(Square src, Square dst) {
-    const U64 emptyBB = position.getEmptyBB();
-    const U64 enemyBB = position.getOccupancyBB();
+    const Color c = position.getOurColor();
+    const U64 enemyBB = position.getOccupancyBB(!c);
 
-    auto pushPromotionsForSquare = [&](Square dst) {
-        const U64 targetBB = square_bb[dst];
-        bool isCapture = targetBB & enemyBB;
-        bool isEmpty = targetBB & emptyBB;
-        bool isValidEvasion = (T == MoveType::Evasions) && (targetBB & valid);
-        bool isQuietCheck = (T == MoveType::QuietChecks) && (position.getCheckSquaresBB(PIECETYPE_KNIGHT) & targetBB);
-        if (T == MoveType::Attacks || T == MoveType::All) {
-            if (isCapture) {
-                push(makeMove(src, dst, PIECETYPE_QUEEN));
+    auto pushPromotionsForSquare = [&](Square sq) {
+        if constexpr (T == MoveType::Attacks || T == MoveType::All) {
+            push(makeMove(src, sq, PIECETYPE_QUEEN));
+        }
+        if constexpr (T == MoveType::Quiets || T == MoveType::All) {
+            push(makeMove(src, sq, PIECETYPE_KNIGHT));
+            push(makeMove(src, sq, PIECETYPE_ROOK));
+            push(makeMove(src, sq, PIECETYPE_BISHOP));
+        }
+        if constexpr (T == MoveType::Evasions) {
+            if (square_bb[sq] & valid) {
+                push(makeMove(src, sq, PIECETYPE_QUEEN));
+                push(makeMove(src, sq, PIECETYPE_KNIGHT));
+                push(makeMove(src, sq, PIECETYPE_ROOK));
+                push(makeMove(src, sq, PIECETYPE_BISHOP));
             }
         }
-        if (T == MoveType::Quiets || T == MoveType::All) {
-            if (isEmpty && !isCapture) {
-                push(makeMove(src, dst, PIECETYPE_KNIGHT));
-                push(makeMove(src, dst, PIECETYPE_ROOK));
-                push(makeMove(src, dst, PIECETYPE_BISHOP));
-            }
-        }
-        if (T == MoveType::Evasions) {
-            if (isValidEvasion) {
-                push(makeMove(src, dst, PIECETYPE_QUEEN));
-                push(makeMove(src, dst, PIECETYPE_KNIGHT));
-                push(makeMove(src, dst, PIECETYPE_ROOK));
-                push(makeMove(src, dst, PIECETYPE_BISHOP));
-            }
-        }
-        if (T == MoveType::QuietChecks) {
-            if (isQuietCheck) {
-                push(makeMove(src, dst, PIECETYPE_KNIGHT));
+        if constexpr (T == MoveType::QuietChecks) {
+            if (position.getCheckSquaresBB(PIECETYPE_KNIGHT) & square_bb[sq]) {
+                push(makeMove(src, sq, PIECETYPE_KNIGHT));
             }
         }
     };
 
-    if (square_bb[dst] & NOT_A_FILE && square_bb[dst + 1] & enemyBB) {
+    if ((square_bb[dst] & NOT_A_FILE) && (square_bb[dst + 1] & enemyBB)) {
         pushPromotionsForSquare(dst + 1);
     }
-    if (square_bb[dst] & NOT_H_FILE && square_bb[dst - 1] & enemyBB) {
+    if ((square_bb[dst] & NOT_H_FILE) && (square_bb[dst - 1] & enemyBB)) {
         pushPromotionsForSquare(dst - 1);
     }
-    if (square_bb[dst] & emptyBB) {
+    if (square_bb[dst] & position.getEmptyBB()) {
         pushPromotionsForSquare(dst);
     }
 }
