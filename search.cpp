@@ -106,7 +106,7 @@ int qsearch(Position &s, SearchInfo &si, GlobalInfo &gi, int ply, int alpha, int
     TTEntry tt_entry = tt.probe(s.getKey());
     if (tt_entry.getKey() == s.getKey()) {
         tt_move = tt_entry.getMove();
-        tt_score = value_from_tt(tt_entry.getScore(), s.getFiftyMoveRule());
+        tt_score = value_from_tt(tt_entry.getScore(), ply);
         tt_flag = tt_entry.getFlag();
         if (tt_flag == FLAG_EXACT || (tt_flag == FLAG_LOWER && tt_score >= beta) || (tt_flag == FLAG_UPPER && tt_score <= alpha)) {
             return tt_score;
@@ -205,7 +205,7 @@ int search(Position &s, SearchInfo &si, GlobalInfo &gi, int depth, int ply, int 
     if (tt_entry.getKey() == s.getKey()) {
         tt_hit = true;
         tt_move = tt_entry.getMove();
-        tt_score = value_from_tt(tt_entry.getScore(), s.getFiftyMoveRule());
+        tt_score = value_from_tt(tt_entry.getScore(), ply);
         tt_flag = tt_entry.getFlag();
         if (!isPv && tt_entry.getDepth() >= depth) {
             if (tt_flag == FLAG_EXACT || (tt_flag == FLAG_LOWER && tt_score >= beta) || (tt_flag == FLAG_UPPER && tt_score <= alpha)) {
@@ -323,11 +323,11 @@ int search(Position &s, SearchInfo &si, GlobalInfo &gi, int depth, int ply, int 
         }
         else {
             score = -search(s, si, gi, d, ply + 1, -alpha - 1, -alpha, false, isNull);
-            if (score > alpha) {
-                score = -search(s, si, gi, std::max(d, depth - 1), ply + 1, -alpha - 1, -alpha, false, isNull);
+            if (score > alpha && d < depth - 1) {
+                score = -search(s, si, gi, depth - 1, ply + 1, -alpha - 1, -alpha, false, isNull);
             }
-            if (alpha < score && score < beta) {
-                score = -search(s, si, gi, d, ply + 1, -beta, -alpha, true, isNull);
+            if (score > alpha && (isPv || score < beta)) {
+                score = -search(s, si, gi, depth - 1, ply + 1, -beta, -alpha, true, isNull);
             }
         }
 
@@ -418,10 +418,7 @@ int search_root(Position &s, SearchInfo &si, GlobalInfo &gi, int depth, int ply,
         }
         else {
             score = -search(s, si, gi, d, ply + 1, -alpha - 1, -alpha, false, false);
-            if (score > alpha) {
-                score = -search(s, si, gi, std::max(d, depth - 1), ply + 1, -alpha - 1, -alpha, false, false);
-            }
-            if (alpha < score && score < beta) {
+            if (score > alpha && score < beta) {
                 score = -search(s, si, gi, d, ply + 1, -beta, -alpha, true, false);
             }
         }
