@@ -18,7 +18,6 @@ typedef unsigned long long U64;
 constexpr int BOARD_SIZE = 64;
 constexpr int PIECE_TYPES_SIZE = 6;
 constexpr int PLAYER_SIZE = 2;
-constexpr int PIECE_MAX = 10;
 
 /** Game stage definitions */
 constexpr int GAMESTAGE_SIZE = 2;

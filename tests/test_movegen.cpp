@@ -109,32 +109,37 @@ TEST_F(MoveGenTest, CastlingMoves) {
 }
 
 TEST_F(MoveGenTest, PromotionMoves) {
-    Position pos("k7/4P3/8/8/8/8/8/4K3 w - - 0 1");
+    Position pos("1r1q1k2/2P2P1P/8/8/8/8/8/4K3 w - - 0 1");
 
-    std::vector<Move> moves = TestUtils::getAllMoves(pos);
+    std::set<std::string> moves = TestUtils::getPromotionMovesAsStrings(pos);
 
-    bool hasPromotion = false;
-    for (const Move &move : moves) {
-        if (isPromotion(move)) {
-            hasPromotion = true;
-            break;
-        }
-    }
+    std::set<std::string> expectedMoves = {
+        "c7b8q",
+        "c7b8r",
+        "c7b8b",
+        "c7b8n",
+        "c7c8q",
+        "c7c8r",
+        "c7c8b",
+        "c7c8n",
+        "c7d8q",
+        "c7d8r",
+        "c7d8b",
+        "c7d8n",
+        "h7h8q",
+        "h7h8r",
+        "h7h8b",
+        "h7h8n",
+    };
 
-    EXPECT_TRUE(hasPromotion) << "Should have moves (promotion check)";
+    EXPECT_EQ(moves, expectedMoves) << "Should have all promotion moves";
 }
 
 TEST_F(MoveGenTest, EnPassantMoves) {
     Position pos("rnbqkbnr/ppp1pppp/8/3pP3/8/8/PPPP1PPP/RNBQKBNR w KQkq d6 0 3");
 
-    bool hasEnPassant = false;
-    std::vector<Move> moves = TestUtils::getAllMoves(pos);
-    for (const Move &move : moves) {
-        if (pos.isEnPassant(move)) {
-            hasEnPassant = true;
-            break;
-        }
-    }
+    std::set<std::string> moves = TestUtils::getAllMovesAsStrings(pos);
+    bool hasEnPassant = moves.count("e5d6") > 0;
 
     EXPECT_TRUE(hasEnPassant) << "Should have en passant move";
 }

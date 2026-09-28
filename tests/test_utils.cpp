@@ -39,6 +39,21 @@ std::set<std::string> TestUtils::getAllMovesAsStrings(const Position &pos) {
     return moves;
 }
 
+std::set<std::string> TestUtils::getPromotionMovesAsStrings(const Position &pos) {
+    MoveList moveList(pos);
+    std::set<std::string> moves;
+
+    while (moveList.size() > 0) {
+        const Move move = moveList.pop();
+
+        if (isPromotion(move)) {
+            moves.insert(to_string(move));
+        }
+    }
+
+    return moves;
+}
+
 bool TestUtils::containsMove(const Position &pos, const std::string &moveStr) {
     MoveList moveList(pos);
 

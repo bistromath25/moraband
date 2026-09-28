@@ -21,7 +21,7 @@ public:
         time = std::chrono::high_resolution_clock::now();
     }
     template<typename T>
-    const int64_t elapsed() {
+    int64_t elapsed() {
         std::chrono::high_resolution_clock::time_point now = std::chrono::high_resolution_clock::now();
         return std::chrono::duration_cast<T>(now - time).count();
     }

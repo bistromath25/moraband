@@ -12,6 +12,7 @@ public:
     static void initialize();
     static std::vector<Move> getAllMoves(const Position &pos);
     static std::set<std::string> getAllMovesAsStrings(const Position &pos);
+    static std::set<std::string> getPromotionMovesAsStrings(const Position &pos);
     static bool containsMove(const Position &pos, const std::string &moveStr);
     static int countCaptureMoves(const Position &pos);
     static int countQuietMoves(const Position &pos);
