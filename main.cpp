@@ -22,7 +22,6 @@ int main(int argc, char *argv[]) {
  \\_|  |_/\\___/|_|  \\__,_|_.__/ \\__,_|_| |_|\\__,_|"
               << std::endl;
 
-
     std::cout << "Moraband, known in antiquity as Korriban, was an\n";
     std::cout << " Outer Rim planet that was home to the ancient Sith\n"
               << std::endl;
