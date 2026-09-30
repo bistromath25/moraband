@@ -49,8 +49,13 @@ bool stop_search(SearchInfo &si) {
     // Incoming quit command
     if (input_waiting()) {
         std::string command(get_input());
-        if (command == "quit" || command == "stop") {
+        if (command == "quit") {
             si.quit = true;
+            si.stopped = true;
+            THREAD_STOP = true;
+            return true;
+        } else if (command == "stop") {
+            si.stopped = true;
             THREAD_STOP = true;
             return true;
         }
@@ -61,7 +66,7 @@ bool stop_search(SearchInfo &si) {
     }
     // Not enough time left for search
     if (U64(si.clock.elapsed<std::chrono::milliseconds>()) >= si.moveTime) {
-        si.quit = true;
+        si.stopped = true;
         return true;
     }
     return false;
@@ -76,7 +81,7 @@ int qsearch(Position &s, SearchInfo &si, GlobalInfo &gi, int ply, int alpha, int
         return DRAW;
     }
 
-    if (!(si.nodes & 2047) && (si.quit || stop_search(si) || THREAD_STOP)) {
+    if (!(si.nodes & 2047) && (si.stopped || stop_search(si) || THREAD_STOP)) {
         return 0;
     }
 
@@ -142,7 +147,7 @@ int qsearch(Position &s, SearchInfo &si, GlobalInfo &gi, int ply, int alpha, int
         score = -qsearch(s, si, gi, ply + 1, -beta, -alpha);
         gi.history.pop();
         s.undoMove(m, st);
-        if (!(si.nodes & 2047) && (si.quit || stop_search(si) || THREAD_STOP)) {
+        if (!(si.nodes & 2047) && (si.stopped || stop_search(si) || THREAD_STOP)) {
             return 0;
         }
 
@@ -192,7 +197,7 @@ int search(Position &s, SearchInfo &si, GlobalInfo &gi, int depth, int ply, int 
         return alpha;
     }
 
-    if (!(si.nodes & 2047) && (si.quit || stop_search(si) || THREAD_STOP)) {
+    if (!(si.nodes & 2047) && (si.stopped || stop_search(si) || THREAD_STOP)) {
         return 0;
     }
 
@@ -334,7 +339,7 @@ int search(Position &s, SearchInfo &si, GlobalInfo &gi, int depth, int ply, int 
         gi.history.pop();
         s.undoMove(m, st);
 
-        if (!(si.nodes & 2047) && (si.quit || stop_search(si) || THREAD_STOP)) {
+        if (!(si.nodes & 2047) && (si.stopped || stop_search(si) || THREAD_STOP)) {
             return 0;
         }
 
@@ -361,7 +366,7 @@ int search(Position &s, SearchInfo &si, GlobalInfo &gi, int depth, int ply, int 
         return s.check() ? -CHECKMATE + ply : STALEMATE;
     }
 
-    if (oldAlpha < alpha && alpha < beta && !si.quit) {
+    if (oldAlpha < alpha && alpha < beta && !si.stopped) {
         gi.variation.pushToPv(best_move, s.getKey(), ply, alpha);
     }
 
@@ -381,7 +386,7 @@ int search_root(Position &s, SearchInfo &si, GlobalInfo &gi, int depth, int ply,
     ++si.nodes;
     ++si.totalNodes;
 
-    if (!(si.nodes & 2047) && (si.quit || stop_search(si) || THREAD_STOP)) {
+    if (!(si.nodes & 2047) && (si.stopped || stop_search(si) || THREAD_STOP)) {
         return 0;
     }
 
@@ -426,7 +431,7 @@ int search_root(Position &s, SearchInfo &si, GlobalInfo &gi, int depth, int ply,
         gi.history.pop();
         s.undoMove(m, st);
 
-        if (!(si.nodes & 2047) && (si.quit || stop_search(si) || THREAD_STOP)) {
+        if (!(si.nodes & 2047) && (si.stopped || stop_search(si) || THREAD_STOP)) {
             return 0;
         }
 
@@ -453,7 +458,7 @@ int search_root(Position &s, SearchInfo &si, GlobalInfo &gi, int depth, int ply,
         return s.check() ? -CHECKMATE + ply : STALEMATE;
     }
 
-    if (oldAlpha < alpha && alpha < beta && !si.quit) {
+    if (oldAlpha < alpha && alpha < beta && !si.stopped) {
         gi.variation.pushToPv(best_move, s.getKey(), ply, alpha);
     }
 
@@ -507,7 +512,7 @@ int aspiration_window(Position &s, SearchInfo &si, int depth, int score) {
 Move iterative_deepening(Position &s, SearchInfo &si) {
     Move best_move = NULL_MOVE;
     int score = 0;
-    for (int d = 1; d < MAX_PLY && !si.quit; ++d) {
+    for (int d = 1; d < MAX_PLY && !si.stopped; ++d) {
         for (int i = 0; i < NUM_THREADS; ++i) {
             global_info[i].variation.clearPv();
         }
@@ -529,7 +534,7 @@ Move iterative_deepening(Position &s, SearchInfo &si) {
             score = aspiration_window(s, si, d, score);
         }
 
-        if (si.quit || (d > 1 && stop_search(si))) {
+        if (si.stopped || (d > 1 && stop_search(si))) {
             break;
         }
 
