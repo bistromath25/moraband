@@ -443,7 +443,7 @@ int search_root(Position &s, SearchInfo &si, GlobalInfo &gi, int depth, int ply,
         return s.check() ? -CHECKMATE + ply : STALEMATE;
     }
 
-    if (oldAlpha < alpha && !si.stopped) {
+    if (oldAlpha < alpha && alpha < beta && !si.stopped) {
         gi.variation.pushToPv(best_move, s.getKey(), ply, alpha);
     }
 
