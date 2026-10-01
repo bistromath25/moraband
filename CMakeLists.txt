@@ -16,6 +16,7 @@ option(BUILD_TESTS "Build tests" OFF)
 
 set(MAIN_SOURCES
     main.cpp
+    bench.cpp
     MagicMoves.cpp
     eval.cpp
     movegen.cpp
