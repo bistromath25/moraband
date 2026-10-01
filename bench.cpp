@@ -5,7 +5,6 @@
 
 #include "bench.h"
 #include "search.h"
-#include "timeman.h"
 #include <array>
 #include <iostream>
 
@@ -67,22 +66,22 @@ void bench(int depth) {
          "7k/8/7P/5B2/5K2/8/8/8 b - - 0 175"};
 
     U64 totalNodes = 0;
+    int64_t total_time = 0;
     SearchInfo search_info;
     search_info.depth = depth;
     search_info.moveTime = ONE_HOUR;
-    Clock clock;
-    clock.set();
     for (unsigned int i = 0; i < fens.size(); ++i) {
         std::cout << i + 1 << "/" << fens.size() << " " << fens[i] << std::endl;
         Position s(fens[i]);
         search_info.totalNodes = 0;
         search_info.clock.set();
         search(s, search_info);
+        total_time += search_info.clock.elapsed<std::chrono::microseconds>();
         totalNodes += search_info.totalNodes;
         std::cout << std::endl;
     }
 
-    double time = clock.elapsed<std::chrono::microseconds>() / static_cast<double>(1000000);
+    double time = static_cast<double>(total_time) / 1000000.0;
     std::cout << "Time:  " << time << std::endl;
     std::cout << "Nodes: " << totalNodes << std::endl;
     std::cout << "NPS:   " << U64(static_cast<long double>(totalNodes) / time) << std::endl;
