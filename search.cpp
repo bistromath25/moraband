@@ -66,10 +66,7 @@ int qsearch(Position &s, SearchInfo &si, GlobalInfo &gi, int ply, int alpha, int
         return DRAW;
     }
 
-    if (si.stopped || THREAD_STOP) {
-        return 0;
-    }
-    if (!(si.nodes & 2047) && stop_search(si)) {
+    if (si.stopped || THREAD_STOP || (!(si.nodes & 2047) && stop_search(si))) {
         return 0;
     }
 
@@ -135,10 +132,7 @@ int qsearch(Position &s, SearchInfo &si, GlobalInfo &gi, int ply, int alpha, int
         score = -qsearch(s, si, gi, ply + 1, -beta, -alpha);
         gi.history.pop();
         s.undoMove(m, st);
-        if (si.stopped || THREAD_STOP) {
-            return 0;
-        }
-        if (!(si.nodes & 2047) && stop_search(si)) {
+        if (si.stopped || THREAD_STOP || (!(si.nodes & 2047) && stop_search(si))) {
             return 0;
         }
 
@@ -188,10 +182,7 @@ int search(Position &s, SearchInfo &si, GlobalInfo &gi, int depth, int ply, int 
         return alpha;
     }
 
-    if (si.stopped || THREAD_STOP) {
-        return 0;
-    }
-    if (!(si.nodes & 2047) && stop_search(si)) {
+    if (si.stopped || THREAD_STOP || (!(si.nodes & 2047) && stop_search(si))) {
         return 0;
     }
 
@@ -333,10 +324,7 @@ int search(Position &s, SearchInfo &si, GlobalInfo &gi, int depth, int ply, int 
         gi.history.pop();
         s.undoMove(m, st);
 
-        if (si.stopped || THREAD_STOP) {
-            return 0;
-        }
-        if (!(si.nodes & 2047) && stop_search(si)) {
+        if (si.stopped || THREAD_STOP || (!(si.nodes & 2047) && stop_search(si))) {
             return 0;
         }
 
@@ -383,10 +371,7 @@ int search_root(Position &s, SearchInfo &si, GlobalInfo &gi, int depth, int ply,
     ++si.nodes;
     ++si.totalNodes;
 
-    if (si.stopped || THREAD_STOP) {
-        return 0;
-    }
-    if (!(si.nodes & 2047) && stop_search(si)) {
+    if (si.stopped || THREAD_STOP || (!(si.nodes & 2047) && stop_search(si))) {
         return 0;
     }
 
@@ -431,10 +416,7 @@ int search_root(Position &s, SearchInfo &si, GlobalInfo &gi, int depth, int ply,
         gi.history.pop();
         s.undoMove(m, st);
 
-        if (si.stopped || THREAD_STOP) {
-            return 0;
-        }
-        if (!(si.nodes & 2047) && stop_search(si)) {
+        if (si.stopped || THREAD_STOP || (!(si.nodes & 2047) && stop_search(si))) {
             return 0;
         }
 
