@@ -5,7 +5,6 @@
 
 #include "search.h"
 #include "eval.h"
-#include "io.h"
 #include "tt.h"
 #include <atomic>
 #include <string>
@@ -46,20 +45,6 @@ inline int reverse_futility_pruning_margin(int depth, bool improving) {
 
 /** Check if search should be stopped */
 bool stop_search(SearchInfo &si) {
-    // Incoming quit command
-    if (input_waiting()) {
-        std::string command(get_input());
-        if (command == "quit") {
-            si.quit = true;
-            si.stopped = true;
-            THREAD_STOP = true;
-            return true;
-        } else if (command == "stop") {
-            si.stopped = true;
-            THREAD_STOP = true;
-            return true;
-        }
-    }
     // Infinite search: only stop on explicit quit/stop command
     if (si.infinite) {
         return false;
@@ -81,7 +66,10 @@ int qsearch(Position &s, SearchInfo &si, GlobalInfo &gi, int ply, int alpha, int
         return DRAW;
     }
 
-    if (!(si.nodes & 2047) && (si.stopped || stop_search(si) || THREAD_STOP)) {
+    if (si.stopped || THREAD_STOP) {
+        return 0;
+    }
+    if (!(si.nodes & 2047) && stop_search(si)) {
         return 0;
     }
 
@@ -147,7 +135,10 @@ int qsearch(Position &s, SearchInfo &si, GlobalInfo &gi, int ply, int alpha, int
         score = -qsearch(s, si, gi, ply + 1, -beta, -alpha);
         gi.history.pop();
         s.undoMove(m, st);
-        if (!(si.nodes & 2047) && (si.stopped || stop_search(si) || THREAD_STOP)) {
+        if (si.stopped || THREAD_STOP) {
+            return 0;
+        }
+        if (!(si.nodes & 2047) && stop_search(si)) {
             return 0;
         }
 
@@ -197,7 +188,10 @@ int search(Position &s, SearchInfo &si, GlobalInfo &gi, int depth, int ply, int 
         return alpha;
     }
 
-    if (!(si.nodes & 2047) && (si.stopped || stop_search(si) || THREAD_STOP)) {
+    if (si.stopped || THREAD_STOP) {
+        return 0;
+    }
+    if (!(si.nodes & 2047) && stop_search(si)) {
         return 0;
     }
 
@@ -339,7 +333,10 @@ int search(Position &s, SearchInfo &si, GlobalInfo &gi, int depth, int ply, int 
         gi.history.pop();
         s.undoMove(m, st);
 
-        if (!(si.nodes & 2047) && (si.stopped || stop_search(si) || THREAD_STOP)) {
+        if (si.stopped || THREAD_STOP) {
+            return 0;
+        }
+        if (!(si.nodes & 2047) && stop_search(si)) {
             return 0;
         }
 
@@ -386,7 +383,10 @@ int search_root(Position &s, SearchInfo &si, GlobalInfo &gi, int depth, int ply,
     ++si.nodes;
     ++si.totalNodes;
 
-    if (!(si.nodes & 2047) && (si.stopped || stop_search(si) || THREAD_STOP)) {
+    if (si.stopped || THREAD_STOP) {
+        return 0;
+    }
+    if (!(si.nodes & 2047) && stop_search(si)) {
         return 0;
     }
 
@@ -431,7 +431,10 @@ int search_root(Position &s, SearchInfo &si, GlobalInfo &gi, int depth, int ply,
         gi.history.pop();
         s.undoMove(m, st);
 
-        if (!(si.nodes & 2047) && (si.stopped || stop_search(si) || THREAD_STOP)) {
+        if (si.stopped || THREAD_STOP) {
+            return 0;
+        }
+        if (!(si.nodes & 2047) && stop_search(si)) {
             return 0;
         }
 
@@ -458,7 +461,7 @@ int search_root(Position &s, SearchInfo &si, GlobalInfo &gi, int depth, int ply,
         return s.check() ? -CHECKMATE + ply : STALEMATE;
     }
 
-    if (oldAlpha < alpha && alpha < beta && !si.stopped) {
+    if (oldAlpha < alpha && !si.stopped) {
         gi.variation.pushToPv(best_move, s.getKey(), ply, alpha);
     }
 
@@ -556,7 +559,10 @@ Move iterative_deepening(Position &s, SearchInfo &si) {
         global_info[0].variation.printPv();
         std::cout << std::endl;
 
-        best_move = global_info[0].variation.getPvMove();
+        Move pv_move = global_info[0].variation.getPvMove();
+        if (pv_move != NULL_MOVE) {
+            best_move = pv_move;
+        }
 
         if (U64(si.clock.elapsed<std::chrono::milliseconds>()) * 2 > si.moveTime) {
             break; // Insufficient time for next search iteration

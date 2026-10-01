@@ -5,7 +5,6 @@
 
 #include "uci.h"
 #include "eval.h"
-#include "io.h"
 #include "perft.h"
 #include "search.h"
 #include "tt.h"
@@ -15,12 +14,15 @@
 #include <algorithm>
 #include <array>
 #include <sstream>
+#include <thread>
 
 int HASH_SIZE = DEFAULT_HASH_SIZE;
 int NUM_THREADS = 1;
 int MOVE_OVERHEAD = 500;
 bool IS_UCI_CHESS960 = false;
 const std::string START_FEN = "rnbqkbnr/pppppppp/8/8/8/8/PPPPPPPP/RNBQKBNR w KQkq 0 1";
+std::thread main_search_thread;
+SearchInfo main_search_info;
 
 /** Validate incoming UCI move */
 Move get_uci_move(std::string &token, Position &s) {
@@ -37,52 +39,48 @@ Move get_uci_move(std::string &token, Position &s) {
 }
 
 /** UCI go command */
-void go(std::istringstream &is, Position &s) {
+void parse_go(std::istringstream &is, Position &s, SearchInfo &si) {
     std::string token;
-    SearchInfo search_info;
 
     while (is >> token) {
         if (token == "wtime") {
-            is >> search_info.time[WHITE];
+            is >> si.time[WHITE];
         }
         else if (token == "btime") {
-            is >> search_info.time[BLACK];
+            is >> si.time[BLACK];
         }
         else if (token == "winc") {
-            is >> search_info.inc[WHITE];
+            is >> si.inc[WHITE];
         }
         else if (token == "binc") {
-            is >> search_info.inc[BLACK];
+            is >> si.inc[BLACK];
         }
         else if (token == "movestogo") {
-            is >> search_info.movesToGo;
+            is >> si.movesToGo;
         }
         else if (token == "depth") {
-            is >> search_info.depth;
-            search_info.infinite = true;
+            is >> si.depth;
+            si.infinite = true;
         }
         else if (token == "nodes") {
-            is >> search_info.maxNodes;
-            search_info.infinite = true;
+            is >> si.maxNodes;
+            si.infinite = true;
         }
         else if (token == "movetime") {
-            is >> search_info.moveTime;
+            is >> si.moveTime;
         }
         else if (token == "infinite") {
-            search_info.infinite = true;
+            si.infinite = true;
         }
     }
 
-    search_info.clock.set();
-    if (search_info.infinite) {
-        search_info.moveTime = ONE_HOUR; // Search for one hour in infinite mode
+    si.clock.set();
+    if (si.infinite) {
+        si.moveTime = ONE_HOUR; // Search for one hour in infinite mode
     }
-    else if (!search_info.moveTime) {
-        search_info.moveTime = get_search_time(search_info.time[s.getOurColor()], search_info.inc[s.getOurColor()], global_info[0].history.size() / 2, search_info.movesToGo, search_info.time[s.getOurColor()] - search_info.time[s.getTheirColor()]);
+    else if (!si.moveTime) {
+        si.moveTime = get_search_time(si.time[s.getOurColor()], si.inc[s.getOurColor()], global_info[0].history.size() / 2, si.movesToGo, si.time[s.getOurColor()] - si.time[s.getTheirColor()]);
     }
-
-    Move m = search(s, search_info);
-    std::cout << "bestmove " << to_string(m) << std::endl;
 }
 
 /** Set position */
@@ -234,7 +232,12 @@ void uci() {
         std::istringstream is(command);
         is >> std::skipws >> token;
 
-        if (token == "quit") {
+        if (token == "stop") {
+            main_search_info.stopped = true;
+        }
+        else if (token == "quit") {
+            main_search_info.stopped = true;
+            main_search_info.quit = true;
             break;
         }
         else if (token == "ucinewgame") {
@@ -275,7 +278,17 @@ void uci() {
             position(is, root);
         }
         else if (token == "go") {
-            go(is, root);
+            if (main_search_thread.joinable()) {
+                main_search_info.stopped = true;
+                main_search_thread.join();
+            }
+            main_search_info = SearchInfo{};
+            parse_go(is, root, main_search_info);
+            main_search_thread = std::thread([](Position pos) {
+                Move m = search(pos, main_search_info);
+                std::cout << "bestmove " << to_string(m) << std::endl;
+            },
+                                             root);
         }
         else if (token == "display") {
             std::cout << root << std::endl;
@@ -313,5 +326,9 @@ void uci() {
         else {
             std::cout << "unknown command" << std::endl;
         }
+    }
+
+    if (main_search_thread.joinable()) {
+        main_search_thread.join();
     }
 }
