@@ -7,7 +7,6 @@
 #include "eval.h"
 #include "tt.h"
 #include <atomic>
-#include <string>
 #include <thread>
 
 std::atomic<bool> THREAD_STOP{false};
