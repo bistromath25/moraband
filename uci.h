@@ -19,7 +19,7 @@ extern int NUM_THREADS;
 extern int MOVE_OVERHEAD;
 extern bool IS_UCI_CHESS960;
 
-void bench(int depth = 16);
+void bench(int depth = 12);
 void uci();
 
 #endif

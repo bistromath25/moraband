@@ -39,7 +39,7 @@ Move get_uci_move(std::string &token, Position &s) {
 }
 
 /** UCI go command */
-void parse_go(std::istringstream &is, Position &s, SearchInfo &si) {
+void set_go(std::istringstream &is, Position &s, SearchInfo &si) {
     std::string token;
 
     while (is >> token) {
@@ -84,7 +84,7 @@ void parse_go(std::istringstream &is, Position &s, SearchInfo &si) {
 }
 
 /** Set position */
-void position(std::istringstream &is, Position &s) {
+void set_position(std::istringstream &is, Position &s) {
     std::string token, fen;
 
     is >> token;
@@ -275,7 +275,7 @@ void uci() {
             set_option(name, value);
         }
         else if (token == "position") {
-            position(is, root);
+            set_position(is, root);
         }
         else if (token == "go") {
             if (main_search_thread.joinable()) {
@@ -283,12 +283,13 @@ void uci() {
                 main_search_thread.join();
             }
             main_search_info = SearchInfo{};
-            parse_go(is, root, main_search_info);
-            main_search_thread = std::thread([](Position pos) {
-                Move m = search(pos, main_search_info);
-                std::cout << "bestmove " << to_string(m) << std::endl;
-            },
-                                             root);
+            set_go(is, root, main_search_info);
+            main_search_thread = std::thread(
+                [](Position pos) {
+                    Move m = search(pos, main_search_info);
+                    std::cout << "bestmove " << to_string(m) << std::endl;
+                },
+                root);
         }
         else if (token == "display") {
             std::cout << root << std::endl;
