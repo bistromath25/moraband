@@ -35,9 +35,7 @@ struct SearchInfo {
 /** Global search information */
 struct GlobalInfo {
     GlobalInfo() {
-        nodes = 0;
-        history.clear();
-        variation.clearPv();
+        clear();
         std::fill(evalHistory.begin(), evalHistory.end(), 0);
     }
     void init() {
