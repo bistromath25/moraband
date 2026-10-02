@@ -5,16 +5,13 @@
 
 #include "search.h"
 #include "eval.h"
-#include "io.h"
 #include "tt.h"
 #include <atomic>
-#include <string>
 #include <thread>
 
 std::atomic<bool> THREAD_STOP{false};
 std::array<std::thread, MAX_THREADS> threads;
 std::array<GlobalInfo, MAX_THREADS> global_info;
-std::array<std::pair<int, bool>, MAX_THREADS> results;
 
 constexpr int value_to_tt(int value, int ply) {
     if (value >= CHECKMATE_BOUND) {
@@ -46,22 +43,13 @@ inline int reverse_futility_pruning_margin(int depth, bool improving) {
 
 /** Check if search should be stopped */
 bool stop_search(SearchInfo &si) {
-    // Incoming quit command
-    if (input_waiting()) {
-        std::string command(get_input());
-        if (command == "quit" || command == "stop") {
-            si.quit = true;
-            THREAD_STOP = true;
-            return true;
-        }
-    }
     // Infinite search: only stop on explicit quit/stop command
     if (si.infinite) {
         return false;
     }
     // Not enough time left for search
     if (U64(si.clock.elapsed<std::chrono::milliseconds>()) >= si.moveTime) {
-        si.quit = true;
+        si.stopped = true;
         return true;
     }
     return false;
@@ -76,7 +64,7 @@ int qsearch(Position &s, SearchInfo &si, GlobalInfo &gi, int ply, int alpha, int
         return DRAW;
     }
 
-    if (!(si.nodes & 2047) && (si.quit || stop_search(si) || THREAD_STOP)) {
+    if (si.stopped || THREAD_STOP || (!(si.nodes & 2047) && stop_search(si))) {
         return 0;
     }
 
@@ -142,7 +130,7 @@ int qsearch(Position &s, SearchInfo &si, GlobalInfo &gi, int ply, int alpha, int
         score = -qsearch(s, si, gi, ply + 1, -beta, -alpha);
         gi.history.pop();
         s.undoMove(m, st);
-        if (!(si.nodes & 2047) && (si.quit || stop_search(si) || THREAD_STOP)) {
+        if (si.stopped || THREAD_STOP || (!(si.nodes & 2047) && stop_search(si))) {
             return 0;
         }
 
@@ -192,7 +180,7 @@ int search(Position &s, SearchInfo &si, GlobalInfo &gi, int depth, int ply, int 
         return alpha;
     }
 
-    if (!(si.nodes & 2047) && (si.quit || stop_search(si) || THREAD_STOP)) {
+    if (si.stopped || THREAD_STOP || (!(si.nodes & 2047) && stop_search(si))) {
         return 0;
     }
 
@@ -334,7 +322,7 @@ int search(Position &s, SearchInfo &si, GlobalInfo &gi, int depth, int ply, int 
         gi.history.pop();
         s.undoMove(m, st);
 
-        if (!(si.nodes & 2047) && (si.quit || stop_search(si) || THREAD_STOP)) {
+        if (si.stopped || THREAD_STOP || (!(si.nodes & 2047) && stop_search(si))) {
             return 0;
         }
 
@@ -361,7 +349,7 @@ int search(Position &s, SearchInfo &si, GlobalInfo &gi, int depth, int ply, int 
         return s.check() ? -CHECKMATE + ply : STALEMATE;
     }
 
-    if (oldAlpha < alpha && alpha < beta && !si.quit) {
+    if (oldAlpha < alpha && alpha < beta && !si.stopped) {
         gi.variation.pushToPv(best_move, s.getKey(), ply, alpha);
     }
 
@@ -381,7 +369,7 @@ int search_root(Position &s, SearchInfo &si, GlobalInfo &gi, int depth, int ply,
     ++si.nodes;
     ++si.totalNodes;
 
-    if (!(si.nodes & 2047) && (si.quit || stop_search(si) || THREAD_STOP)) {
+    if (si.stopped || THREAD_STOP || (!(si.nodes & 2047) && stop_search(si))) {
         return 0;
     }
 
@@ -426,7 +414,7 @@ int search_root(Position &s, SearchInfo &si, GlobalInfo &gi, int depth, int ply,
         gi.history.pop();
         s.undoMove(m, st);
 
-        if (!(si.nodes & 2047) && (si.quit || stop_search(si) || THREAD_STOP)) {
+        if (si.stopped || THREAD_STOP || (!(si.nodes & 2047) && stop_search(si))) {
             return 0;
         }
 
@@ -453,7 +441,7 @@ int search_root(Position &s, SearchInfo &si, GlobalInfo &gi, int depth, int ply,
         return s.check() ? -CHECKMATE + ply : STALEMATE;
     }
 
-    if (oldAlpha < alpha && alpha < beta && !si.quit) {
+    if (oldAlpha < alpha && alpha < beta && !si.stopped) {
         gi.variation.pushToPv(best_move, s.getKey(), ply, alpha);
     }
 
@@ -468,14 +456,8 @@ int search_root(Position &s, SearchInfo &si, GlobalInfo &gi, int depth, int ply,
 
 /** Multi-threaded search driver */
 void parallel_search(Position s, SearchInfo si, int depth, int alpha, int beta, int t) {
-    auto &[value, valid] = results[t];
     auto &gi = global_info[t];
-    valid = false;
-    value = search_root(s, si, gi, depth, 0, alpha, beta);
-    if (!THREAD_STOP) {
-        THREAD_STOP = true;
-        valid = true;
-    }
+    search_root(s, si, gi, depth, 0, alpha, beta);
 }
 
 /** Aspiration window search */
@@ -507,7 +489,7 @@ int aspiration_window(Position &s, SearchInfo &si, int depth, int score) {
 Move iterative_deepening(Position &s, SearchInfo &si) {
     Move best_move = NULL_MOVE;
     int score = 0;
-    for (int d = 1; d < MAX_PLY && !si.quit; ++d) {
+    for (int d = 1; d < MAX_PLY && !si.stopped; ++d) {
         for (int i = 0; i < NUM_THREADS; ++i) {
             global_info[i].variation.clearPv();
         }
@@ -529,11 +511,10 @@ Move iterative_deepening(Position &s, SearchInfo &si) {
             score = aspiration_window(s, si, d, score);
         }
 
-        if (si.quit || (d > 1 && stop_search(si))) {
+        if (si.stopped || (d > 1 && stop_search(si))) {
             break;
         }
 
-        results[0].first = score;
         global_info[0].variation.checkPv(s);
 
         std::cout << "info depth " << d;
@@ -551,7 +532,10 @@ Move iterative_deepening(Position &s, SearchInfo &si) {
         global_info[0].variation.printPv();
         std::cout << std::endl;
 
-        best_move = global_info[0].variation.getPvMove();
+        Move pv_move = global_info[0].variation.getPvMove();
+        if (pv_move != NULL_MOVE) {
+            best_move = pv_move;
+        }
 
         if (U64(si.clock.elapsed<std::chrono::milliseconds>()) * 2 > si.moveTime) {
             break; // Insufficient time for next search iteration
@@ -571,8 +555,6 @@ Move iterative_deepening(Position &s, SearchInfo &si) {
 Move search(Position &s, SearchInfo &si) {
     for (int i = 0; i < NUM_THREADS; ++i) {
         global_info[i].clear();
-        results[i].first = 0;
-        results[i].second = false;
     }
     return iterative_deepening(s, si);
 }

@@ -8,9 +8,9 @@
 
 #define ENGINE_NAME "Moraband"
 #ifdef TUNE
-#define ENGINE_VERSION "1.3.5-Tune"
+#define ENGINE_VERSION "1.4.0-Tune"
 #else
-#define ENGINE_VERSION "1.3.5"
+#define ENGINE_VERSION "1.4.0"
 #endif
 #define ENGINE_AUTHOR "Brighten Zhang"
 
@@ -19,7 +19,6 @@ extern int NUM_THREADS;
 extern int MOVE_OVERHEAD;
 extern bool IS_UCI_CHESS960;
 
-void bench(int depth = 16);
 void uci();
 
 #endif

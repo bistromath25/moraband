@@ -23,21 +23,19 @@ constexpr int ASPIRATION_WINDOW = 30;
 
 /** Search information */
 struct SearchInfo {
-    SearchInfo() : time{}, inc{}, movesToGo(0), depth(MAX_PLY), nodes(0), prevNodes(0), maxNodes(0), totalNodes(0), moveTime(0), quit(false), infinite(false) {}
+    SearchInfo() : time{}, inc{}, movesToGo(0), depth(MAX_PLY), nodes(0), prevNodes(0), maxNodes(0), totalNodes(0), moveTime(0), quit(false), stopped(false), infinite(false) {}
     int time[PLAYER_SIZE], inc[PLAYER_SIZE];
     int movesToGo, depth, nodes, prevNodes;
     U64 maxNodes, totalNodes;
     U64 moveTime;
     Clock clock;
-    bool quit, infinite;
+    bool quit, stopped, infinite;
 };
 
 /** Global search information */
 struct GlobalInfo {
     GlobalInfo() {
-        nodes = 0;
-        history.clear();
-        variation.clearPv();
+        clear();
         std::fill(evalHistory.begin(), evalHistory.end(), 0);
     }
     void init() {
