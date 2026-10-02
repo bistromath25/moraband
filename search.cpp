@@ -12,7 +12,6 @@
 std::atomic<bool> THREAD_STOP{false};
 std::array<std::thread, MAX_THREADS> threads;
 std::array<GlobalInfo, MAX_THREADS> global_info;
-std::array<std::pair<int, bool>, MAX_THREADS> results;
 
 constexpr int value_to_tt(int value, int ply) {
     if (value >= CHECKMATE_BOUND) {
@@ -457,14 +456,8 @@ int search_root(Position &s, SearchInfo &si, GlobalInfo &gi, int depth, int ply,
 
 /** Multi-threaded search driver */
 void parallel_search(Position s, SearchInfo si, int depth, int alpha, int beta, int t) {
-    auto &[value, valid] = results[t];
     auto &gi = global_info[t];
-    valid = false;
-    value = search_root(s, si, gi, depth, 0, alpha, beta);
-    if (!THREAD_STOP) {
-        THREAD_STOP = true;
-        valid = true;
-    }
+    search_root(s, si, gi, depth, 0, alpha, beta);
 }
 
 /** Aspiration window search */
@@ -522,7 +515,6 @@ Move iterative_deepening(Position &s, SearchInfo &si) {
             break;
         }
 
-        results[0].first = score;
         global_info[0].variation.checkPv(s);
 
         std::cout << "info depth " << d;
@@ -563,8 +555,6 @@ Move iterative_deepening(Position &s, SearchInfo &si) {
 Move search(Position &s, SearchInfo &si) {
     for (int i = 0; i < NUM_THREADS; ++i) {
         global_info[i].clear();
-        results[i].first = 0;
-        results[i].second = false;
     }
     return iterative_deepening(s, si);
 }
