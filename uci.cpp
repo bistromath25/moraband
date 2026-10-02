@@ -132,6 +132,7 @@ void set_option(std::string &name, std::string &value) {
     }
     else if (name == "Clear Hash") {
         tt.clear();
+        ptable.clear();
     }
     else if (name == "Threads") {
         NUM_THREADS = clamp(std::stoi(value), 1, MAX_THREADS);
@@ -239,6 +240,7 @@ void uci() {
         else if (token == "bench") {
             is >> token;
             tt.clear();
+            ptable.clear();
             bench(std::stoi(token));
         }
 #ifdef TUNE
