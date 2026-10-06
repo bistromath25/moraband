@@ -190,7 +190,7 @@ bool Position::isLegal(Move move) const {
     }
 
     if (onSquare(src) == PIECETYPE_PAWN && square_bb[dst] & enPassant) {
-        U64 change = us == WHITE ? square_bb[src] | square_bb[dst - 8] : square_bb[src] | square_bb[dst + 8];
+        U64 change = square_bb[src] | square_bb[dst] | (us == WHITE ? square_bb[dst - 8] : square_bb[dst + 8]);
         if (check(change)) {
             return false;
         }
