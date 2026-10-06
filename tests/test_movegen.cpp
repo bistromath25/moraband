@@ -136,12 +136,26 @@ TEST_F(MoveGenTest, PromotionMoves) {
 }
 
 TEST_F(MoveGenTest, EnPassantMoves) {
-    Position pos("rnbqkbnr/ppp1pppp/8/3pP3/8/8/PPPP1PPP/RNBQKBNR w KQkq d6 0 3");
-
-    std::set<std::string> moves = TestUtils::getAllMovesAsStrings(pos);
-    bool hasEnPassant = moves.count("e5d6") > 0;
-
-    EXPECT_TRUE(hasEnPassant) << "Should have en passant move";
+    {
+        Position pos("rnbqkbnr/ppp1pppp/8/3pP3/8/8/PPPP1PPP/RNBQKBNR w KQkq d6 0 3");
+        std::set<std::string> moves = TestUtils::getAllMovesAsStrings(pos);
+        EXPECT_TRUE(moves.count("e5d6") > 0) << "Should have en passant move";
+    }
+    {
+        Position pos("8/7p/R2b1kp1/2pr4/2Ppp3/1P3n1q/1B2Q3/3K1R2 b - c3 0 40");
+        std::set<std::string> moves = TestUtils::getAllMovesAsStrings(pos);
+        EXPECT_TRUE(moves.count("d4c3") > 0) << "Should have en passant move";
+    }
+    {
+        Position pos("3k4/8/7r/3PpK2/8/8/8/3R4 w - e6 0 2");
+        std::set<std::string> moves = TestUtils::getAllMovesAsStrings(pos);
+        EXPECT_TRUE(moves.count("d5e6") > 0) << "Should have en passant move";
+    }
+    {
+        Position pos("8/8/8/8/k3pP1R/8/8/7K b - f3 0 1");
+        std::set<std::string> moves = TestUtils::getAllMovesAsStrings(pos);
+        EXPECT_TRUE(moves.count("g4f3") == 0) << "Should not have en passant move";
+    }
 }
 
 TEST_F(MoveGenTest, MoveGenerationAfterMakeMove) {
