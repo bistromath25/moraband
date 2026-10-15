@@ -73,8 +73,7 @@ void bench(int depth) {
     for (unsigned int i = 0; i < fens.size(); ++i) {
         std::cout << i + 1 << "/" << fens.size() << " " << fens[i] << std::endl;
         Position s(fens[i]);
-        search_info.totalNodes = 0;
-        search_info.clock.set();
+        search_info.start();
         search(s, search_info);
         total_time += search_info.clock.elapsed<std::chrono::microseconds>();
         totalNodes += search_info.totalNodes;

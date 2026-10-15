@@ -75,7 +75,7 @@ void set_go(std::istringstream &is, Position &s, SearchInfo &si) {
         }
     }
 
-    si.clock.set();
+    si.start();
     if (si.infinite) {
         si.moveTime = ONE_HOUR; // Search for one hour in infinite mode
     }
@@ -168,8 +168,7 @@ void uci() {
             tt.clear();
             ptable.clear();
             for (int i = 0; i < NUM_THREADS; ++i) {
-                global_info[i].clear();
-                global_info[i].history.init();
+                global_info[i].init();
             }
         }
         else if (token == "isready") {
@@ -206,7 +205,7 @@ void uci() {
                 main_search_info.stopped = true;
                 main_search_thread.join();
             }
-            main_search_info = SearchInfo{};
+            main_search_info.init();
             set_go(is, root, main_search_info);
             main_search_thread = std::thread(
                 [](Position pos) {

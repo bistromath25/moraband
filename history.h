@@ -17,7 +17,7 @@ class History {
 public:
     History() {
         game_history.reserve(1024);
-        clear();
+        clear_heuristics();
     }
     History(const Position &s) : History() {
         push(std::make_pair(NULL_MOVE, s.getKey()));
@@ -26,10 +26,10 @@ public:
         return game_history.size();
     }
     void init() {
-        clear();
+        clear_heuristics();
         game_history.clear();
     }
-    void clear() {
+    void clear_heuristics() {
         killers = {};
         history = {};
         for (std::array<int, BOARD_SIZE> &b : butterfly) {
