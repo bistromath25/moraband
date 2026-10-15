@@ -15,10 +15,10 @@ Moraband, known in antiquity as Korriban, was an
  Outer Rim planet that was home to the ancient Sith
 
 uci
-id name Moraband 1.3
+id name Moraband 1.4.0
 id author Brighten Zhang
 option name Hash type spin default 256 min 1 max 65536
-option name Threads type spin default 1 min 1 max 16
+option name Threads type spin default 1 min 1 max 64
 option name Move Overhead type spin default 500 min 0 max 10000
 option name UCI_Chess960 type check default false
 uciok

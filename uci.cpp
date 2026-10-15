@@ -178,7 +178,7 @@ void uci() {
             std::cout << "id name " << ENGINE_NAME << " " << ENGINE_VERSION << "\n"
                       << "id author " << ENGINE_AUTHOR << "\n"
                       << "option name Hash type spin default " << DEFAULT_HASH_SIZE << " min " << MIN_HASH_SIZE << " max " << MAX_HASH_SIZE << "\n"
-                      << "option name Threads type spin default 1 min 1 max 16\n"
+                      << "option name Threads type spin default 1 min 1 max " << MAX_THREADS << "\n"
                       << "option name Move Overhead type spin default 500 min 0 max 10000\n"
                       << "option name UCI_Chess960 type check default false\n";
             std::cout << "uciok" << std::endl;
