@@ -8,7 +8,6 @@
 
 #include "position.h"
 #include <array>
-#include <iomanip>
 
 /**
  * Score structure for tapered evaluation

@@ -4,6 +4,7 @@
  **/
 
 #include "eval.h"
+#include <iomanip>
 
 /** Helper macro for creating Score objects with middle game and endgame values */
 #define S(mg, eg) Score(mg, eg)
