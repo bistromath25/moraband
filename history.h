@@ -15,31 +15,21 @@
 /** History heuristic for move ordering */
 class History {
 public:
-    History() : killers{}, history{} {
+    History() {
         game_history.reserve(1024);
-        for (std::array<int, BOARD_SIZE> &b : butterfly) {
-            b.fill(1);
-        }
+        clear_heuristics();
     }
-    History(const Position &s) : killers{}, history{} {
-        game_history.reserve(1024);
-        for (std::array<int, BOARD_SIZE> &b : butterfly) {
-            b.fill(1);
-        }
+    History(const Position &s) : History() {
         push(std::make_pair(NULL_MOVE, s.getKey()));
     }
     std::size_t size() const {
         return game_history.size();
     }
     void init() {
-        killers = {};
-        history = {};
+        clear_heuristics();
         game_history.clear();
-        for (std::array<int, BOARD_SIZE> &b : butterfly) {
-            b.fill(1);
-        }
     }
-    void clear() {
+    void clear_heuristics() {
         killers = {};
         history = {};
         for (std::array<int, BOARD_SIZE> &b : butterfly) {

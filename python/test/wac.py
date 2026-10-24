@@ -5,8 +5,6 @@ import threading
 import time
 from concurrent.futures import ThreadPoolExecutor, as_completed
 
-from tqdm import tqdm
-
 DEFAULT_MOVETIME = 5000
 
 
@@ -51,8 +49,14 @@ class EngineWorker:
             bufsize=1,
         )
 
-        for _ in range(9):
-            self.proc.stdout.readline()
+        self.proc.stdin.write("uci\n")
+        self.proc.stdin.flush()
+        while self.proc.stdout.readline().strip() != "uciok":
+            pass
+        self.proc.stdin.write("isready\n")
+        self.proc.stdin.flush()
+        while self.proc.stdout.readline().strip() != "readyok":
+            pass
 
         self.lock = threading.Lock()
 
@@ -62,7 +66,10 @@ class EngineWorker:
             self.proc.stdin.flush()
             self.proc.stdin.write("isready\n")
             self.proc.stdin.flush()
-            self.proc.stdin.write(f"position fen {test_position.fen}\n")
+            while self.proc.stdout.readline().strip() != "readyok":
+                pass
+            self.proc.stdin.write(f"position fen {test_position.fen} 0 1\n")
+            self.proc.stdin.flush()
 
             go_cmd = f"go movetime {self.move_time}"
             if self.depth is not None:
@@ -133,13 +140,9 @@ def main():
             worker = engines[i % len(engines)]
             futures.append(executor.submit(worker.run_position, pos))
 
-        for future in tqdm(
-            as_completed(futures),
-            total=len(futures),
-            desc="Running tests",
-            unit="test",
-            bar_format="{desc}: {n}/{total}",
-        ):
+        completed = 0
+        print_every = total // 10
+        for future in as_completed(futures):
             test_position, engine_best_move, success, engine_out = future.result()
             if success:
                 passed += 1
@@ -152,6 +155,15 @@ def main():
                     print(
                         f"\tfound {engine_best_move} expected {test_position.best_moves}"
                     )
+            completed += 1
+            if completed % print_every == 0 or completed == total:
+                elapsed_so_far = time.perf_counter() - start_time
+                eta = elapsed_so_far / completed * (total - completed)
+                eta_m, eta_s = divmod(int(eta), 60)
+                print(
+                    f"Completed {completed}/{total} - ETA: {eta_m:02d}:{eta_s:02d}",
+                    flush=True,
+                )
 
     elapsed = time.perf_counter() - start_time
 

@@ -8,7 +8,6 @@
 
 #include "position.h"
 #include <array>
-#include <iomanip>
 
 /**
  * Score structure for tapered evaluation
@@ -168,7 +167,7 @@ struct PawnHashTable {
         delete[] table;
     }
     void clear() {
-        for (int i = 0; i < PAWN_HASH_SIZE; ++i) {
+        for (int i = 0; i < size; ++i) {
             table[i].clear();
         }
     }

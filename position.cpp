@@ -20,67 +20,8 @@ constexpr int CASTLE_RIGHTS[BOARD_SIZE] = {
     15, 15, 15, 15, 15, 15, 15, 15,
     11, 15, 15, 3, 15, 15, 15, 7};
 
-int CASTLE_RIGHTS_CHESS960[BOARD_SIZE] = {
-    15, 15, 15, 15, 15, 15, 15, 15,
-    15, 15, 15, 15, 15, 15, 15, 15,
-    15, 15, 15, 15, 15, 15, 15, 15,
-    15, 15, 15, 15, 15, 15, 15, 15,
-    15, 15, 15, 15, 15, 15, 15, 15,
-    15, 15, 15, 15, 15, 15, 15, 15,
-    15, 15, 15, 15, 15, 15, 15, 15,
-    15, 15, 15, 15, 15, 15, 15, 15};
-
 /** Board position and related functions */
 Position::Position() {}
-
-Position::Position(const Position &s)
-    : us(s.us), them(s.them), fiftyMoveRule(s.fiftyMoveRule), castleRights(s.castleRights), phase(s.phase), chess960(s.chess960), key(s.key), pawnKey(s.pawnKey), checkers(s.checkers), enPassant(s.enPassant), previousMove(s.previousMove), checkSquares(s.checkSquares), pinned(s.pinned), occupancy(s.occupancy), pieceIndex(s.pieceIndex), board(s.board), pieces(s.pieces), pieceCounts(s.pieceCounts), pstScore(s.pstScore), pieceList(s.pieceList)
-#ifdef USE_NNUE
-      ,
-      nnue(s.nnue)
-#endif
-{
-
-    for (auto c : {WHITE, BLACK}) {
-        for (auto side : {CASTLE_KINGSIDE, CASTLE_QUEENSIDE}) {
-            castleRookSrc[c][side] = s.castleRookSrc[c][side];
-        }
-    }
-}
-
-Position &Position::operator=(const Position &s) {
-    if (this != &s) {
-        us = s.us;
-        them = s.them;
-        fiftyMoveRule = s.fiftyMoveRule;
-        castleRights = s.castleRights;
-        phase = s.phase;
-        chess960 = s.chess960;
-        key = s.key;
-        pawnKey = s.pawnKey;
-        checkers = s.checkers;
-        enPassant = s.enPassant;
-        previousMove = s.previousMove;
-        checkSquares = s.checkSquares;
-        pinned = s.pinned;
-        occupancy = s.occupancy;
-        pieceIndex = s.pieceIndex;
-        board = s.board;
-        pieces = s.pieces;
-        pieceCounts = s.pieceCounts;
-        pstScore = s.pstScore;
-        pieceList = s.pieceList;
-        for (auto c : {WHITE, BLACK}) {
-            for (auto side : {CASTLE_KINGSIDE, CASTLE_QUEENSIDE}) {
-                castleRookSrc[c][side] = s.castleRookSrc[c][side];
-            }
-        }
-#ifdef USE_NNUE
-        nnue = s.nnue;
-#endif
-    }
-    return *this;
-}
 
 Position::Position(const std::string &fen, bool isChess960) {
     init(isChess960);
@@ -133,7 +74,7 @@ Position::Position(const std::string &fen, bool isChess960) {
     if (isChess960) {
         for (char x : parts[2]) {
             Color c = isupper(x) ? WHITE : BLACK;
-            int f = 7 - (towlower(x) - 'a');
+            int f = 'h' - towlower(x);
             auto side = file(getKingSquare(c)) > f ? CASTLE_KINGSIDE : CASTLE_QUEENSIDE;
             castleRookSrc[c][side] = static_cast<Square>(((c == WHITE) ? 0 : 7) * 8 + f);
             castleRights |= (c == WHITE)
@@ -160,7 +101,7 @@ Position::Position(const std::string &fen, bool isChess960) {
     key ^= Zobrist::key(castleRights);
 
     if (parts[3] != "-") {
-        enPassant = square_bb[(parts[3][1] - '1') * 8 + (parts[3][0] - 'a')];
+        enPassant = square_bb[(parts[3][1] - '1') * 8 + ('h' - parts[3][0])];
         key ^= Zobrist::key(get_file(enPassant));
     }
 
@@ -171,15 +112,6 @@ Position::Position(const std::string &fen, bool isChess960) {
     setPins(BLACK);
     setCheckers();
     setGamePhase();
-
-    if (isChess960) {
-        CASTLE_RIGHTS_CHESS960[getKingSquare(WHITE)] &= ~(WHITE_KINGSIDE_CASTLE | WHITE_QUEENSIDE_CASTLE);
-        CASTLE_RIGHTS_CHESS960[getKingsideCastleRookSrc(WHITE)] &= ~WHITE_KINGSIDE_CASTLE;
-        CASTLE_RIGHTS_CHESS960[getQueensideCastleRookSrc(WHITE)] &= ~WHITE_QUEENSIDE_CASTLE;
-        CASTLE_RIGHTS_CHESS960[getKingSquare(BLACK)] &= ~(BLACK_KINGSIDE_CASTLE | BLACK_QUEENSIDE_CASTLE);
-        CASTLE_RIGHTS_CHESS960[getKingsideCastleRookSrc(BLACK)] &= ~BLACK_KINGSIDE_CASTLE;
-        CASTLE_RIGHTS_CHESS960[getQueensideCastleRookSrc(BLACK)] &= ~BLACK_QUEENSIDE_CASTLE;
-    }
 }
 
 void Position::init(bool isChess960) {
@@ -196,16 +128,10 @@ void Position::init(bool isChess960) {
     checkSquares.fill({});
     pinned.fill({});
     occupancy.fill({});
-    pieceIndex.fill({});
     board.fill(PIECETYPE_NONE);
     pieces.fill({});
     pieceCounts.fill({});
     pstScore.fill({});
-    for (auto i = pieceList.begin(); i != pieceList.end(); ++i) {
-        for (auto j = i->begin(); j != i->end(); ++j) {
-            j->fill(no_sq);
-        }
-    }
     castleRookSrc[WHITE][CASTLE_KINGSIDE] = isChess960 ? no_sq : H1;
     castleRookSrc[WHITE][CASTLE_QUEENSIDE] = isChess960 ? no_sq : A1;
     castleRookSrc[BLACK][CASTLE_KINGSIDE] = isChess960 ? no_sq : H8;
@@ -267,7 +193,7 @@ bool Position::isLegal(Move move) const {
     }
 
     if (onSquare(src) == PIECETYPE_PAWN && square_bb[dst] & enPassant) {
-        U64 change = us == WHITE ? square_bb[src] | square_bb[dst - 8] : square_bb[src] | square_bb[dst + 8];
+        U64 change = square_bb[src] | square_bb[dst] | (us == WHITE ? square_bb[dst - 8] : square_bb[dst + 8]);
         if (check(change)) {
             return false;
         }
@@ -310,7 +236,7 @@ bool Position::isValid(Move move, U64 validMoves) const {
     if (isCastle(move) && onSquare(src) != PIECETYPE_KING) {
         return false;
     }
-    if (!(square_bb[src] & getOccupancyBB(us)) || (square_bb[dst] & getOccupancyBB(us)) || dst == getKingSquare(them)) {
+    if (!(square_bb[src] & getOccupancyBB(us)) || (!isCastle(move) && square_bb[dst] & getOccupancyBB(us)) || dst == getKingSquare(them)) {
         return false;
     }
 
@@ -353,8 +279,18 @@ bool Position::isValid(Move move, U64 validMoves) const {
             Square k = getKingSquare(us);
             if (isCastle(move)) {
                 if (isChess960()) {
-                    return canCastle(src, dst, (dst < src) ? getKingsideCastleRookSrc() : getQueensideCastleRookSrc(),
-                                     (dst < src) ? CASTLE_ROOK_DST[us][CASTLE_KINGSIDE] : CASTLE_ROOK_DST[us][CASTLE_QUEENSIDE]);
+                    if (src > dst) {
+                        if (!canCastleKingside() || dst != getKingsideCastleRookSrc(us)) {
+                            return false;
+                        }
+                        return canCastle(src, CASTLE_KING_DST[us][CASTLE_KINGSIDE], dst, CASTLE_ROOK_DST[us][CASTLE_KINGSIDE]);
+                    }
+                    else {
+                        if (!canCastleQueenside() || dst != getQueensideCastleRookSrc(us)) {
+                            return false;
+                        }
+                        return canCastle(src, CASTLE_KING_DST[us][CASTLE_QUEENSIDE], dst, CASTLE_ROOK_DST[us][CASTLE_QUEENSIDE]);
+                    }
                 }
                 else {
                     if (src > dst) {
@@ -484,7 +420,7 @@ int Position::see(Move move) const {
     return gain[0];
 }
 
-void Position::makeMove(Move move) {
+void Position::makeMove(Move move, StateInfo &st) {
     assert(move != NULL_MOVE);
     assert(getSrc(move) < no_sq);
     assert(getDst(move) < no_sq);
@@ -497,6 +433,25 @@ void Position::makeMove(Move move) {
     assert(moved != PIECETYPE_NONE);
     PieceType captured = onSquare(dst);
     assert(captured != PIECETYPE_KING);
+
+    st.key = key;
+    st.pawnKey = pawnKey;
+    st.checkers = checkers;
+    st.enPassant = enPassant;
+    st.castleRights = castleRights;
+    st.fiftyMoveRule = fiftyMoveRule;
+    st.phase = phase;
+    st.previousMove = previousMove;
+    st.checkSquares = checkSquares;
+    for (auto c : {WHITE, BLACK}) {
+        st.pinned[c] = pinned[c];
+        for (int i = 0; i < GAMESTAGE_SIZE; ++i) {
+            st.pstScore[c][i] = pstScore[c][i];
+        }
+    }
+    st.captured = captured;
+    st.capturedSq = dst;
+
     ++fiftyMoveRule;
 
     if (enPassant) {
@@ -526,8 +481,10 @@ void Position::makeMove(Move move) {
         addPiece(us, PIECETYPE_ROOK, rookDst);
         addPiece(us, PIECETYPE_KING, kingDst);
 #ifdef USE_NNUE
-        nnue.movePiece(us, PIECETYPE_ROOK, rookSrc, rookDst);
-        nnue.movePiece(us, PIECETYPE_KING, src, kingDst);
+        nnue.removePiece(us, PIECETYPE_ROOK, rookSrc);
+        nnue.removePiece(us, PIECETYPE_KING, src);
+        nnue.addPiece(us, PIECETYPE_ROOK, rookDst);
+        nnue.addPiece(us, PIECETYPE_KING, kingDst);
 #endif
     }
     else {
@@ -565,6 +522,8 @@ void Position::makeMove(Move move) {
             nnue.removePiece(them, PIECETYPE_PAWN, epCapture);
 #endif
             gamePhase = true;
+            st.captured = PIECETYPE_PAWN;
+            st.capturedSq = epCapture;
         }
     }
 
@@ -576,8 +535,8 @@ void Position::makeMove(Move move) {
     }
 
     if (isChess960()) {
-        castleRights &= CASTLE_RIGHTS_CHESS960[src];
-        castleRights &= CASTLE_RIGHTS_CHESS960[dst];
+        castleRights &= chess960CastleMask(src);
+        castleRights &= chess960CastleMask(dst);
     }
     else {
         castleRights &= CASTLE_RIGHTS[src];
@@ -595,8 +554,80 @@ void Position::makeMove(Move move) {
     setCheckers();
 }
 
-void Position::makeNull() {
+void Position::undoMove(Move move, const StateInfo &st) {
+    swapTurn();
+
+    Square src = getSrc(move);
+    Square dst = getDst(move);
+
+    if (isCastle(move)) {
+        auto side = dst < src ? CASTLE_KINGSIDE : CASTLE_QUEENSIDE;
+        Square rookSrc = side == CASTLE_KINGSIDE ? getKingsideCastleRookSrc() : getQueensideCastleRookSrc();
+        Square rookDst = CASTLE_ROOK_DST[us][side];
+        Square kingDst = CASTLE_KING_DST[us][side];
+        removePiece(us, PIECETYPE_ROOK, rookDst);
+        removePiece(us, PIECETYPE_KING, kingDst);
+        addPiece(us, PIECETYPE_ROOK, rookSrc);
+        addPiece(us, PIECETYPE_KING, src);
+#ifdef USE_NNUE
+        nnue.removePiece(us, PIECETYPE_ROOK, rookDst);
+        nnue.removePiece(us, PIECETYPE_KING, kingDst);
+        nnue.addPiece(us, PIECETYPE_ROOK, rookSrc);
+        nnue.addPiece(us, PIECETYPE_KING, src);
+#endif
+    }
+    else if (getPiecePromotion(move)) {
+        PieceType promo = getPiecePromotion(move);
+        removePiece(us, promo, dst);
+        addPiece(us, PIECETYPE_PAWN, src);
+#ifdef USE_NNUE
+        nnue.removePiece(us, promo, dst);
+        nnue.addPiece(us, PIECETYPE_PAWN, src);
+#endif
+        if (st.captured != PIECETYPE_NONE) {
+            addPiece(them, st.captured, st.capturedSq);
+#ifdef USE_NNUE
+            nnue.addPiece(them, st.captured, st.capturedSq);
+#endif
+        }
+    }
+    else {
+        PieceType moved = onSquare(dst);
+        movePiece(us, moved, dst, src);
+#ifdef USE_NNUE
+        nnue.movePiece(us, moved, dst, src);
+#endif
+        if (st.captured != PIECETYPE_NONE) {
+            addPiece(them, st.captured, st.capturedSq);
+#ifdef USE_NNUE
+            nnue.addPiece(them, st.captured, st.capturedSq);
+#endif
+        }
+    }
+
+    key = st.key;
+    pawnKey = st.pawnKey;
+    checkers = st.checkers;
+    enPassant = st.enPassant;
+    castleRights = st.castleRights;
+    fiftyMoveRule = st.fiftyMoveRule;
+    phase = st.phase;
+    previousMove = st.previousMove;
+    checkSquares = st.checkSquares;
+    for (auto c : {WHITE, BLACK}) {
+        pinned[c] = st.pinned[c];
+        for (int i = 0; i < GAMESTAGE_SIZE; ++i) {
+            pstScore[c][i] = st.pstScore[c][i];
+        }
+    }
+}
+
+void Position::makeNull(StateInfo &st) {
     assert(checkers == 0);
+    st.key = key;
+    st.enPassant = enPassant;
+    st.checkSquares = checkSquares;
+
     if (enPassant) {
         key ^= Zobrist::key(get_file(enPassant));
     }
@@ -610,33 +641,28 @@ void Position::makeNull() {
     checkSquares[PIECETYPE_QUEEN] = checkSquares[PIECETYPE_BISHOP] | checkSquares[PIECETYPE_ROOK];
 }
 
+void Position::undoNull(const StateInfo &st) {
+    swapTurn();
+    key = st.key;
+    enPassant = st.enPassant;
+    checkSquares = st.checkSquares;
+}
+
 bool Position::insufficientMaterial() const {
-    bool res = false;
-
-    if (getPieceCount<PIECETYPE_PAWN>() + getPieceCount<PIECETYPE_ROOK>() + getPieceCount<PIECETYPE_QUEEN>() == 0) {
-        switch (getPieceCount<PIECETYPE_KNIGHT>()) {
-            case 0:
-                if ((getPieceBB<PIECETYPE_BISHOP>() & DARK_SQUARES) == getPieceBB<PIECETYPE_BISHOP>() || (getPieceBB<PIECETYPE_BISHOP>() & LIGHT_SQUARES) == getPieceBB<PIECETYPE_BISHOP>()) {
-                    res = true;
-                }
-                break;
-
-            case 1:
-                if (!getPieceCount<PIECETYPE_BISHOP>()) {
-                    res = true;
-                }
-                break;
-
-            case 2:
-                if (getPieceCount<PIECETYPE_KNIGHT>(WHITE) && getPieceCount<PIECETYPE_KNIGHT>(BLACK) && !getPieceCount<PIECETYPE_BISHOP>())
-                    res = true;
-                break;
-
-            default:
-                break;
-        }
+    if (getPieceCount<PIECETYPE_PAWN>() + getPieceCount<PIECETYPE_ROOK>() + getPieceCount<PIECETYPE_QUEEN>() != 0) {
+        return false;
     }
-    return res;
+
+    switch (getPieceCount<PIECETYPE_KNIGHT>()) {
+        case 0:
+            return (getPieceBB<PIECETYPE_BISHOP>() & DARK_SQUARES) == getPieceBB<PIECETYPE_BISHOP>() || (getPieceBB<PIECETYPE_BISHOP>() & LIGHT_SQUARES) == getPieceBB<PIECETYPE_BISHOP>();
+        case 1:
+            return !getPieceCount<PIECETYPE_BISHOP>();
+        case 2:
+            return getPieceCount<PIECETYPE_KNIGHT>(WHITE) && getPieceCount<PIECETYPE_KNIGHT>(BLACK) && !getPieceCount<PIECETYPE_BISHOP>();
+        default:
+            return false;
+    }
 }
 
 std::string Position::getFen() const {
@@ -736,7 +762,9 @@ std::string Position::getFen() const {
 
     bool enpass = false;
     if (moved == PIECETYPE_PAWN && int(std::max(src, dst)) - int(std::min(src, dst)) == 16) {
-        for (Square p : getPieceList<PIECETYPE_PAWN>(us)) {
+        U64 pawns = getPieceBB<PIECETYPE_PAWN>(us);
+        while (pawns) {
+            Square p = pop_lsb(pawns);
             if (rank(p) == rank(dst) && std::max(file(p), file(dst)) - std::min(file(p), file(dst)) == 1) {
                 fen += SQUARE_TO_STRING[dst + (us == WHITE ? 8 : -8)];
                 enpass = true;

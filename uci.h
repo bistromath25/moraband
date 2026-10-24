@@ -9,9 +9,9 @@
 #define ENGINE_NAME "Moraband"
 #define ENGINE_AUTHOR "Brighten Zhang"
 #if defined(USE_NNUE)
-#define ENGINE_VERSION "1.3-NNUE"
+#define ENGINE_VERSION "1.4.0-NNUE"
 #else
-#define ENGINE_VERSION "1.3"
+#define ENGINE_VERSION "1.4.0"
 #endif
 
 extern int HASH_SIZE;
@@ -19,7 +19,6 @@ extern int NUM_THREADS;
 extern int MOVE_OVERHEAD;
 extern bool IS_UCI_CHESS960;
 
-void bench(int depth = 16);
 void uci();
 
 #endif

@@ -8,7 +8,6 @@
 
 #include "defs.h"
 #include <chrono>
-#include <sys/time.h>
 
 constexpr int MIN_SEARCH_TIME = 500; // Absolute minimum time to spend searching
 constexpr int ONE_MINUTE = 60000;    // 1000 * 60

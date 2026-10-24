@@ -10,29 +10,32 @@
 #include <vector>
 
 /** Perft test */
-U64 perft(const Position &s, int depth) {
-    int nodes = 0;
+U64 perft(Position &s, int depth) {
     if (s.getFiftyMoveRule() > 99) {
-        return nodes;
+        return 0;
     }
     MoveList moveList(s);
     if (depth == 1) {
         return moveList.size();
     }
+    U64 nodes = 0;
     while (Move m = moveList.getBestMove()) {
-        Position c(s);
-        c.makeMove(m);
-        nodes += perft(c, depth - 1);
+        StateInfo st;
+        s.makeMove(m, st);
+        nodes += perft(s, depth - 1);
+        s.undoMove(m, st);
     }
     return nodes;
 }
 
 void perftWorker(const Position &pos, const std::vector<Move> &moves, int depth, size_t start,
                  size_t step, std::vector<U64> &results) {
+    Position c(pos);
     for (size_t i = start; i < moves.size(); i += step) {
-        Position child(pos);
-        child.makeMove(moves[i]);
-        results[i] = perft(child, depth - 1);
+        StateInfo st;
+        c.makeMove(moves[i], st);
+        results[i] = perft(c, depth - 1);
+        c.undoMove(moves[i], st);
     }
 }
 
@@ -60,7 +63,13 @@ void perftTest(const Position &s, int depth, bool mt) {
     U64 nodes = 0;
     Clock clock;
     clock.set();
-    nodes = mt ? MTperft(s, depth) : perft(s, depth);
+    if (mt) {
+        nodes = MTperft(s, depth);
+    }
+    else {
+        Position c(s);
+        nodes = perft(c, depth);
+    }
     double time = clock.elapsed<std::chrono::microseconds>() / static_cast<double>(1000000);
     std::cout << s << std::endl;
     std::cout << s.getFen() << std::endl;
