@@ -6,6 +6,6 @@
 #ifndef BENCH_H
 #define BENCH_H
 
-void bench(int depth = 16);
+void bench(int depth = 12);
 
 #endif
