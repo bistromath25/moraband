@@ -11,12 +11,6 @@
 #include <fstream>
 #include <vector>
 
-#if defined(USE_NEON)
-#include <arm_neon.h>
-#elif defined(USE_AVX2) || defined(USE_AVX512)
-#include <immintrin.h>
-#endif
-
 namespace NNUE {
 
     constexpr int QA = 255;
