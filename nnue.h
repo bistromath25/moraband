@@ -17,14 +17,12 @@ namespace NNUE {
     const std::string NNUE_PATH = "nnue.bin";
     constexpr int INPUT_FEATURE_SIZE = 768;
     constexpr int HIDDEN_SIZE = 256;
-    constexpr float SCALE = 1000.0f;
-
-    constexpr int NUM_PIECE_TYPES = 12;
+    constexpr int SCALE = 400;
 
     struct Accumulator {
         Accumulator();
         Accumulator(const Position &s);
-        std::array<float, HIDDEN_SIZE> values;
+        std::array<int16_t, HIDDEN_SIZE> white, black;
     };
 
     class NNUE {
