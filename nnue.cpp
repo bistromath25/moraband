@@ -32,10 +32,10 @@ namespace NNUE {
             throw std::runtime_error("Failed to open file: " + path);
         }
 
-        in.read(reinterpret_cast<char*>(fc1_weight), sizeof(fc1_weight));
-        in.read(reinterpret_cast<char*>(fc1_bias), sizeof(fc1_bias));
-        in.read(reinterpret_cast<char*>(fc2_weight), sizeof(fc2_weight));
-        in.read(reinterpret_cast<char*>(&fc2_bias), sizeof(fc2_bias));
+        in.read(reinterpret_cast<char *>(fc1_weight), sizeof(fc1_weight));
+        in.read(reinterpret_cast<char *>(fc1_bias), sizeof(fc1_bias));
+        in.read(reinterpret_cast<char *>(fc2_weight), sizeof(fc2_weight));
+        in.read(reinterpret_cast<char *>(&fc2_bias), sizeof(fc2_bias));
 
         if (!in) {
             throw std::runtime_error("Unexpected end of file: " + path);
@@ -106,8 +106,8 @@ namespace NNUE {
     }
 
     int NNUE::evaluate(Color stm) const {
-        const std::array<int16_t, HIDDEN_SIZE>& us = (stm == WHITE) ? acc.white : acc.black;
-        const std::array<int16_t, HIDDEN_SIZE>& them = (stm == WHITE) ? acc.black : acc.white;
+        const std::array<int16_t, HIDDEN_SIZE> &us = (stm == WHITE) ? acc.white : acc.black;
+        const std::array<int16_t, HIDDEN_SIZE> &them = (stm == WHITE) ? acc.black : acc.white;
         int32_t sum = 0;
 
         for (int i = 0; i < HIDDEN_SIZE; ++i) {
